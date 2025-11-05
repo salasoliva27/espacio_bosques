@@ -1,9 +1,15 @@
 version: '3.8'
 
+# NOTE: When using Supabase (cloud database), you don't need postgres or minio services
+# Just run Hardhat locally with: yarn start:eth (no Docker required)
+# To use local Postgres: docker-compose --profile local-services up
+
 services:
+  # OPTIONAL: Local PostgreSQL (only if NOT using Supabase)
   postgres:
     image: postgres:15-alpine
     container_name: espacio-bosques-postgres
+    profiles: ["local-services"]  # Only runs with --profile local-services
     environment:
       POSTGRES_DB: espacio_bosques
       POSTGRES_USER: bosques
@@ -20,9 +26,11 @@ services:
       timeout: 5s
       retries: 5
 
+  # OPTIONAL: Local MinIO storage (IPFS is primary storage)
   minio:
     image: minio/minio:latest
     container_name: espacio-bosques-minio
+    profiles: ["local-services"]  # Only runs with --profile local-services
     command: server /data --console-address ":9001"
     environment:
       MINIO_ROOT_USER: minioadmin
@@ -40,11 +48,14 @@ services:
       timeout: 20s
       retries: 3
 
+  # OPTIONAL: Hardhat in Docker (recommended to run locally instead)
+  # Run locally with: yarn start:eth
   hardhat:
     build:
       context: ./contracts
       dockerfile: Dockerfile
     container_name: espacio-bosques-hardhat
+    profiles: ["local-services"]  # Only runs with --profile local-services
     command: npx hardhat node --hostname 0.0.0.0
     ports:
       - "8545:8545"
@@ -56,11 +67,14 @@ services:
       timeout: 5s
       retries: 5
 
+  # OPTIONAL: Backend in Docker (recommended to run locally instead)
+  # Run locally with: cd backend && yarn dev
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
     container_name: espacio-bosques-backend
+    profiles: ["local-services"]  # Only runs with --profile local-services
     environment:
       NODE_ENV: development
       PORT: 3001
