@@ -1,0 +1,148 @@
+{
+  "platform": {
+    "name": "Espacio Bosques",
+    "shortName": "Bosques DAO",
+    "version": "1.0.0",
+    "description": "Community funding platform with AI-assisted project creation and on-chain escrow",
+    "supportEmail": "support@espacio-bosques.org",
+    "website": "https://espacio-bosques.org"
+  },
+  "blockchain": {
+    "tokenSymbol": "BOSQUES",
+    "tokenName": "Bosques Community Token",
+    "initialSupply": "1000000",
+    "decimals": 18,
+    "networkName": "Hardhat Local",
+    "chainId": 31337
+  },
+  "governance": {
+    "quorumPercentage": 51,
+    "votingPeriodDays": 7,
+    "timelockDelayHours": 24,
+    "proposalThreshold": "1000",
+    "roles": {
+      "admin": "DEFAULT_ADMIN_ROLE",
+      "validator": "VALIDATOR_ROLE",
+      "planner": "PLANNER_ROLE"
+    }
+  },
+  "funding": {
+    "minProjectFunding": "100",
+    "maxProjectFunding": "100000",
+    "platformFeePercentage": 2.5,
+    "minInvestment": "10",
+    "investmentPeriodDays": 30,
+    "refundGracePeriodDays": 7
+  },
+  "milestones": {
+    "maxMilestonesPerProject": 10,
+    "minMilestoneDurationDays": 7,
+    "maxMilestoneDurationDays": 180,
+    "evidenceRequirements": {
+      "minPhotos": 2,
+      "minDescriptionLength": 100,
+      "requiredFields": ["description", "evidence", "completion_date"]
+    }
+  },
+  "validation": {
+    "requiredValidatorVotes": 3,
+    "validatorVotingPeriodDays": 3,
+    "autoApproveThreshold": "500",
+    "requiresKYCForPlanner": false,
+    "requiresKYCForInvestor": false
+  },
+  "ai": {
+    "provider": "anthropic",
+    "projectCreation": {
+      "enabled": true,
+      "maxPromptLength": 2000,
+      "outputSchema": {
+        "type": "object",
+        "required": ["title", "summary", "milestones"],
+        "properties": {
+          "title": { "type": "string", "maxLength": 100 },
+          "summary": { "type": "string", "maxLength": 1000 },
+          "category": { "type": "string", "enum": ["infrastructure", "environment", "community", "technology", "education"] },
+          "milestones": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 10,
+            "items": {
+              "type": "object",
+              "required": ["title", "description", "fundingPercentage", "durationDays"],
+              "properties": {
+                "title": { "type": "string" },
+                "description": { "type": "string" },
+                "fundingPercentage": { "type": "number", "min": 1, "max": 100 },
+                "durationDays": { "type": "number", "min": 7, "max": 180 }
+              }
+            }
+          },
+          "monitoringHints": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        }
+      }
+    },
+    "reporting": {
+      "enabled": true,
+      "generationIntervalHours": 24,
+      "anomalyThresholds": {
+        "uptimeMinPercent": 95,
+        "batteryMinPercent": 20,
+        "maxHoursSinceLastSeen": 48,
+        "maxConsecutiveErrors": 5
+      },
+      "reportTypes": ["summary", "anomaly", "milestone_progress", "funding_status"]
+    },
+    "monitoring": {
+      "telemetryRetentionDays": 90,
+      "alertChannels": ["email", "webhook"],
+      "criticalAlertThreshold": "high"
+    }
+  },
+  "ipfs": {
+    "gateway": "https://ipfs.io/ipfs/",
+    "pinningService": "infura",
+    "maxFileSize": 10485760,
+    "allowedMimeTypes": ["image/jpeg", "image/png", "image/webp", "application/pdf", "video/mp4"]
+  },
+  "security": {
+    "rateLimit": {
+      "windowMs": 900000,
+      "maxRequests": 100
+    },
+    "jwtExpirationDays": 7,
+    "passwordMinLength": 8,
+    "maxLoginAttempts": 5,
+    "lockoutDurationMinutes": 15,
+    "requireEmailVerification": true,
+    "require2FA": false
+  },
+  "localization": {
+    "defaultLocale": "en-US",
+    "supportedLocales": ["en-US", "es-MX"],
+    "fallbackLocale": "en-US"
+  },
+  "features": {
+    "aiProjectCreation": true,
+    "aiReporting": true,
+    "telemetrySimulation": true,
+    "walletLogin": true,
+    "emailLogin": false,
+    "socialLogin": false,
+    "kycIntegration": false,
+    "multiSigWallets": false,
+    "recurringFunding": false,
+    "nftRewards": false
+  },
+  "simulation": {
+    "droneDefaults": {
+      "uptimePercent": 98,
+      "batteryPercent": 75,
+      "checkIntervalMinutes": 60,
+      "errorRate": 0.02
+    }
+  }
+}

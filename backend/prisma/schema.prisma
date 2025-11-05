@@ -1,0 +1,191 @@
+// Prisma schema for Espacio Bosques
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  walletAddress String    @unique
+  role          UserRole  @default(MEMBER)
+  verified      Boolean   @default(false)
+  kycStatus     KYCStatus @default(NONE)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  projects      Project[] @relation("ProjectPlanner")
+  investments   Investment[]
+  reports       Report[]
+
+  @@index([walletAddress])
+  @@map("users")
+}
+
+enum UserRole {
+  ADMIN
+  VALIDATOR
+  PLANNER
+  MEMBER
+}
+
+enum KYCStatus {
+  NONE
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model Project {
+  id              String        @id @default(cuid())
+  chainId         Int
+  contractId      Int           @unique // On-chain project ID
+  planner         User          @relation("ProjectPlanner", fields: [plannerId], references: [id])
+  plannerId       String
+  title           String
+  summary         String        @db.Text
+  category        String
+  metadataURI     String
+  fundingGoal     String // BigInt as string
+  fundingRaised   String        @default("0")
+  status          ProjectStatus @default(PENDING)
+  aiGenerated     Boolean       @default(false)
+  aiBlueprint     Json?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  approvedAt      DateTime?
+  completedAt     DateTime?
+
+  // Relations
+  milestones      Milestone[]
+  investments     Investment[]
+  telemetry       Telemetry[]
+  reports         Report[]
+  events          BlockchainEvent[]
+
+  @@index([plannerId])
+  @@index([status])
+  @@index([contractId])
+  @@map("projects")
+}
+
+enum ProjectStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  ACTIVE
+  COMPLETED
+  CANCELLED
+}
+
+model Milestone {
+  id                  String          @id @default(cuid())
+  chainId             Int?
+  contractId          Int?            @unique // On-chain milestone ID
+  project             Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId           String
+  title               String
+  description         String          @db.Text
+  fundingPercentage   Int
+  durationDays        Int
+  status              MilestoneStatus @default(PENDING)
+  evidenceURI         String?
+  createdAt           DateTime        @default(now())
+  submittedAt         DateTime?
+  completedAt         DateTime?
+
+  @@index([projectId])
+  @@index([status])
+  @@map("milestones")
+}
+
+enum MilestoneStatus {
+  PENDING
+  IN_PROGRESS
+  SUBMITTED
+  APPROVED
+  REJECTED
+  COMPLETED
+}
+
+model Investment {
+  id           String   @id @default(cuid())
+  project      Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId    String
+  investor     User     @relation(fields: [investorId], references: [id])
+  investorId   String
+  amount       String // BigInt as string
+  txHash       String   @unique
+  chainId      Int
+  createdAt    DateTime @default(now())
+
+  @@index([projectId])
+  @@index([investorId])
+  @@index([txHash])
+  @@map("investments")
+}
+
+model Telemetry {
+  id        String   @id @default(cuid())
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId String
+  type      String   // "drone", "sensor", etc.
+  data      Json
+  timestamp DateTime @default(now())
+
+  @@index([projectId])
+  @@index([timestamp])
+  @@map("telemetry")
+}
+
+model Report {
+  id          String     @id @default(cuid())
+  chainId     Int?
+  contractId  Int?       // On-chain report ID
+  project     Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId   String
+  generator   User       @relation(fields: [generatorId], references: [id])
+  generatorId String
+  type        ReportType
+  title       String
+  content     String     @db.Text
+  summary     String?
+  anomalies   Json?
+  ipfsHash    String?
+  createdAt   DateTime   @default(now())
+
+  @@index([projectId])
+  @@index([type])
+  @@index([createdAt])
+  @@map("reports")
+}
+
+enum ReportType {
+  SUMMARY
+  ANOMALY
+  MILESTONE_PROGRESS
+  FUNDING_STATUS
+}
+
+model BlockchainEvent {
+  id          String   @id @default(cuid())
+  chainId     Int
+  eventType   String
+  contractAddress String
+  txHash      String
+  blockNumber Int
+  project     Project? @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId   String?
+  data        Json
+  createdAt   DateTime @default(now())
+
+  @@index([eventType])
+  @@index([txHash])
+  @@index([projectId])
+  @@map("blockchain_events")
+}

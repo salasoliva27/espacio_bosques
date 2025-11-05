@@ -1,0 +1,35 @@
+name: Slither Security Scan
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'contracts/**/*.sol'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'contracts/**/*.sol'
+
+jobs:
+  slither:
+    name: Slither Analysis
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'yarn'
+      - name: Install dependencies
+        run: |
+          yarn install --frozen-lockfile
+          pip3 install slither-analyzer
+      - name: Run Slither
+        run: |
+          cd contracts
+          slither . --json slither-report.json || true
+      - name: Upload Slither report
+        uses: actions/upload-artifact@v3
+        with:
+          name: slither-report
+          path: contracts/slither-report.json

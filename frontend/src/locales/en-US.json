@@ -1,0 +1,30 @@
+{
+  "nav": {
+    "dashboard": "Dashboard",
+    "createProject": "Create Project",
+    "connectWallet": "Connect Wallet"
+  },
+  "landing": {
+    "title": "Fund Community Projects",
+    "subtitle": "with AI & Blockchain",
+    "description": "Espacio Bosques empowers communities to create, fund, and monitor impactful projects using AI-assisted planning and transparent on-chain escrow.",
+    "exploreProjects": "Explore Projects",
+    "createWithAI": "Create with AI"
+  },
+  "dashboard": {
+    "title": "Community Projects",
+    "subtitle": "Browse and fund impactful community initiatives",
+    "noProjects": "No projects found",
+    "fundingProgress": "Funding Progress",
+    "milestones": "milestones"
+  },
+  "project": {
+    "about": "About",
+    "milestones": "Milestones",
+    "funding": "Funding",
+    "fundThisProject": "Fund This Project",
+    "recentActivity": "Recent Activity",
+    "latestTelemetry": "Latest Telemetry",
+    "viewReports": "View AI Reports"
+  }
+}

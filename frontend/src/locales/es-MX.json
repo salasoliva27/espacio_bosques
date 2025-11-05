@@ -1,0 +1,30 @@
+{
+  "nav": {
+    "dashboard": "Panel",
+    "createProject": "Crear Proyecto",
+    "connectWallet": "Conectar Billetera"
+  },
+  "landing": {
+    "title": "Financia Proyectos Comunitarios",
+    "subtitle": "con IA y Blockchain",
+    "description": "Espacio Bosques empodera a las comunidades para crear, financiar y monitorear proyectos impactantes usando planificación asistida por IA y custodia transparente en blockchain.",
+    "exploreProjects": "Explorar Proyectos",
+    "createWithAI": "Crear con IA"
+  },
+  "dashboard": {
+    "title": "Proyectos Comunitarios",
+    "subtitle": "Explora y financia iniciativas comunitarias impactantes",
+    "noProjects": "No se encontraron proyectos",
+    "fundingProgress": "Progreso de Financiamiento",
+    "milestones": "hitos"
+  },
+  "project": {
+    "about": "Acerca de",
+    "milestones": "Hitos",
+    "funding": "Financiamiento",
+    "fundThisProject": "Financiar Este Proyecto",
+    "recentActivity": "Actividad Reciente",
+    "latestTelemetry": "Última Telemetría",
+    "viewReports": "Ver Informes IA"
+  }
+}

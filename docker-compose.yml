@@ -1,0 +1,93 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: espacio-bosques-postgres
+    environment:
+      POSTGRES_DB: espacio_bosques
+      POSTGRES_USER: bosques
+      POSTGRES_PASSWORD: bosques_dev_pass
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - bosques-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U bosques"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  minio:
+    image: minio/minio:latest
+    container_name: espacio-bosques-minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio-data:/data
+    networks:
+      - bosques-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
+  hardhat:
+    build:
+      context: ./contracts
+      dockerfile: Dockerfile
+    container_name: espacio-bosques-hardhat
+    command: npx hardhat node --hostname 0.0.0.0
+    ports:
+      - "8545:8545"
+    networks:
+      - bosques-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8545"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: espacio-bosques-backend
+    environment:
+      NODE_ENV: development
+      PORT: 3001
+      DATABASE_URL: postgresql://bosques:bosques_dev_pass@postgres:5432/espacio_bosques?schema=public
+      RPC_URL: http://hardhat:8545
+      CHAIN_ID: 31337
+      MINIO_ENDPOINT: minio
+      MINIO_PORT: 9000
+      CORS_ORIGIN: http://localhost:5173
+    ports:
+      - "3001:3001"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      hardhat:
+        condition: service_healthy
+    networks:
+      - bosques-network
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    command: yarn dev
+
+volumes:
+  postgres-data:
+  minio-data:
+
+networks:
+  bosques-network:
+    driver: bridge
