@@ -20,6 +20,7 @@ dist/
 .env.development.local
 .env.test.local
 .env.production.local
+CREDENTIALS.txt
 
 # IDE
 .vscode/
@@ -44,18 +45,13 @@ yarn-debug.log*
 yarn-error.log*
 lerna-debug.log*
 pnpm-debug.log*
+hardhat.log
+backend.log
+frontend.log
 
 # Prisma
 backend/prisma/migrations/
 backend/node_modules/
-
-# MinIO data
-.minio.sys/
-minio-data/
-
-# Docker
-docker-data/
-postgres-data/
 
 # Misc
 .turbo
@@ -64,3 +60,10 @@ out/
 *.pid
 *.seed
 *.pid.lock
+*.job
+.hardhat.pid
+.backend.pid
+.frontend.pid
+.hardhat.job
+.backend.job
+.frontend.job

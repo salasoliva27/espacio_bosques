@@ -12,8 +12,7 @@ Espacio Bosques empowers communities to create, fund, and monitor impactful proj
 
 - Node.js ≥ 18
 - Yarn ≥ 1.22
-- PostgreSQL 15
-- Docker & Docker Compose (optional)
+- Supabase account (free tier works) OR PostgreSQL 15
 
 ### Installation
 
@@ -25,18 +24,25 @@ cd espacio_bosques
 # Install dependencies
 yarn install
 
-# Copy environment file and add your API keys
+# Copy environment file and configure
 cp .env.example .env
-# Edit .env and add your ANTHROPIC_API_KEY
+# Edit .env and add:
+# - Your ANTHROPIC_API_KEY
+# - Your Supabase DATABASE_URL
 ```
 
 ### Configuration
 
-**REQUIRED:** Add your Anthropic API key to `.env`:
+**REQUIRED:** Configure `.env` with:
 
+1. **Anthropic API key** (get from https://console.anthropic.com/):
 ```bash
-# Get your key from https://console.anthropic.com/
 ANTHROPIC_API_KEY=sk-ant-api03-YOUR_KEY_HERE
+```
+
+2. **Supabase DATABASE_URL** (get from your Supabase project dashboard):
+```bash
+DATABASE_URL=postgresql://postgres:YOUR_PASSWORD@YOUR_HOST.supabase.co:5432/postgres?schema=public
 ```
 
 ### Running Locally (Step-by-Step)
@@ -72,19 +78,6 @@ yarn dev
 cd frontend
 yarn dev
 # Frontend running at http://localhost:5173
-```
-
-### Running with Docker
-
-```bash
-# Start all services
-docker-compose up -d
-
-# Deploy contracts
-yarn deploy:local
-
-# Seed database
-yarn seed
 ```
 
 ## 🎯 Demo: Drone Vigilance Scenario
