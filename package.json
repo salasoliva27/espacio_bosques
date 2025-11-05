@@ -1,0 +1,49 @@
+{
+  "name": "espacio-bosques",
+  "version": "1.0.0",
+  "description": "Bosques DAO - Community funding platform with AI-assisted project creation and on-chain escrow",
+  "private": true,
+  "workspaces": [
+    "contracts",
+    "backend",
+    "frontend"
+  ],
+  "scripts": {
+    "start:dev": "concurrently \"yarn workspace backend dev\" \"yarn workspace frontend dev\"",
+    "start:eth": "yarn workspace contracts hardhat:node",
+    "deploy:local": "yarn workspace contracts deploy:local",
+    "seed": "yarn workspace backend seed",
+    "test": "yarn workspace contracts test && yarn workspace backend test",
+    "e2e": "yarn workspace frontend e2e",
+    "lint": "eslint . --ext .ts,.tsx",
+    "build": "yarn workspace contracts compile && yarn workspace backend build && yarn workspace frontend build",
+    "postinstall": "husky install"
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^6.9.0",
+    "@typescript-eslint/parser": "^6.9.0",
+    "concurrently": "^8.2.2",
+    "eslint": "^8.52.0",
+    "husky": "^8.0.3",
+    "lint-staged": "^15.0.2",
+    "prettier": "^3.0.3"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,jsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md}": [
+      "prettier --write"
+    ]
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "yarn": ">=1.22.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/salasoliva27/espacio_bosques.git"
+  },
+  "license": "MIT"
+}
