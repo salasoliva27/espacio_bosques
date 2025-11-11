@@ -8,77 +8,59 @@ Espacio Bosques empowers communities to create, fund, and monitor impactful proj
 
 ## 🚀 Quick Start
 
-### Prerequisites
+**For the fastest setup on any computer (using VSCode + Claude Code):**
 
+👉 **See [HOW_TO_USE_ON_NEW_COMPUTER.md](HOW_TO_USE_ON_NEW_COMPUTER.md)**
+
+Just 3 steps:
+1. Clone repo
+2. Open in VSCode
+3. Paste `setup_and_run_prompt.txt` into Claude Code
+
+**Total time: 4-10 minutes**
+
+---
+
+### Alternative: Manual Setup
+
+#### Prerequisites
 - Node.js ≥ 18
 - Yarn ≥ 1.22
-- Supabase account (free tier works) OR PostgreSQL 15
+- Supabase account (or local PostgreSQL)
 
-### Installation
+#### Steps
 
+1. **Clone & Install**
 ```bash
-# Clone repository
 git clone https://github.com/salasoliva27/espacio_bosques.git
 cd espacio_bosques
-
-# Install dependencies
 yarn install
+```
 
-# Copy environment file and configure
+2. **Configure**
+```bash
 cp .env.example .env
-# Edit .env and add:
-# - Your ANTHROPIC_API_KEY
-# - Your Supabase DATABASE_URL
+# Edit .env and add your DATABASE_URL and ANTHROPIC_API_KEY
 ```
 
-### Configuration
+3. **Run Setup Script**
 
-**REQUIRED:** Configure `.env` with:
+**Windows:**
+```powershell
+.\setup-and-run.ps1
+```
 
-1. **Anthropic API key** (get from https://console.anthropic.com/):
+**Mac/Linux:**
 ```bash
-ANTHROPIC_API_KEY=sk-ant-api03-YOUR_KEY_HERE
+./setup-and-run.sh
 ```
 
-2. **Supabase DATABASE_URL** (get from your Supabase project dashboard):
-```bash
-DATABASE_URL=postgresql://postgres:YOUR_PASSWORD@YOUR_HOST.supabase.co:5432/postgres?schema=public
-```
-
-### Running Locally (Step-by-Step)
-
-#### Terminal 1: Start Hardhat Node
-
-```bash
-yarn start:eth
-# Hardhat network running at http://localhost:8545
-```
-
-#### Terminal 2: Deploy Contracts
-
-```bash
-yarn deploy:local
-# Deploys all contracts and funds test accounts
-# Writes addresses to .env.local
-```
-
-#### Terminal 3: Start Backend
-
-```bash
-cd backend
-yarn prisma:migrate
-yarn seed
-yarn dev
-# Backend running at http://localhost:3001
-```
-
-#### Terminal 4: Start Frontend
-
-```bash
-cd frontend
-yarn dev
-# Frontend running at http://localhost:5173
-```
+This automatically:
+- Starts Hardhat blockchain
+- Deploys contracts
+- Runs database migrations
+- Seeds test data
+- Starts backend & frontend
 
 ## 🎯 Demo: Drone Vigilance Scenario
 

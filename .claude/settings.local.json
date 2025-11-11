@@ -16,7 +16,8 @@
       "Bash(git add:*)",
       "Bash(git commit -m \"$(cat <<''EOF''\nfeat: Complete Supabase setup with automated deployment\n\n- Configured Supabase PostgreSQL database connection\n- Added Anthropic Claude API integration\n- Removed Docker dependencies (PostgreSQL, MinIO)\n- Created automated setup scripts (PowerShell & Bash)\n- Added comprehensive documentation suite\n- Cleaned up repository (removed unused configs)\n\nNew Files:\n- setup_and_run_prompt.txt - Claude Code automation prompt\n- VSCODE_SETUP.md - VSCode setup guide for new machines\n- setup-and-run.ps1/sh - One-command automated setup\n- stop-services.ps1/sh - Stop all services\n- Multiple documentation files (QUICKSTART, COMMANDS, etc.)\n\nChanges:\n- Updated .env.example with Supabase format\n- Cleaned .env removing IPFS/MinIO configs\n- Updated README.md for Supabase usage\n- Updated .gitignore for log/PID files\n\nRemoved:\n- docker-compose.yml (not needed with Supabase)\n- backend/Dockerfile (local dev only)\n- contracts/Dockerfile (local dev only)\n\nReady for one-command deployment on any machine!\n\n🤖 Generated with Claude Code\nhttps://claude.com/claude-code\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
       "Bash(git push:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(git commit:*)"
     ],
     "deny": [],
     "ask": []
