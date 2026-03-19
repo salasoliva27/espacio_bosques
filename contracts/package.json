@@ -9,6 +9,8 @@
     "coverage": "hardhat coverage",
     "hardhat:node": "hardhat node",
     "deploy:local": "hardhat run scripts/deploy-local.ts --network localhost",
+    "deploy:sepolia": "hardhat run scripts/deploy-sepolia.ts --network sepolia",
+    "verify:sepolia": "hardhat verify --network sepolia",
     "verify": "hardhat verify",
     "clean": "hardhat clean",
     "size": "hardhat size-contracts"
