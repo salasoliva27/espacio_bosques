@@ -1,0 +1,40 @@
+{
+  "permissions": {
+    "allow": [
+      "Read",
+      "Write",
+      "Edit",
+      "Glob",
+      "Grep",
+      "Bash(git:*)",
+      "Bash(gh:*)",
+      "Bash(npm:*)",
+      "Bash(npx:*)",
+      "Bash(node:*)",
+      "Bash(yarn:*)",
+      "Bash(ls:*)",
+      "Bash(cat:*)",
+      "Bash(echo:*)",
+      "Bash(printf:*)",
+      "Bash(env)",
+      "Bash(printenv:*)",
+      "Bash(which:*)",
+      "Bash(mkdir:*)",
+      "Bash(cp:*)",
+      "Bash(mv:*)",
+      "Bash(chmod:*)",
+      "Bash(find:*)",
+      "Bash(python3:*)",
+      "Bash(jq:*)",
+      "Bash(curl:*)",
+      "Bash(set:*)",
+      "Bash(source:*)",
+      "Bash(export:*)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:registry.npmjs.org)",
+      "WebFetch(domain:www.npmjs.com)",
+      "WebFetch(domain:api.github.com)",
+      "WebSearch"
+    ]
+  }
+}
