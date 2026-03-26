@@ -1,6 +1,9 @@
 # TOOLS — espacio-bosques
 ## Tools declared for this project
 
+> Tools and skills are managed centrally in the venture-os master registry.
+> For discovery protocol, verdicts, and install commands: see venture-os/TOOLS.md and venture-os/learnings/mcp-registry.md
+
 This file declares which tools this project uses. For credential setup, key rotation, and "where to find" guides → see **[venture-os/CREDENTIALS.md](../venture-os/CREDENTIALS.md)**.
 
 Never manage credentials here. All secrets live in `salasoliva27/dotfiles`.
