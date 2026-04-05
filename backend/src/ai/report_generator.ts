@@ -127,7 +127,7 @@ Generate a comprehensive report following this JSON schema:
 
   try {
     const message = await anthropic.messages.create({
-      model: process.env.ANTHROPIC_MODEL || "claude-3-5-sonnet-20241022",
+      model: process.env.ANTHROPIC_MODEL || "claude-sonnet-4-20250514",
       max_tokens: parseInt(process.env.ANTHROPIC_MAX_TOKENS || "4096"),
       temperature: 0.5,
       system: systemPrompt,

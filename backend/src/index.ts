@@ -7,6 +7,7 @@ import { PrismaClient } from "@prisma/client";
 import { logger } from "./utils/logger";
 import { errorHandler } from "./middleware/errorHandler";
 import { rateLimiter } from "./middleware/rateLimiter";
+import "./config/mode"; // initializes simulation mode + prints startup logs
 
 // Routes
 import authRoutes from "./routes/auth";
@@ -14,6 +15,7 @@ import projectRoutes from "./routes/projects";
 import aiRoutes from "./routes/ai";
 import simulationRoutes from "./routes/simulation";
 import reportRoutes from "./routes/reports";
+import investRoutes from "./routes/invest";
 
 // Initialize environment
 dotenv.config({ path: "../.env" });
@@ -47,6 +49,7 @@ app.use("/api/projects", projectRoutes);
 app.use("/api/ai", aiRoutes);
 app.use("/api/simulate", simulationRoutes);
 app.use("/api/reports", reportRoutes);
+app.use("/api/invest", investRoutes);
 
 // 404 handler
 app.use((req, res) => {

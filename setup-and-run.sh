@@ -52,6 +52,13 @@ print_success "Node.js $(node -v) found"
 print_success "Yarn $(yarn -v) found"
 echo ""
 
+# Check for .env
+if [ ! -f .env ]; then
+  print_warning "No .env found. Copying from .env.example..."
+  cp .env.example .env
+  print_warning "Please fill in credentials in .env before running in production"
+fi
+
 # Step 1: Install dependencies
 echo "=========================================="
 echo "📦 Step 1: Installing dependencies"
@@ -59,6 +66,27 @@ echo "=========================================="
 yarn install
 print_success "Dependencies installed"
 echo ""
+
+# Simulation mode check
+if grep -q "SIMULATION_MODE=true" .env 2>/dev/null; then
+  echo "🟡 MODO SIMULACIÓN activo"
+
+  # Auto-generate backend wallet if not already set
+  if ! grep -q "BACKEND_WALLET_PRIVATE_KEY=0x" .env 2>/dev/null; then
+    echo "Generando wallet backend..."
+    cd backend && node -e "
+const {ethers} = require('ethers');
+const w = ethers.Wallet.createRandom();
+const fs = require('fs');
+let env = fs.readFileSync('../.env', 'utf8');
+env = env.replace('BACKEND_WALLET_PRIVATE_KEY=', 'BACKEND_WALLET_PRIVATE_KEY=' + w.privateKey);
+env = env.replace('BACKEND_WALLET_ADDRESS=', 'BACKEND_WALLET_ADDRESS=' + w.address);
+fs.writeFileSync('../.env', env);
+console.log('✅ Wallet: ' + w.address);
+" && cd ..
+  fi
+  echo ""
+fi
 
 # Step 2: Start Hardhat in background
 echo "=========================================="
@@ -186,6 +214,7 @@ echo "🎯 Quick Links:"
 echo "  • Dashboard:      http://localhost:5173/dashboard"
 echo "  • Create Project: http://localhost:5173/create"
 echo "  • API Health:     http://localhost:3001/health"
+echo "  • Invest Quote:   http://localhost:3001/api/invest/quote?mxn=500"
 echo ""
 echo "📋 Demo Scenario: Drone Vigilance"
 echo "  1. Open: http://localhost:5173/dashboard"

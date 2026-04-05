@@ -1,101 +1,103 @@
 # ESPACIO BOSQUES — WORKSPACE BRAIN
-## Workspace: espacio-bosques | Part of Venture OS
+## Workspace: espacio-bosques | Part of Janus IA
 
 ---
 
 ## WHO YOU ARE
 
-You are the build agent for espacio-bosques — a blockchain-based community investment platform for Bosques de las Lomas residents. You operate within the Venture OS portfolio managed from `salasoliva27/venture-os`. Read that repo for portfolio-level context.
+Build agent for espacio-bosques — a blockchain community funding platform
+for Bosques de las Lomas, CDMX. Part of the Janus IA portfolio.
+Read janus-ia/CLAUDE.md for portfolio-level context and the dispatch protocol.
 
 ---
 
-## THIS WORKSPACE
+## PRODUCT
 
-- **Workspace name:** `espacio-bosques` (use this in all memory calls)
-- **Repo:** github.com/salasoliva27/espacio_bosques
-- **Product:** Blockchain investment platform — residents pool capital into community improvement projects, governed by smart contracts
-- **Target market:** Bosques de las Lomas residents + local service providers
-- **Key legal flag:** Blockchain-based investment → potential CNBV regulatory territory → validate before real funds
+Espacio Bosques lets Bosques de las Lomas residents fund, monitor, and govern
+community projects using on-chain escrow, AI project creation, and fiat payments.
+
+Key design decision: users never touch a wallet or buy crypto themselves.
+Bitso API (licensed IFPE under Ley Fintech) handles MXN → ETH conversion.
+Backend custodial wallet executes on-chain transactions on behalf of users.
+Auth: Supabase (email + PIN or Google OAuth). No MetaMask.
 
 ---
 
-## CODEBASE STRUCTURE
+## SIMULATION MODE
 
-```
-contracts/          ← Solidity smart contracts (22/22 tests passing)
-frontend/           ← React + TypeScript (5 pages)
-backend/            ← Node.js/Express + Prisma/Supabase
-config/             ← Deployed contract addresses, network configs
-```
+SIMULATION_MODE=true in .env activates:
+- Bitso sandbox API (fake MXN → fake ETH, zero real money)
+- Hardhat local blockchain (fake BOSQUES tokens)
+- Visible "SIMULACIÓN" banner in all UI
+- Auto-generated backend wallet with fake ETH from Hardhat
+
+SIMULATION_MODE=false = production. Never change without full review.
+
+---
+
+## STACK
+
+Frontend:  React + Vite + TypeScript + Tailwind
+Backend:   Node.js + Express + TypeScript
+Contracts: Solidity 0.8.x + Hardhat
+Auth:      Supabase Auth (email/PIN + Google OAuth)
+Payments:  Bitso API (sandbox: api-dev.bitso.com | prod: api.bitso.com)
+AI:        Claude claude-sonnet-4-20250514
+Memory:    Shared Supabase + pgvector (janus-ia instance)
+DB tables: Prefixed eb_ to avoid collision with other janus-ia projects
 
 ---
 
 ## CREDENTIALS — NEVER ASK FOR THESE
 
-All keys are in `salasoliva27/dotfiles/.env` and auto-load into every Codespace.
-
-**Full credential registry and "where to find" guide → [`venture-os/CREDENTIALS.md`](../venture-os/CREDENTIALS.md)**
-
-**Blockchain deployment keys** (separate from MCP tools — live in `.env` in this repo, gitignored):
-- `PRIVATE_KEY` — MetaMask wallet for contract deployment
-- `SEPOLIA_RPC_URL` or `ALCHEMY_API_KEY` — Sepolia testnet RPC
-- `ETHERSCAN_API_KEY` — contract verification
-
-Which tools this project needs → [`TOOLS.md`](./TOOLS.md)
+All keys in salasoliva27/dotfiles/.env. Full registry → janus-ia/CREDENTIALS.md
+Required: ANTHROPIC_API_KEY · SUPABASE_URL · SUPABASE_SERVICE_ROLE_KEY
+         BITSO_API_KEY · BITSO_API_SECRET · GOOGLE_CLIENT_ID · GOOGLE_CLIENT_SECRET
 
 ---
 
-## SESSION BEHAVIOR — READ THIS FIRST
+## SESSION BEHAVIOR
 
-**This workspace is: `espacio-bosques`**
+STEP 0 — Ask permission mode: 🟢 Full Auto | 🟡 Smart (default) | 🔴 Manual
 
-Every time a chat opens — regardless of what the user says first — you MUST do the following before composing any response:
+STEP 1 — Session start:
+1. recall("recent espacio-bosques work and decisions")
+2. recall("janus-ia portfolio context")
+3. Read this CLAUDE.md — note current build status
+4. Check SIMULATION_MODE in .env
+5. Respond to user
 
-### STEP 0 — PERMISSION MODE (ask this before anything else, every single session)
-
-Before recalling memory, ask Jano:
-
----
-**🔐 Permission mode for this session?**
-**🟢 Full Auto** — everything without interruptions | **🟡 Smart** *(default)* — safe ops auto, confirm before push/delete/destructive | **🔴 Manual** — ask before each action
-
----
-
-Wait for answer, then proceed. Full permission mode definitions → `venture-os/CLAUDE.md`
-
-### STEP 1 — AUTOMATIC SESSION START (do this right after getting permission mode)
-1. Call `recall("recent espacio-bosques work and decisions")` — gets this project's memory
-2. Call `recall("venture-os portfolio context")` — loads cross-project context
-3. Read this CLAUDE.md build status section — understand current state
-4. You now have full context. Respond to whatever the user asked.
-
-### END OF EVERY SESSION
-Before the conversation ends, call `remember()` — even if the user doesn't ask:
-```
-remember(
-  content="[summary: what was built, decisions made, open questions, next steps]",
-  workspace="espacio-bosques",
-  project="espacio-bosques",
-  type="session"
-)
-```
+END OF SESSION:
+remember(content="[summary]", workspace="espacio-bosques",
+         project="espacio-bosques", type="session")
 
 ---
 
 ## BUILD STATUS
 
-- ✅ Smart contracts — 22/22 tests passing (local hardhat)
-- ✅ Sepolia config added — hardhat.config.ts + deploy-sepolia.ts
-- ✅ React frontend exists (5 pages)
-- ✅ Node/Express backend with Prisma/Supabase
-- ⬜ Sepolia deployment — blocked on testnet ETH (see faucet guide in venture-os/CREDENTIALS.md)
-- ⬜ Frontend → blockchain integration
-- ⬜ CNBV legal review before mainnet
+Contracts:
+- ✅ ERC20 BOSQUES token, milestone escrow, validator voting, timelock, 22/22 tests
+- ⬜ Sepolia deploy (after simulation validated)
+
+Backend:
+- ✅ Express API, Claude AI project creation, AI monitoring, Supabase
+- ✅ Bitso service (fiat→crypto), custodial wallet service
+- ✅ Investment route (replaces MetaMask flow)
+- ✅ Supabase auth middleware
+- ✅ Simulation mode config
+
+Frontend:
+- ✅ Dashboard, project detail, create project, AI reports
+- ✅ SimulationBanner component
+- ✅ AuthScreen (email/PIN + Google, no MetaMask)
+- ✅ InvestModal (MXN amount → Bitso quote → confirm → tx hash)
+- ⬜ Remove all remaining web3/MetaMask references
 
 ---
 
-## TOOLS FOR THIS PROJECT
+## LEGAL FLAG
 
-Declared tool list and storage routing → [`TOOLS.md`](./TOOLS.md)
-
-Blockchain tooling: `npx hardhat` for compile/test/deploy
+Custodial crypto model is regulated under Ley Fintech / CNBV.
+Using Bitso as licensed IFPE removes this risk for POC.
+Do not accept real funds until legal structure validated with lawyer.
+→ Flag for janus-ia/agents/core/legal.md when ready.
