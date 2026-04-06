@@ -7,6 +7,7 @@ import { PrismaClient } from "@prisma/client";
 import { logger } from "./utils/logger";
 import { errorHandler } from "./middleware/errorHandler";
 import { rateLimiter } from "./middleware/rateLimiter";
+import "./config/mode"; // initializes simulation mode + prints startup logs
 
 // Routes
 import authRoutes from "./routes/auth";

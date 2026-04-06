@@ -63,6 +63,7 @@ function App() {
             <Route path="/projects/:id" element={<ProjectDetail />} />
             <Route path="/create" element={<CreateProject />} />
             <Route path="/reports/:projectId" element={<Reports />} />
+            <Route path="/auth/callback" element={<Dashboard />} />
           </Routes>
         </div>
       </Router>
