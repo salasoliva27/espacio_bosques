@@ -7,9 +7,9 @@ import { SIMULATION_MODE } from "../config/mode";
 const DEMO_PROJECTS = [
   {
     id: "demo-project-001",
-    title: "Vigilancia Forestal con Drones",
-    summary: "Sistema de monitoreo aéreo para detectar incendios forestales y actividad ilegal en el bosque de Bosques de las Lomas.",
-    category: "ENVIRONMENTAL",
+    title: "Smart Security Network — Paseo de las Palmas",
+    summary: "Deploy a mesh of AI-powered security cameras with real-time incident alerts across Paseo de las Palmas and connecting streets. Footage is processed on-device; no cloud storage. Residents receive push alerts for unusual activity and can review clips via the Espacio Bosques app.",
+    category: "INFRASTRUCTURE",
     status: "ACTIVE",
     fundingGoal: "50000000000000000000000",
     fundingRaised: "18500000000000000000000",
@@ -17,9 +17,9 @@ const DEMO_PROJECTS = [
     updatedAt: new Date("2026-04-01"),
     planner: { id: "planner-001", walletAddress: "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266", role: "PLANNER" },
     milestones: [
-      { id: "m1", title: "Adquisición de drones", status: "COMPLETED", fundingPercentage: 30, description: "Compra de 3 drones DJI Matrice", durationDays: 30 },
-      { id: "m2", title: "Instalación de estaciones base", status: "IN_PROGRESS", fundingPercentage: 40, description: "Instalación de 5 estaciones de carga solar", durationDays: 60 },
-      { id: "m3", title: "Sistema de alertas IA", status: "PENDING", fundingPercentage: 30, description: "Entrenamiento y despliegue del modelo de detección", durationDays: 45 },
+      { id: "m1", title: "Hardware procurement & site survey", status: "COMPLETED", fundingPercentage: 30, description: "Purchase 12 edge-AI cameras (Ambarella SoC); map optimal mounting points across 8 intersections", durationDays: 30 },
+      { id: "m2", title: "Installation & fiber backbone", status: "IN_PROGRESS", fundingPercentage: 40, description: "Install cameras, conduit, and the PoE fiber ring connecting all nodes to the colonia server room", durationDays: 60 },
+      { id: "m3", title: "AI model deployment & resident app", status: "PENDING", fundingPercentage: 30, description: "Deploy on-device anomaly detection model; launch resident alert app with opt-in notifications", durationDays: 45 },
     ],
     investments: [
       { id: "inv1", amount: "5000000000000000000000", investor: { id: "u1", walletAddress: "0xsim001" } },
@@ -33,8 +33,8 @@ const DEMO_PROJECTS = [
   },
   {
     id: "demo-project-002",
-    title: "Jardín Comunitario Orgánico",
-    summary: "Transformar lotes baldíos en huertos comunitarios que provean alimentos frescos y espacios de convivencia para residentes de Bosques.",
+    title: "Pocket Park — Presa Angostura & Explanada",
+    summary: "Convert the unused median lot at Presa Angostura and Explanada into a landscaped pocket park with native CDMX plants, benches, and evening lighting. Designed for the daily walkers and dog owners already using the space informally.",
     category: "COMMUNITY",
     status: "ACTIVE",
     fundingGoal: "20000000000000000000000",
@@ -43,9 +43,9 @@ const DEMO_PROJECTS = [
     updatedAt: new Date("2026-04-02"),
     planner: { id: "planner-002", walletAddress: "0x70997970c51812dc3a010c7d01b50e0d17dc79c8", role: "PLANNER" },
     milestones: [
-      { id: "m4", title: "Preparación del terreno", status: "COMPLETED", fundingPercentage: 25, description: "Limpieza, nivelación y preparación del suelo", durationDays: 21 },
-      { id: "m5", title: "Instalación de riego", status: "PENDING", fundingPercentage: 35, description: "Sistema de riego por goteo solar", durationDays: 30 },
-      { id: "m6", title: "Primera cosecha", status: "PENDING", fundingPercentage: 40, description: "Siembra y seguimiento hasta primera cosecha", durationDays: 90 },
+      { id: "m4", title: "Design approval & permits", status: "COMPLETED", fundingPercentage: 25, description: "Landscape architect renders, SEDUVI permit, HOA sign-off", durationDays: 21 },
+      { id: "m5", title: "Hardscape & irrigation", status: "PENDING", fundingPercentage: 35, description: "Grading, stone paths, solar drip irrigation system for planted areas", durationDays: 30 },
+      { id: "m6", title: "Planting & lighting", status: "PENDING", fundingPercentage: 40, description: "Native species planting (tepozán, colorín, salvia mexicana), LED post lighting, final handover", durationDays: 45 },
     ],
     investments: [
       { id: "inv3", amount: "4200000000000000000000", investor: { id: "u3", walletAddress: "0xsim003" } },
@@ -175,19 +175,53 @@ router.get("/:id", async (req: Request, res: Response) => {
  * Create a new project
  */
 router.post("/", async (req: Request, res: Response) => {
-  try {
-    const {
-      plannerId,
+  const {
+    plannerId,
+    title,
+    summary,
+    category,
+    fundingGoal,
+    metadataURI,
+    aiGenerated,
+    aiBlueprint,
+    milestones,
+  } = req.body;
+
+  // Simulation mode — skip DB entirely, return mock project
+  if (SIMULATION_MODE()) {
+    const mockProject = {
+      id: `sim-${Date.now()}`,
       title,
       summary,
-      category,
-      fundingGoal,
-      metadataURI,
-      aiGenerated,
-      aiBlueprint,
-      milestones,
-    } = req.body;
+      category: category || "community",
+      status: "PENDING",
+      fundingGoal: fundingGoal || "10000000000000000000000",
+      fundingRaised: "0",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      planner: { id: plannerId || "sim-user", walletAddress: "0xsimulated", role: "PLANNER" },
+      milestones: (milestones || []).map((m: any, i: number) => ({
+        id: `sim-m-${Date.now()}-${i}`,
+        title: m.title,
+        description: m.description,
+        fundingPercentage: m.fundingPercentage,
+        durationDays: m.durationDays,
+        status: "PENDING",
+      })),
+      investments: [],
+      telemetry: [],
+      reports: [],
+      _count: { investments: 0 },
+      aiGenerated: aiGenerated || false,
+      aiBlueprint: aiBlueprint || null,
+    };
+    // Inject into in-memory demo list so dashboard shows it immediately
+    DEMO_PROJECTS.unshift(mockProject as any);
+    logger.info("Simulation mode — mock project created", { title });
+    return res.status(201).json({ project: mockProject });
+  }
 
+  try {
     // Validate required fields
     if (!plannerId || !title || !summary || !fundingGoal || !metadataURI) {
       return res.status(400).json({ error: "Missing required fields" });

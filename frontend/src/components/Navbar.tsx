@@ -1,61 +1,68 @@
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { supabase, signOut } from '../lib/auth';
+import { useLanguage } from '../context/LanguageContext';
+import { t } from '../lib/i18n';
+import { LayoutGrid, Plus, LogOut, Globe } from 'lucide-react';
 import type { User } from '@supabase/supabase-js';
 
 export default function Navbar() {
   const [user, setUser] = useState<User | null>(null);
+  const { lang, toggle } = useLanguage();
+  const location = useLocation();
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-    });
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-    });
+    supabase.auth.getSession().then(({ data: { session } }) => setUser(session?.user ?? null));
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, session) => setUser(session?.user ?? null));
     return () => subscription.unsubscribe();
   }, []);
 
+  const isActive = (path: string) => location.pathname === path || location.pathname.startsWith(path + '/');
+
   return (
-    <nav className="bg-white shadow-lg">
+    <nav style={{ background: '#0d1520', borderBottom: '1px solid #1e2d3d' }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-16">
-          <div className="flex">
-            <Link to="/" className="flex items-center">
-              <span className="text-2xl font-bold text-primary-600">🌳 Bosques DAO</span>
+        <div className="flex justify-between h-14">
+          {/* Logo */}
+          <div className="flex items-center gap-8">
+            <Link to="/" className="flex items-center gap-2">
+              <span className="text-lg font-bold tracking-tight" style={{ color: '#00e5c4' }}>Espacio Bosques</span>
             </Link>
-            <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
+            <div className="hidden sm:flex items-center gap-1">
               <Link
                 to="/dashboard"
-                className="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-900 hover:text-primary-600"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors"
+                style={{ color: isActive('/dashboard') ? '#00e5c4' : '#9ca3af', background: isActive('/dashboard') ? 'rgba(0,229,196,0.08)' : 'transparent' }}
               >
-                Dashboard
+                <LayoutGrid size={13} />{t('nav.dashboard')}
               </Link>
               <Link
                 to="/create"
-                className="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-500 hover:text-primary-600"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors"
+                style={{ color: isActive('/create') ? '#00e5c4' : '#9ca3af', background: isActive('/create') ? 'rgba(0,229,196,0.08)' : 'transparent' }}
               >
-                Crear Proyecto
+                <Plus size={13} />{t('nav.create')}
               </Link>
             </div>
           </div>
-          <div className="flex items-center gap-3">
+
+          {/* Right */}
+          <div className="flex items-center gap-2">
+            <button onClick={toggle} className="flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-md" style={{ background: '#1e2d3d', color: '#9ca3af', border: '1px solid #2a3f52' }}>
+              <Globe size={11} />{lang === 'es' ? 'EN' : 'ES'}
+            </button>
             {user ? (
               <>
-                <span className="text-sm text-gray-600 hidden sm:block">{user.email}</span>
-                <button
-                  onClick={() => signOut()}
-                  className="text-sm text-gray-500 hover:text-gray-700 px-3 py-2 rounded-md border border-gray-200"
-                >
-                  Salir
+                <span className="text-xs hidden sm:block truncate max-w-[160px]" style={{ color: '#6b7280' }}>
+                  {user.user_metadata?.full_name || user.email?.split('@')[0]}
+                </span>
+                <button onClick={() => signOut()} className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-md" style={{ background: '#1e2d3d', color: '#9ca3af', border: '1px solid #2a3f52' }}>
+                  <LogOut size={11} />{t('nav.signout')}
                 </button>
               </>
             ) : (
-              <Link
-                to="/dashboard"
-                className="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-md text-sm font-medium"
-              >
-                Iniciar sesión
+              <Link to="/dashboard" className="text-sm font-semibold px-4 py-1.5 rounded-md transition-opacity hover:opacity-90" style={{ background: '#00e5c4', color: '#080c10' }}>
+                {t('nav.signin')}
               </Link>
             )}
           </div>
