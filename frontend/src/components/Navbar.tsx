@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { supabase, signOut } from '../lib/auth';
 import { useLanguage } from '../context/LanguageContext';
 import { t } from '../lib/i18n';
-import { LayoutGrid, Plus, LogOut, Globe } from 'lucide-react';
+import { LayoutGrid, Plus, LogOut, Globe, UserCircle } from 'lucide-react';
 import type { User } from '@supabase/supabase-js';
 
 export default function Navbar() {
@@ -53,9 +53,14 @@ export default function Navbar() {
             </button>
             {user ? (
               <>
-                <span className="text-xs hidden sm:block truncate max-w-[160px]" style={{ color: '#6b7280' }}>
-                  {user.user_metadata?.full_name || user.email?.split('@')[0]}
-                </span>
+                <Link
+                  to="/profile"
+                  className="hidden sm:flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-md transition-colors"
+                  style={{ color: isActive('/profile') ? '#00e5c4' : '#9ca3af', background: isActive('/profile') ? 'rgba(0,229,196,0.08)' : '#1e2d3d', border: '1px solid #2a3f52' }}
+                >
+                  <UserCircle size={12} />
+                  <span className="truncate max-w-[120px]">{user.user_metadata?.full_name || user.email?.split('@')[0]}</span>
+                </Link>
                 <button onClick={() => signOut()} className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-md" style={{ background: '#1e2d3d', color: '#9ca3af', border: '1px solid #2a3f52' }}>
                   <LogOut size={11} />{t('nav.signout')}
                 </button>

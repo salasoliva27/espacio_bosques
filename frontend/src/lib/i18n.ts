@@ -104,6 +104,15 @@ const translations = {
     'landing.cta_title': 'Have an idea for Bosques?',
     'landing.cta_sub': 'Pitch it in a sentence. The AI will turn it into a full proposal in seconds.',
     'landing.cta_btn': 'Start a Project',
+    // Profile
+    'profile.edit_name': 'Edit display name',
+    'profile.save_error': 'Failed to save name',
+    'profile.member_since': 'Member since',
+    'profile.stat_projects': 'Projects funded',
+    'profile.stat_invested': 'Total invested',
+    'profile.investments': 'Investment history',
+    'profile.no_investments': 'No investments yet.',
+    'profile.browse_projects': 'Browse projects',
     // CreateProject minor strings
     'create.cmd_hint': '⌘ + Enter to generate',
     'create.label_milestones': 'Milestones',
@@ -206,6 +215,15 @@ const translations = {
     'landing.cta_title': '¿Tienes una idea para Bosques?',
     'landing.cta_sub': 'Descríbela en una frase. La IA la convierte en propuesta completa en segundos.',
     'landing.cta_btn': 'Iniciar proyecto',
+    // Profile
+    'profile.edit_name': 'Editar nombre',
+    'profile.save_error': 'Error al guardar nombre',
+    'profile.member_since': 'Miembro desde',
+    'profile.stat_projects': 'Proyectos financiados',
+    'profile.stat_invested': 'Total invertido',
+    'profile.investments': 'Historial de inversiones',
+    'profile.no_investments': 'Sin inversiones aún.',
+    'profile.browse_projects': 'Ver proyectos',
     // CreateProject minor strings
     'create.cmd_hint': '⌘ + Enter para generar',
     'create.label_milestones': 'Hitos',

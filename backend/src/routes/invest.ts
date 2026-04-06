@@ -10,7 +10,7 @@ import { fundProject } from '../services/wallet';
 import { requireAuth, AuthRequest } from '../middleware/auth';
 import { logger } from '../utils/logger';
 import { SIMULATION_MODE } from '../config/mode';
-import { addSimInvestment } from '../data/simStore';
+import { addSimInvestment, getSimUserInvestments } from '../data/simStore';
 
 const router = Router();
 
@@ -63,7 +63,7 @@ router.post('/buy', requireAuth, async (req: AuthRequest, res: Response) => {
 
     // 3. Update in-memory funding progress (simulation mode)
     if (SIMULATION_MODE()) {
-      addSimInvestment(projectId, order.eth);
+      addSimInvestment(projectId, order.eth, amount);
     }
 
     logger.info('[invest] investment recorded', {
@@ -91,6 +91,15 @@ router.post('/buy', requireAuth, async (req: AuthRequest, res: Response) => {
     logger.error('[invest] buy failed', { error: err.message });
     return res.status(500).json({ error: 'Investment failed' });
   }
+});
+
+/**
+ * GET /api/invest/me
+ * Auth required — returns the current sim-user's investment history
+ */
+router.get('/me', requireAuth, (_req: AuthRequest, res: Response) => {
+  const investments = getSimUserInvestments();
+  return res.json({ investments });
 });
 
 export default router;

@@ -56,6 +56,8 @@ export const DEMO_PROJECTS: SimProject[] = [
     ],
     investments: [
       { id: 'inv1', amount: ((ETH * BigInt(37)) / BigInt(100)).toString(), investor: { id: 'u1', walletAddress: '0xsim001' } },
+      // Pre-seeded sim-user investment (500 MXN ≈ 0.0075 ETH)
+      { id: 'inv-sim-seed-1', amount: (ETH * BigInt(75) / BigInt(10000)).toString(), investor: { id: 'sim-user', walletAddress: '0xsimulated' }, mxn: 500, createdAt: new Date('2026-03-10') } as any,
     ],
     telemetry: [{ id: 't1', timestamp: new Date(), data: { uptimePercent: 98.5, batteryPercent: 87 } }],
     reports: [],
@@ -87,27 +89,65 @@ export const DEMO_PROJECTS: SimProject[] = [
   },
 ];
 
+export interface SimUserInvestment {
+  id: string;
+  projectId: string;
+  projectTitle: string;
+  projectCategory: string;
+  ethAmount: number;   // ETH float
+  mxnAmount: number;   // MXN (approximate)
+  createdAt: Date;
+}
+
+// Rate used for MXN display — approximate Bitso sandbox rate
+const ETH_MXN_RATE = 65000;
+
+/**
+ * Return all sim-user investments across all projects with enriched project info.
+ */
+export function getSimUserInvestments(): SimUserInvestment[] {
+  const results: SimUserInvestment[] = [];
+  for (const project of DEMO_PROJECTS) {
+    for (const inv of project.investments) {
+      if (inv.investor.id !== 'sim-user') continue;
+      const ethAmount = Number(BigInt(inv.amount)) / 1e18;
+      const mxnAmount = (inv as any).mxn ?? Math.round(ethAmount * ETH_MXN_RATE);
+      results.push({
+        id: inv.id,
+        projectId: project.id,
+        projectTitle: project.title,
+        projectCategory: project.category,
+        ethAmount,
+        mxnAmount,
+        createdAt: (inv as any).createdAt ?? project.updatedAt,
+      });
+    }
+  }
+  return results.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+}
+
 /**
  * Record a simulated investment against a project.
  * Converts ETH float → wei string and adds it to fundingRaised.
  * Returns false if project not found.
  */
-export function addSimInvestment(projectId: string, ethAmount: number): boolean {
+export function addSimInvestment(projectId: string, ethAmount: number, mxnAmount?: number): boolean {
   const project = DEMO_PROJECTS.find((p) => p.id === projectId);
   if (!project) return false;
 
   // Convert ETH float to wei (1 ETH = 1e18 wei)
-  // Use integer arithmetic to avoid float precision issues
   const weiAmount = BigInt(Math.round(ethAmount * 1e12)) * BigInt(1e6);
   project.fundingRaised = (BigInt(project.fundingRaised) + weiAmount).toString();
   project.updatedAt = new Date();
 
-  // Record in investments array
-  project.investments.push({
+  const inv: any = {
     id: `sim-inv-${Date.now()}`,
     amount: weiAmount.toString(),
     investor: { id: 'sim-user', walletAddress: '0xsimulated' },
-  });
+    mxn: mxnAmount ?? Math.round(ethAmount * ETH_MXN_RATE),
+    createdAt: new Date(),
+  };
+  project.investments.push(inv);
   project._count.investments += 1;
 
   return true;
