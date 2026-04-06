@@ -119,9 +119,8 @@ export default function Dashboard() {
                 <div className="mt-4 pt-4 border-t border-gray-200">
                   <div className="flex items-center justify-between text-sm text-gray-600">
                     <span>{project.milestones.length} milestones</span>
-                    <span className="text-xs truncate">
-                      {project.planner.walletAddress.substring(0, 6)}...
-                      {project.planner.walletAddress.substring(38)}
+                    <span className="text-xs" style={{ color: '#6b7280' }}>
+                      Proyecto comunitario
                     </span>
                   </div>
                 </div>

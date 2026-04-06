@@ -1,14 +1,21 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import axios from 'axios';
+import { supabase } from '../lib/auth';
+import InvestModal from '../components/InvestModal';
 
 export default function ProjectDetail() {
   const { id } = useParams();
   const [project, setProject] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [showInvest, setShowInvest] = useState(false);
+  const [user, setUser] = useState<any>(null);
 
   useEffect(() => {
     fetchProject();
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+    });
   }, [id]);
 
   const fetchProject = async () => {
@@ -57,7 +64,7 @@ export default function ProjectDetail() {
           <div className="bg-white rounded-lg shadow p-6">
             <h2 className="text-2xl font-bold mb-4">Milestones</h2>
             <div className="space-y-4">
-              {project.milestones.map((milestone: any, index: number) => (
+              {project.milestones.map((milestone: any) => (
                 <div key={milestone.id} className="border-l-4 border-primary-500 pl-4">
                   <h3 className="font-semibold text-lg">{milestone.title}</h3>
                   <p className="text-gray-600 text-sm mt-1">{milestone.description}</p>
@@ -95,8 +102,12 @@ export default function ProjectDetail() {
                 />
               </div>
             </div>
-            <button className="w-full mt-6 bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-md font-medium">
-              Fund This Project
+            <button
+              onClick={() => setShowInvest(true)}
+              className="w-full mt-6 font-semibold py-3 rounded-lg text-sm transition-all"
+              style={{ background: '#00e5c4', color: '#080c10' }}
+            >
+              Invertir en este proyecto
             </button>
           </div>
 
@@ -105,8 +116,8 @@ export default function ProjectDetail() {
             <div className="space-y-3 text-sm">
               {project.investments.slice(0, 5).map((inv: any) => (
                 <div key={inv.id} className="flex items-center justify-between">
-                  <span className="text-gray-600">
-                    {inv.investor.walletAddress.substring(0, 6)}...{inv.investor.walletAddress.substring(38)}
+                  <span className="text-xs" style={{ color: '#6b7280' }}>
+                    Proyecto comunitario
                   </span>
                   <span className="font-semibold">{formatAmount(inv.amount)}</span>
                 </div>
@@ -137,6 +148,14 @@ export default function ProjectDetail() {
           )}
         </div>
       </div>
+
+      {showInvest && (
+        <InvestModal
+          projectId={project.id}
+          projectTitle={project.title}
+          onClose={() => { setShowInvest(false); fetchProject(); }}
+        />
+      )}
     </div>
   );
 }
