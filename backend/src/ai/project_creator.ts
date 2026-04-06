@@ -1,6 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { logger } from "../utils/logger";
 import projectConfig from "../../../config/project-config.json";
+import { queryKnowledge, formatKnowledgeContext } from "../knowledge/base";
 
 // Initialize Anthropic client
 const anthropic = new Anthropic({
@@ -39,13 +40,22 @@ export async function createProjectWithAI(
     throw new Error(`Prompt too long. Maximum ${maxPromptLength} characters allowed.`);
   }
 
-  const systemPrompt = `You are an expert community project planner for Bosques DAO, a decentralized funding platform.
-Your task is to transform user ideas into structured project blueprints.
+  const systemPrompt = `You are an expert community project planner for Espacio Bosques — a blockchain-based community funding platform for residents of Bosques de las Lomas, an upscale residential neighborhood in Mexico City (CDMX).
+
+IMPORTANT CONTEXT:
+- "Bosques" refers to Bosques de las Lomas, a colonia in CDMX — NOT a forest or natural area
+- Projects are funded by and benefit the residents of this specific neighborhood
+- Typical projects: street lighting upgrades, security systems, pocket parks, smart traffic calming, pedestrian improvements, cultural events, building restoration, colonia-wide services
+- The neighborhood is affluent and well-connected; proposals should match that context
+- Projects are written in English but may include Spanish street/place names (e.g., Paseo de las Palmas, Presa Angostura, Explanada de las Palmas, Bosques de las Lomas)
+- The BOSQUES token is the neighborhood's governance token, not related to forestry
+
+Your task is to transform user ideas into structured project blueprints that make sense for this specific urban neighborhood.
 
 Generate a JSON response following this exact schema:
 {
-  "title": "string (max 100 chars)",
-  "summary": "string (max 1000 chars)",
+  "title": "string (max 100 chars, in English)",
+  "summary": "string (max 1000 chars, in English, specific to the Bosques de las Lomas neighborhood)",
   "category": "one of: infrastructure, environment, community, technology, education",
   "milestones": [
     {
@@ -55,24 +65,29 @@ Generate a JSON response following this exact schema:
       "durationDays": number (7-180)
     }
   ],
-  "monitoringHints": ["string array with monitoring suggestions"]
+  "monitoringHints": ["string array with monitoring/verification suggestions relevant to urban infrastructure in CDMX"]
 }
 
 Requirements:
 - Create 2-5 milestones that logically break down the project
 - Milestones must sum to 100% funding
-- Be specific and actionable
-- Consider verification and monitoring needs`;
+- Be specific and actionable — name real streets, intersections, or landmarks in Bosques de las Lomas where relevant
+- Consider CDMX municipal permits, local regulations, and community approval steps
+- Never reference forests, wildfires, or natural wilderness`;
 
-  const userMessage = `User project idea: ${userPrompt}
+  // Inject relevant knowledge from the shared database
+  const relevantKnowledge = queryKnowledge(userPrompt);
+  const knowledgeContext = formatKnowledgeContext(relevantKnowledge);
 
-Please create a structured project blueprint for this idea.`;
+  const userMessage = `User project idea: ${userPrompt}${knowledgeContext}
+
+Please create a structured project blueprint for this idea, informed by the knowledge base above.`;
 
   try {
     logger.info("Calling Anthropic API for project creation...");
 
     const message = await anthropic.messages.create({
-      model: process.env.ANTHROPIC_MODEL || "claude-sonnet-4-20250514",
+      model: process.env.ANTHROPIC_MODEL || "claude-sonnet-4-6",
       max_tokens: parseInt(process.env.ANTHROPIC_MAX_TOKENS || "4096"),
       temperature: 0.7,
       system: systemPrompt,

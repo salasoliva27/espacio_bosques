@@ -10,3 +10,5 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     detectSessionInUrl: true,
   },
 });
+
+export const signOut = () => supabase.auth.signOut();

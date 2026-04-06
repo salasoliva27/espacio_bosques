@@ -1,8 +1,12 @@
 import { Router, Request, Response } from "express";
+import Anthropic from "@anthropic-ai/sdk";
 import { createProjectWithAI } from "../ai/project_creator";
 import { generateReport } from "../ai/report_generator";
+import { queryKnowledge, formatKnowledgeContext } from "../knowledge/base";
 import { prisma } from "../index";
 import { logger } from "../utils/logger";
+
+const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY || "" });
 
 const router = Router();
 
@@ -119,6 +123,117 @@ router.post("/generate-report/:projectId", async (req: Request, res: Response) =
       error: "Failed to generate report",
       details: error.message,
     });
+  }
+});
+
+/**
+ * POST /api/ai/refine-blueprint
+ * Conversational refinement of an existing blueprint.
+ * Takes the current blueprint + chat history + new user message.
+ * Returns an updated blueprint + the AI's conversational response.
+ */
+router.post("/refine-blueprint", async (req: Request, res: Response) => {
+  try {
+    const { currentBlueprint, message, conversationHistory = [] } = req.body;
+
+    if (!currentBlueprint || !message) {
+      return res.status(400).json({ error: "Missing currentBlueprint or message" });
+    }
+
+    const relevantKnowledge = queryKnowledge(message + " " + currentBlueprint.title);
+    const knowledgeContext = formatKnowledgeContext(relevantKnowledge);
+
+    const systemPrompt = `You are a collaborative project planner for Espacio Bosques — a community funding platform for Bosques de las Lomas, an upscale residential neighborhood in Mexico City (CDMX). NOT a forest. A colonia.
+
+You are helping a resident refine a community project blueprint through conversation. Your role:
+1. Listen to their feedback and requests
+2. Update the blueprint accordingly
+3. Explain what you changed and why, briefly
+4. Ask a focused follow-up question if something needs clarification
+5. When the blueprint feels complete, say so and invite them to submit
+
+CRITICAL: Your ENTIRE response must be a single valid JSON object. No text before or after. No markdown. No code fences. Just raw JSON:
+{"blueprint": { ...full updated blueprint... }, "message": "your short conversational reply"}
+
+The message field must be plain text with no special characters that would break JSON (no unescaped quotes or backslashes inside strings).
+
+Blueprint schema:
+{
+  "title": "string (max 100 chars, English)",
+  "summary": "string (max 1000 chars, English, specific to Bosques de las Lomas)",
+  "category": "one of: infrastructure, environment, community, technology, education",
+  "milestones": [{ "title": string, "description": string, "fundingPercentage": number, "durationDays": number }],
+  "monitoringHints": ["string"]
+}
+
+Milestones must always sum to 100% funding. Be specific — use real street names, realistic CDMX timelines, and informed cost guidance.
+${knowledgeContext}`;
+
+    const messages = [
+      ...conversationHistory,
+      {
+        role: "user" as const,
+        content: `Current blueprint:\n${JSON.stringify(currentBlueprint, null, 2)}\n\nMy request: ${message}`,
+      },
+    ];
+
+    const response = await anthropic.messages.create({
+      model: process.env.ANTHROPIC_MODEL || "claude-sonnet-4-6",
+      max_tokens: 4096,
+      system: systemPrompt,
+      messages,
+    });
+
+    const textContent = response.content.find((b) => b.type === "text");
+    if (!textContent || textContent.type !== "text") {
+      throw new Error("No text response from AI");
+    }
+
+    let jsonText = textContent.text.trim();
+    // Strip markdown code fences
+    if (jsonText.startsWith("```json")) jsonText = jsonText.replace(/^```json\n?/, "").replace(/\n?```$/, "");
+    else if (jsonText.startsWith("```")) jsonText = jsonText.replace(/^```\n?/, "").replace(/\n?```$/, "");
+
+    // Find the outermost JSON object even if there is prose before/after
+    const jsonStart = jsonText.indexOf("{");
+    const jsonEnd = jsonText.lastIndexOf("}");
+    if (jsonStart !== -1 && jsonEnd !== -1) {
+      jsonText = jsonText.slice(jsonStart, jsonEnd + 1);
+    }
+
+    let result: any;
+    try {
+      result = JSON.parse(jsonText);
+    } catch (parseErr: any) {
+      // Last-resort: try to salvage just the blueprint object from the raw text
+      logger.warn("JSON parse failed, attempting blueprint extraction", { error: parseErr.message });
+      const bpMatch = textContent.text.match(/"blueprint"\s*:\s*(\{[\s\S]+?\})\s*,?\s*"message"/);
+      if (bpMatch) {
+        try {
+          const salvaged = JSON.parse(`{"blueprint":${bpMatch[1]},"message":"I updated the blueprint. What else would you like to change?"}`);
+          result = salvaged;
+        } catch {
+          throw new Error(`Could not parse AI response as JSON: ${parseErr.message}`);
+        }
+      } else {
+        throw new Error(`Could not parse AI response as JSON: ${parseErr.message}`);
+      }
+    }
+
+    logger.info("Blueprint refined", { title: result.blueprint?.title });
+
+    res.json({
+      success: true,
+      blueprint: result.blueprint,
+      message: result.message,
+      assistantMessage: {
+        role: "assistant",
+        content: textContent.text,
+      },
+    });
+  } catch (error: any) {
+    logger.error("Blueprint refinement failed", { error: error.message });
+    res.status(500).json({ error: "Failed to refine blueprint", details: error.message });
   }
 });
 

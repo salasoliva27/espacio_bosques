@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { supabase } from './lib/auth';
+import { LanguageProvider, useLanguage } from './context/LanguageContext';
+import { t } from './lib/i18n';
 import SimulationBanner from './components/SimulationBanner';
 import AuthScreen from './components/AuthScreen';
 import Navbar from './components/Navbar';
@@ -13,7 +15,9 @@ import Reports from './pages/Reports';
 
 const queryClient = new QueryClient();
 
-function App() {
+function AppInner() {
+  const { lang } = useLanguage(); // re-render on lang change
+  void lang;
   // undefined = loading, null = logged out, object = logged in
   const [session, setSession] = useState<any>(undefined);
 
@@ -32,7 +36,7 @@ function App() {
   if (session === undefined) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: '#080c10' }}>
-        <p style={{ color: '#9ca3af', fontSize: '14px' }}>Cargando…</p>
+        <p style={{ color: '#9ca3af', fontSize: '14px' }}>{t('app.loading')}</p>
       </div>
     );
   }
@@ -68,6 +72,14 @@ function App() {
         </div>
       </Router>
     </QueryClientProvider>
+  );
+}
+
+function App() {
+  return (
+    <LanguageProvider>
+      <AppInner />
+    </LanguageProvider>
   );
 }
 
