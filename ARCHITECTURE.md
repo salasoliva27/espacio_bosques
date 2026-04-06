@@ -1,293 +1,208 @@
-# Architecture Documentation
+# Architecture — Espacio Bosques
 
 ## System Overview
 
-Espacio Bosques is a three-tier web application combining React frontend, Node.js/Express backend, and Ethereum blockchain smart contracts.
+Three-tier web application. In the current POC, the blockchain layer is simulated — no smart contracts are deployed yet. The system is designed so that the simulation layer can be swapped for real contracts without frontend changes.
 
-## Architecture Diagram
+---
 
-```
-┌──────────────────────────────────────────────────────────────────┐
-│                         FRONTEND LAYER                            │
-│   React 18 + Vite + TypeScript + Tailwind CSS + Wagmi           │
-│                                                                    │
-│   Components:                                                      │
-│   ├── Navbar (wallet connection)                                 │
-│   └── Pages                                                       │
-│       ├── Landing                                                 │
-│       ├── Dashboard (project list)                               │
-│       ├── ProjectDetail (milestones, funding, telemetry)         │
-│       ├── CreateProject (AI wizard)                              │
-│       └── Reports (AI-generated insights)                        │
-│                                                                    │
-└────────────────┬─────────────────────────────────────────────────┘
-                 │ HTTPS/REST API + JSON-RPC (Web3)
-                 │
-┌────────────────▼─────────────────────────────────────────────────┐
-│                         BACKEND LAYER                             │
-│      Node.js 18 + Express + TypeScript + Prisma ORM             │
-│                                                                    │
-│   API Routes:                                                     │
-│   ├── /api/auth          (web3 signature login)                  │
-│   ├── /api/projects      (CRUD operations)                       │
-│   ├── /api/ai            (project creation, report generation)   │
-│   ├── /api/simulate      (drone telemetry simulation)            │
-│   └── /api/reports       (fetch AI reports)                      │
-│                                                                    │
-│   AI Integration:                                                 │
-│   ├── project_creator.ts      (Anthropic Claude)                 │
-│   ├── report_generator.ts     (Anthropic Claude)                 │
-│   └── drone_simulator.ts      (mock IoT telemetry)               │
-│                                                                    │
-│   Event Listener:                                                 │
-│   └── blockchain_sync.ts (syncs on-chain events to DB)           │
-│                                                                    │
-└────────┬───────────────────────┬──────────────────────────────────┘
-         │                       │
-         │ SQL                   │ JSON-RPC (ethers.js)
-         │                       │
-┌────────▼────────┐     ┌────────▼──────────────────────────────────┐
-│   DATABASE      │     │        BLOCKCHAIN LAYER                    │
-│   PostgreSQL 15 │     │   Hardhat + Solidity 0.8.20               │
-│                 │     │                                             │
-│   Tables:       │     │   Smart Contracts:                         │
-│   - users       │     │   ┌──────────────────────────────────────┐ │
-│   - projects    │     │   │ CommunityToken.sol (ERC20)           │ │
-│   - milestones  │     │   │   - Mint, burn, transfer BOSQUES     │ │
-│   - investments │     │   │   - Role: MINTER_ROLE                │ │
-│   - telemetry   │     │   └──────────────────────────────────────┘ │
-│   - reports     │     │   ┌──────────────────────────────────────┐ │
-│   - events      │     │   │ ProjectRegistry.sol                  │ │
-│                 │     │   │   - Create projects                  │ │
-│   Indexes:      │     │   │   - Validator voting & approval      │ │
-│   - wallet_addr │     │   │   - Role: PLANNER_ROLE, VALIDATOR_ROLE│ │
-│   - project_id  │     │   └──────────────────────────────────────┘ │
-│   - tx_hash     │     │   ┌──────────────────────────────────────┐ │
-│                 │     │   │ EscrowVault.sol                      │ │
-└─────────────────┘     │   │   - Deposit BOSQUES to projects     │ │
-                        │   │   - Release request + voting         │ │
-                        │   │   - Timelock enforcement             │ │
-                        │   │   - Reentrancy protection            │ │
-                        │   │   - Role: VALIDATOR_ROLE, ADMIN      │ │
-                        │   └──────────────────────────────────────┘ │
-                        │   ┌──────────────────────────────────────┐ │
-                        │   │ MilestoneManager.sol                 │ │
-                        │   │   - Create & track milestones        │ │
-                        │   │   - Submit evidence (IPFS)           │ │
-                        │   │   - Validator approval               │ │
-                        │   └──────────────────────────────────────┘ │
-                        │   ┌──────────────────────────────────────┐ │
-                        │   │ Governance.sol                       │ │
-                        │   │   - Role management                  │ │
-                        │   │   - Proposal voting                  │ │
-                        │   │   - Configuration updates            │ │
-                        │   └──────────────────────────────────────┘ │
-                        │   ┌──────────────────────────────────────┐ │
-                        │   │ Reporting.sol                        │ │
-                        │   │   - Anchor AI report hashes          │ │
-                        │   │   - Emit on-chain events             │ │
-                        │   └──────────────────────────────────────┘ │
-                        └─────────────────────────────────────────────┘
-```
-
-## Data Flow
-
-### Project Creation with AI
+## Component Diagram
 
 ```
-User → Frontend (CreateProject)
+┌──────────────────────────────────────────────────────────┐
+│                       FRONTEND                           │
+│   React 18 + Vite + TypeScript + Tailwind                │
+│                                                          │
+│   Pages:                                                 │
+│   ├── Landing          (hero, features, CTA)            │
+│   ├── Dashboard        (project grid, funding %)        │
+│   ├── ProjectDetail    (milestones, funding, activity)  │
+│   └── CreateProject    (AI pitch → blueprint → chat)    │
+│                                                          │
+│   Components:                                            │
+│   ├── Navbar           (logo, nav, lang toggle, user)   │
+│   ├── AuthScreen       (sign-in / sign-up / Google)     │
+│   ├── InvestModal      (MXN → quote → confirm)          │
+│   └── SimulationBanner (warns when in sim mode)         │
+│                                                          │
+│   Lib:                                                   │
+│   ├── auth.ts          (Supabase client + helpers)      │
+│   ├── i18n.ts          (EN/ES translations, t())        │
+│   └── LanguageContext  (React context for lang toggle)  │
+│                                                          │
+└──────────────────┬───────────────────────────────────────┘
+                   │ HTTP (axios, /api/*)
+                   │ Supabase JS SDK (auth only)
+                   │
+┌──────────────────▼───────────────────────────────────────┐
+│                       BACKEND                            │
+│   Node.js 18 + Express + TypeScript                      │
+│                                                          │
+│   Routes:                                                │
+│   ├── /api/auth         JWT login (legacy, unused)      │
+│   ├── /api/projects     CRUD → falls back to simStore   │
+│   ├── /api/ai           create-project + refine-bp      │
+│   ├── /api/invest       quote (Bitso) + buy (simulated) │
+│   ├── /api/simulate     drone telemetry (demo data)     │
+│   └── /api/reports      AI-generated project reports    │
+│                                                          │
+│   AI (backend/src/ai/):                                  │
+│   ├── adapters/project_creator.ts   (blueprint gen)     │
+│   ├── adapters/report_generator.ts  (project reports)   │
+│   └── adapters/drone_simulator.ts   (telemetry mock)    │
+│                                                          │
+│   Services:                                              │
+│   ├── bitso.ts          (quote + simulateBuy)           │
+│   └── wallet.ts         (fundProject — sim tx hash)     │
+│                                                          │
+│   Data:                                                  │
+│   └── simStore.ts       (shared in-memory demo state)   │
+│       ├── DEMO_PROJECTS[]   (mutable, both routes use)  │
+│       └── addSimInvestment() (updates fundingRaised)    │
+│                                                          │
+│   Config:                                                │
+│   └── mode.ts           (SIMULATION_MODE flag)          │
+│                                                          │
+└──────┬────────────────────────┬────────────────────────-─┘
+       │ SQL (Prisma)            │ Supabase Admin SDK
+       │ (optional — skipped     │ (auth verification)
+       │  in simulation mode)    │
+       │                         │
+┌──────▼──────────┐    ┌─────────▼───────────────────────┐
+│  PostgreSQL      │    │  Supabase                       │
+│  (Prisma ORM)   │    │  ├── auth.users (email + OAuth) │
+│                 │    │  └── (schema TBD — see ROADMAP) │
+│  Tables (exist  │    └─────────────────────────────────┘
+│  in schema, not │
+│  yet used in    │
+│  sim mode):     │
+│  - users        │
+│  - projects     │
+│  - milestones   │
+│  - investments  │
+│  - telemetry    │
+│  - reports      │
+└─────────────────┘
+```
+
+---
+
+## Data Flows
+
+### Auth
+
+```
+User → AuthScreen
+  → supabase.auth.signInWithPassword() / signInWithOAuth()
+    ← Supabase returns session (JWT)
+  → Frontend stores session, calls onSuccess()
+  → Navbar reads user.user_metadata.full_name || email prefix
+```
+
+### AI Blueprint Creation
+
+```
+User → CreateProject (pitch textarea)
   → POST /api/ai/create-project { prompt }
-    → Backend: project_creator.ts
-      → Anthropic API (Claude 3.5 Sonnet)
-        ← Returns: { title, summary, milestones[], monitoringHints[] }
-      → Validates against schema
-    ← Returns blueprint to frontend
-  → User reviews & submits
-→ POST /api/projects { ...blueprint, fundingGoal }
-  → Backend: Creates project in Postgres
-  → Backend: Calls ProjectRegistry.createProject()
-    → Blockchain: Emits ProjectCreated event
-      → Event listener syncs to DB
-← Redirect to project detail page
+    → backend/ai/adapters/project_creator.ts
+      → Anthropic claude-sonnet-4-6
+        ← JSON: { title, summary, category, milestones[], monitoringHints[] }
+      → knowledge/base.ts context injected into every prompt
+    ← Blueprint returned to frontend
+  → Side-by-side view: blueprint panel + chat panel
 ```
 
-### Funding Flow
+### Blueprint Refinement (Chat Loop)
 
 ```
-User → Connect wallet (MetaMask)
-  → Frontend: Approve BOSQUES token spending
-    → CommunityToken.approve(escrowAddress, amount)
-  → Frontend: Click "Fund This Project"
-    → EscrowVault.deposit(projectId, amount)
-      → Transfers tokens from user to escrow
-      → Emits Deposited event
-        → Backend event listener syncs to DB
-← Frontend updates funding progress display
+User → types refinement request
+  → POST /api/ai/refine-blueprint { currentBlueprint, message, conversationHistory }
+    → backend maintains Anthropic message history (user/assistant alternating)
+    → Returns: { blueprint (updated), message (assistant reply) }
+  → Frontend updates blueprint panel live, appends to chat
+  → Loop repeats until user clicks "Create Project"
 ```
 
-### Milestone Release Flow
+### Investment Flow (Simulation)
 
 ```
-Admin → Request release
-  → Backend: EscrowVault.requestRelease(projectId, milestoneId, amount, recipient)
-    → Creates ReleaseRequest with status=Pending
-    → Emits ReleaseRequested event
-
-Validators → Vote on release
-  → EscrowVault.voteRelease(requestId, approved)
-    → Increments approvalCount or rejectionCount
-    → If quorum reached: status = Approved
-    → Emits ReleaseVoteCast event
-
-Wait for timelock (24 hours default)
-
-Admin → Execute release
-  → EscrowVault.executeRelease(requestId)
-    → Checks: approved, timelock expired, sufficient balance
-    → Transfers tokens to recipient
-    → Emits ReleaseExecuted event
-      → Backend syncs to DB
+User → ProjectDetail → "Fund this project"
+  → InvestModal: user enters MXN amount
+  → GET /api/invest/quote?mxn=1000
+    → bitso.ts: getQuote() → Bitso sandbox API (or sim fallback)
+    ← { mxn, eth, rate }
+  → User confirms
+  → POST /api/invest/buy { projectId, mxn }
+    → simulateBuy() → fake Bitso order
+    → fundProject() → fake tx hash
+    → addSimInvestment(projectId, ethAmount) → mutates DEMO_PROJECTS in place
+    ← { txHash, mxn, eth, simulation: true }
+  → InvestModal closes → ProjectDetail.fetchProject() re-runs
+    → GET /api/projects/:id → returns updated fundingRaised from simStore
+  → Funding card reflects new percentage
 ```
 
-### AI Report Generation
+### Simulation Mode Fallback
 
 ```
-User → ProjectDetail page → "View AI Reports"
-  → Click "Generate New Report"
-    → POST /api/ai/generate-report/:projectId
-      → Backend: Fetches project + milestones + telemetry from DB
-      → Backend: report_generator.ts
-        → Analyzes telemetry for anomalies
-        → Builds context (funding, milestones, recent events)
-        → Sends to Anthropic API
-          ← Returns: { title, summary, anomalies[], recommendations[] }
-        → Stores report in Postgres
-        → (Optional) Anchors hash on-chain via Reporting.sol
-      ← Returns report to frontend
-    → Frontend displays report with anomaly alerts
+Any route that calls Prisma:
+  try:
+    → normal Prisma call
+  catch (DB unavailable):
+    → if SIMULATION_MODE(): return in-memory data from simStore.ts
+    → else: return 500
 ```
+
+POST /api/projects checks SIMULATION_MODE() upfront (before the try) to
+avoid unnecessary Prisma calls when in simulation mode.
+
+---
 
 ## Technology Stack
 
-| Layer | Technology | Purpose |
-|-------|-----------|---------|
-| **Frontend** | React 18 | UI framework |
-| | Vite | Build tool & dev server |
-| | TypeScript | Type safety |
-| | Tailwind CSS | Styling |
-| | Wagmi | Ethereum wallet integration |
-| | React Router | Client-side routing |
-| | Axios | HTTP client |
-| **Backend** | Node.js 18 | Runtime |
-| | Express | Web framework |
-| | TypeScript | Type safety |
-| | Prisma | ORM for PostgreSQL |
-| | Anthropic SDK | AI integration |
-| | Ethers.js | Blockchain interaction |
-| | Winston | Logging |
-| **Blockchain** | Hardhat | Development environment |
-| | Solidity 0.8.20 | Smart contract language |
-| | OpenZeppelin | Security libraries |
-| | Ethers.js | Contract interaction |
-| **Database** | PostgreSQL 15 | Relational database |
-| **Storage** | MinIO | S3-compatible object storage |
-| | IPFS (Infura) | Decentralized file storage |
-| **DevOps** | Docker | Containerization |
-| | GitHub Actions | CI/CD |
+| Layer | Technology | Notes |
+|-------|-----------|-------|
+| Frontend | React 18 + Vite | Dark UI, `#080c10` bg |
+| Styling | Tailwind CSS + inline styles | Primary: `#00e5c4` (teal) |
+| Icons | Lucide React | Replaces all emoji icons |
+| i18n | Custom `i18n.ts` | EN + ES, localStorage persistence |
+| Auth | Supabase JS SDK | Email/password + Google OAuth |
+| HTTP client | Axios | Vite proxy → backend |
+| Backend | Node.js 18 + Express | TypeScript |
+| ORM | Prisma | Optional — skipped in simulation mode |
+| AI | Anthropic SDK | `claude-sonnet-4-6` |
+| Investment | Bitso REST API | Sandbox + simulation fallback |
+| Blockchain (future) | Hardhat + Solidity | Contracts exist, not yet deployed |
 
-## Security Architecture
+---
 
-### Authentication Flow
+## Environment Variables
 
-1. User connects wallet (MetaMask)
-2. Frontend generates challenge message
-3. User signs message with private key
-4. Backend verifies signature using `ethers.verifyMessage`
-5. Backend issues JWT token
-6. Frontend includes JWT in Authorization header for subsequent requests
+| Variable | Where used | Required for |
+|----------|-----------|--------------|
+| `ANTHROPIC_API_KEY` | backend | AI blueprint + report generation |
+| `SUPABASE_URL` | frontend + backend | Auth |
+| `SUPABASE_ANON_KEY` | frontend | Auth |
+| `SUPABASE_SERVICE_ROLE_KEY` | backend | Admin auth verification |
+| `BITSO_API_KEY` | backend | Live Bitso quotes |
+| `BITSO_API_SECRET` | backend | Live Bitso quotes |
+| `DATABASE_URL` | backend | Prisma (skipped in simulation) |
+| `SIMULATION_MODE` | backend | Force simulation (`true` by default if DB unavailable) |
+| `ANTHROPIC_MODEL` | backend | Defaults to `claude-sonnet-4-6` |
 
-### Smart Contract Security
+All keys auto-loaded from `salasoliva27/dotfiles` in Codespaces.
 
-- **AccessControl**: Role-based permissions (ADMIN, VALIDATOR, PLANNER, REPORTER)
-- **ReentrancyGuard**: Prevents reentrancy attacks on fund transfers
-- **SafeERC20**: Safe token transfer wrappers
-- **Timelock**: 24-hour delay on fund releases
-- **Quorum**: Requires 51% validator approval by default
+---
 
-### API Security
+## Security Notes
 
-- Rate limiting: 100 requests per 15 minutes per IP
-- CORS: Restricted to frontend origin
-- Helmet: Security headers
-- Input validation: Zod schemas
-- JWT expiration: 7 days
+- No private keys or seed phrases are ever stored in the frontend
+- Bitso API calls are proxied through the backend — keys never reach the browser
+- Supabase RLS policies will be required before any real user data is stored (see ROADMAP)
+- Investment amounts go through Bitso's regulated IFPE infrastructure (Ley Fintech / CNBV)
 
-## Scalability Considerations
-
-### Current Limitations
-
-- Single PostgreSQL instance
-- In-memory rate limiting (not distributed)
-- No caching layer
-- Frontend API calls not optimized (no React Query cache)
-
-### Recommended for Production
-
-1. **Database**: Read replicas + connection pooling (PgBouncer)
-2. **Caching**: Redis for API responses + session storage
-3. **CDN**: CloudFlare for static assets
-4. **Load Balancer**: Nginx or AWS ALB for backend
-5. **Monitoring**: Datadog or New Relic for APM
-6. **Queue**: Bull/BullMQ for background jobs (event processing, report generation)
-
-## Configuration Management
-
-Configuration is centralized in `config/project-config.json` and read by both backend and contracts:
-
-```json
-{
-  "governance": { "quorumPercentage": 51, "timelockDelayHours": 24 },
-  "ai": { "anomalyThresholds": { "uptimeMinPercent": 95, ... } },
-  "funding": { "minProjectFunding": "100", "maxProjectFunding": "100000" }
-}
-```
-
-## Deployment Architecture (Production)
-
-```
-           Internet
-              │
-         ┌────▼────┐
-         │   CDN   │ (CloudFlare)
-         │ + WAF   │
-         └────┬────┘
-              │
-         ┌────▼────────┐
-         │ Load        │
-         │ Balancer    │
-         └──┬──────┬───┘
-            │      │
-    ┌───────▼──┐ ┌▼────────┐
-    │ Frontend │ │ Backend │ (Auto-scaling group)
-    │ (Static) │ │ (Node)  │
-    └──────────┘ └┬───┬────┘
-                  │   │
-           ┌──────▼┐  └──▼────────┐
-           │ RDS   │     │ Redis  │
-           │(Postgres)   │(Cache) │
-           └───────┘     └────────┘
-```
-
-## Monitoring & Observability
-
-Recommended metrics to track:
-
-- **Frontend**: Page load time, API response time, error rate
-- **Backend**: Request rate, response time, error rate, queue depth
-- **Blockchain**: Gas usage, transaction success rate, event sync lag
-- **AI**: API latency, token usage, error rate, prompt/response quality
-- **Database**: Query performance, connection pool usage, replication lag
+---
 
 ## Assumptions & Trade-offs
 
-See [ASSUMPTIONS.md](./ASSUMPTIONS.md) for detailed discussion of design decisions.
+See [ASSUMPTIONS.md](./ASSUMPTIONS.md).

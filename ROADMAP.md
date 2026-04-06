@@ -1,91 +1,108 @@
-# Roadmap
+# Roadmap — Espacio Bosques
 
-## Next 10 Priority Features/Security Items
+## Current milestone: POC (April 2026)
 
-### 1. **Multi-Signature Wallet Support** (High Priority)
-Allow projects to use multi-sig wallets (Gnosis Safe) as planners for enhanced security.
+Goal: a fully demoable simulation of the end-to-end user journey. No real contracts, no real money.
 
-### 2. **Real Stablecoin Integration** (Critical for Production)
-Replace mock BOSQUES token with USDC/DAI integration. Update all contracts and UI.
+### POC status
 
-### 3. **Professional Smart Contract Audit** (Security Critical)
-Engage audit firm (Trail of Bits, ConsenSys Diligence, OpenZeppelin) before mainnet deploy.
+| Feature | Status |
+|---------|--------|
+| Auth (Supabase email + Google OAuth) | ✅ Done |
+| Landing page (EN/ES) | ✅ Done |
+| Dashboard — project list with funding % | ✅ Done |
+| Project detail — milestones, funding card | ✅ Done |
+| AI blueprint creation | ✅ Done |
+| Blueprint chat refinement loop | ✅ Done |
+| Invest flow (Bitso quote + sim tx) | ✅ Done |
+| Funding progress updates live after investment | ✅ Done |
+| Full EN/ES i18n across all pages | ✅ Done |
+| Sign-up name field + email verification UX | ✅ Done |
+| Navbar: display name instead of email | ✅ Done |
+| Create Project: simulation fallback (POST) | ✅ Done |
 
-### 4. **IPFS Pinning Service Integration** (Infrastructure)
-Integrate Pinata or NFT.Storage for reliable evidence/metadata storage with automatic pinning.
+---
 
-### 5. **Email & Notification System** (User Experience)
-Implement SendGrid for email notifications on project milestones, funding, validator votes.
+## Next: POC Polish (immediate)
 
-### 6. **NFT Rewards for Contributors** (Gamification)
-Mint commemorative NFTs for investors, planners, and validators. Track reputation on-chain.
+- [ ] **User profile page** (`/profile`)
+  - Name, email, avatar (initials fallback)
+  - Investment history (all investments by this user)
+  - Projects created
+  - Option to update display name
+- [ ] **Supabase persistent schema** — run SQL migrations for:
+  - `bosques_profiles` (extends auth.users)
+  - `bosques_projects`
+  - `bosques_investments`
+  - `bosques_milestones`
+  - `bosques_disbursements`
+  - `bosques_blueprint_sessions`
+  - RLS policies on all tables
+  - Seed `bosques_knowledge` from in-memory `KNOWLEDGE_BASE`
+- [ ] **Wire create-project to persist** — after Supabase schema is live,
+  `POST /api/projects` should write to `bosques_projects` (not just simStore)
+- [ ] **Dashboard: real projects from Supabase** — `GET /api/projects` reads
+  from `bosques_projects` table when DB is available
 
-### 7. **Advanced Governance with Proposals** (DAO Features)
-Full proposal system where token holders vote on platform parameters, upgrades, and treasury allocation.
+---
 
-### 8. **Mobile App (React Native)** (Accessibility)
-Native iOS/Android apps for browsing projects, investing, and receiving push notifications.
+## Phase 2: Beta (1–2 months)
 
-### 9. **Multi-Chain Deployment** (Scalability)
-Deploy to Polygon, Arbitrum, Optimism for lower gas fees. Bridge BOSQUES token.
+- [ ] **Real Bitso API** — switch from sandbox to production keys
+- [ ] **Email notifications** — investment confirmation, project created,
+  milestone approved (Resend or SendGrid)
+- [ ] **Project evidence upload** — planners upload photos/CFDIs per milestone
+  (Supabase Storage)
+- [ ] **Community vote on milestones** — residents approve/reject milestone
+  completion before funds release
+- [ ] **Admin dashboard** — manage projects, approve planners, trigger
+  disbursements
+- [ ] **Push notifications** — resident gets notified when a project they funded
+  hits a milestone
 
-### 10. **Recurring Funding Campaigns** (New Feature)
-Support subscription-style funding where backers commit monthly contributions to ongoing projects.
+---
 
-## Prioritized Development Phases
+## Phase 3: Production (3–6 months)
 
-### Phase 1: MVP Hardening (Weeks 1-4)
-- [ ] Complete unit test coverage (>90%)
-- [ ] Integration tests for full user flows
-- [ ] Load testing (k6 or Artillery)
-- [ ] Security audit preparation docs
-- [ ] Improve error handling & logging
+- [ ] **Smart contract deployment** — deploy `EscrowVault.sol` to mainnet
+  (Polygon for low gas fees)
+- [ ] **Replace simulation with real escrow** — on-chain fund holding,
+  milestone-gated release
+- [ ] **CNBV/Ley Fintech compliance review** — legal sign-off before real money
+  flows through the platform
+- [ ] **KYC/AML** — resident identity verification for investments above
+  legal threshold
+- [ ] **Audit** — smart contract audit (Trail of Bits or equivalent)
+- [ ] **Testnet run** — 30-day beta on Polygon Mumbai with real residents
+- [ ] **Mainnet launch** — first real community project funded end-to-end
 
-### Phase 2: Production Readiness (Weeks 5-8)
-- [ ] Smart contract audit & fixes
-- [ ] Replace mock token with stablecoin
-- [ ] Set up monitoring (Datadog/Sentry)
-- [ ] Configure CI/CD pipelines
-- [ ] Testnet deployment (Goerli/Sepolia)
+---
 
-### Phase 3: Enhanced Features (Weeks 9-16)
-- [ ] IPFS pinning integration
-- [ ] Email notifications
-- [ ] Multi-sig wallet support
-- [ ] Advanced search & filtering
-- [ ] Project categories & tags
+## Phase 4: Scale (6–12 months)
 
-### Phase 4: DAO Governance (Weeks 17-24)
-- [ ] Proposal creation & voting
-- [ ] Treasury management
-- [ ] Token distribution schedules
-- [ ] Delegation system
-- [ ] Governance dashboard
+- [ ] **Multi-colonia support** — expand beyond Bosques de las Lomas
+- [ ] **DAO governance** — token holders vote on platform parameters
+- [ ] **Mobile app** — React Native (iOS + Android)
+- [ ] **NFT proof-of-contribution** — commemorative tokens for investors and
+  planners
+- [ ] **IPFS evidence storage** — on-chain content addressing for milestone
+  proofs
 
-### Phase 5: Expansion (Weeks 25-36)
-- [ ] NFT rewards system
-- [ ] Mobile apps (iOS/Android)
-- [ ] Multi-chain deployment
-- [ ] Recurring funding campaigns
-- [ ] Internationalization (10+ languages)
+---
 
 ## Technical Debt
 
-- Migrate from REST to GraphQL for more efficient data fetching
-- Implement Redis caching layer
-- Add database read replicas
-- Refactor frontend state management to Zustand
-- Optimize contract gas usage
-- Add Subgraph for event indexing (The Graph)
+- [ ] Remove unused legacy auth route (`/api/auth` JWT login — predates Supabase)
+- [ ] Fix pre-existing TypeScript errors in `drone_simulator.ts` and `auth.ts`
+- [ ] Add `vite-env.d.ts` to resolve `ImportMeta.env` TS errors in frontend
+- [ ] Remove unused `supabase` import in `ProjectDetail.tsx`
+- [ ] Add proper error boundaries to frontend pages
 
-## Research & Exploration
+---
 
-- Zero-knowledge proofs for private voting
-- Chainlink oracles for real-world data (weather, IoT sensors)
-- Decentralized identity (DID) for KYC
-- Layer 2 rollup for lower fees
-- Cross-chain messaging (LayerZero, Wormhole)
+## Out of scope (intentionally)
 
-## Community Requests (Voting)
-
-Track feature requests from community at https://github.com/salasoliva27/espacio_bosques/discussions
+- ERC20 BOSQUES token — replaced by ETH escrow via Bitso
+- MetaMask / wallet-connect — no crypto wallet required (fiat-first)
+- PostgreSQL self-hosted — Supabase handles all data storage
+- MinIO / IPFS (Phase 1–2) — Supabase Storage is sufficient for evidence files
