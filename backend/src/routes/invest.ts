@@ -10,6 +10,7 @@ import { fundProject } from '../services/wallet';
 import { requireAuth, AuthRequest } from '../middleware/auth';
 import { logger } from '../utils/logger';
 import { SIMULATION_MODE } from '../config/mode';
+import { addSimInvestment } from '../data/simStore';
 
 const router = Router();
 
@@ -59,6 +60,11 @@ router.post('/buy', requireAuth, async (req: AuthRequest, res: Response) => {
 
     // 2. Fund project escrow (simulation tx)
     const { txHash, simulation } = await fundProject(projectId, order.eth);
+
+    // 3. Update in-memory funding progress (simulation mode)
+    if (SIMULATION_MODE()) {
+      addSimInvestment(projectId, order.eth);
+    }
 
     logger.info('[invest] investment recorded', {
       userId: req.user?.id,

@@ -2,59 +2,7 @@ import { Router, Request, Response } from "express";
 import { prisma } from "../index";
 import { logger } from "../utils/logger";
 import { SIMULATION_MODE } from "../config/mode";
-
-// Demo projects used when no database is available (simulation mode)
-const DEMO_PROJECTS = [
-  {
-    id: "demo-project-001",
-    title: "Smart Security Network — Paseo de las Palmas",
-    summary: "Deploy a mesh of AI-powered security cameras with real-time incident alerts across Paseo de las Palmas and connecting streets. Footage is processed on-device; no cloud storage. Residents receive push alerts for unusual activity and can review clips via the Espacio Bosques app.",
-    category: "INFRASTRUCTURE",
-    status: "ACTIVE",
-    fundingGoal: "50000000000000000000000",
-    fundingRaised: "18500000000000000000000",
-    createdAt: new Date("2026-01-15"),
-    updatedAt: new Date("2026-04-01"),
-    planner: { id: "planner-001", walletAddress: "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266", role: "PLANNER" },
-    milestones: [
-      { id: "m1", title: "Hardware procurement & site survey", status: "COMPLETED", fundingPercentage: 30, description: "Purchase 12 edge-AI cameras (Ambarella SoC); map optimal mounting points across 8 intersections", durationDays: 30 },
-      { id: "m2", title: "Installation & fiber backbone", status: "IN_PROGRESS", fundingPercentage: 40, description: "Install cameras, conduit, and the PoE fiber ring connecting all nodes to the colonia server room", durationDays: 60 },
-      { id: "m3", title: "AI model deployment & resident app", status: "PENDING", fundingPercentage: 30, description: "Deploy on-device anomaly detection model; launch resident alert app with opt-in notifications", durationDays: 45 },
-    ],
-    investments: [
-      { id: "inv1", amount: "5000000000000000000000", investor: { id: "u1", walletAddress: "0xsim001" } },
-      { id: "inv2", amount: "3500000000000000000000", investor: { id: "u2", walletAddress: "0xsim002" } },
-    ],
-    telemetry: [
-      { id: "t1", timestamp: new Date(), data: { uptimePercent: 98.5, batteryPercent: 87 } },
-    ],
-    reports: [],
-    _count: { investments: 2 },
-  },
-  {
-    id: "demo-project-002",
-    title: "Pocket Park — Presa Angostura & Explanada",
-    summary: "Convert the unused median lot at Presa Angostura and Explanada into a landscaped pocket park with native CDMX plants, benches, and evening lighting. Designed for the daily walkers and dog owners already using the space informally.",
-    category: "COMMUNITY",
-    status: "ACTIVE",
-    fundingGoal: "20000000000000000000000",
-    fundingRaised: "4200000000000000000000",
-    createdAt: new Date("2026-02-20"),
-    updatedAt: new Date("2026-04-02"),
-    planner: { id: "planner-002", walletAddress: "0x70997970c51812dc3a010c7d01b50e0d17dc79c8", role: "PLANNER" },
-    milestones: [
-      { id: "m4", title: "Design approval & permits", status: "COMPLETED", fundingPercentage: 25, description: "Landscape architect renders, SEDUVI permit, HOA sign-off", durationDays: 21 },
-      { id: "m5", title: "Hardscape & irrigation", status: "PENDING", fundingPercentage: 35, description: "Grading, stone paths, solar drip irrigation system for planted areas", durationDays: 30 },
-      { id: "m6", title: "Planting & lighting", status: "PENDING", fundingPercentage: 40, description: "Native species planting (tepozán, colorín, salvia mexicana), LED post lighting, final handover", durationDays: 45 },
-    ],
-    investments: [
-      { id: "inv3", amount: "4200000000000000000000", investor: { id: "u3", walletAddress: "0xsim003" } },
-    ],
-    telemetry: [],
-    reports: [],
-    _count: { investments: 1 },
-  },
-];
+import { DEMO_PROJECTS } from "../data/simStore";
 
 const router = Router();
 
