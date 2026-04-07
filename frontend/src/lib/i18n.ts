@@ -229,6 +229,30 @@ const translations = {
     'search.view_all': 'View all results',
     // Nav
     'nav.feed': 'Feed',
+    // Provider portal
+    'provider.tab': 'Provider',
+    'provider.enable_toggle': 'Enable provider profile',
+    'provider.enabled_badge': 'Provider Active',
+    'provider.company_name': 'Company / Name',
+    'provider.specialty': 'Specialty',
+    'provider.rfc': 'RFC',
+    'provider.services_title': 'My Services',
+    'provider.add_service': 'Add Service',
+    'provider.service_finalized': 'Defined',
+    'provider.service_draft': 'Draft',
+    'provider.no_services': 'No services defined yet.',
+    'provider.deliverables': 'Deliverables',
+    'provider.price_range': 'Typical price',
+    // Member tab
+    'member.tab': 'Member',
+    // Roles / bidding
+    'roles.title': 'Providers Needed',
+    'roles.milestone': 'Milestone',
+    'roles.bid_btn': 'Submit Bid',
+    'roles.empty': 'No provider roles defined for this project.',
+    'bid.title': 'Submit a Bid',
+    'bid.no_provider': 'Enable your provider profile to submit bids.',
+    'bid.go_profile': 'Go to Profile',
   },
   es: {
     'auth.signin_subtitle': 'Inicia sesión para invertir',
@@ -449,6 +473,30 @@ const translations = {
     'search.view_all': 'Ver todos los resultados',
     // Nav
     'nav.feed': 'Feed',
+    // Provider portal
+    'provider.tab': 'Proveedor',
+    'provider.enable_toggle': 'Activar perfil de proveedor',
+    'provider.enabled_badge': 'Proveedor Activo',
+    'provider.company_name': 'Empresa / Nombre',
+    'provider.specialty': 'Especialidad',
+    'provider.rfc': 'RFC',
+    'provider.services_title': 'Mis Servicios',
+    'provider.add_service': 'Agregar Servicio',
+    'provider.service_finalized': 'Definido',
+    'provider.service_draft': 'Borrador',
+    'provider.no_services': 'Aún no hay servicios definidos.',
+    'provider.deliverables': 'Entregables',
+    'provider.price_range': 'Precio típico',
+    // Member tab
+    'member.tab': 'Miembro',
+    // Roles / bidding
+    'roles.title': 'Proveedores Requeridos',
+    'roles.milestone': 'Hito',
+    'roles.bid_btn': 'Enviar Propuesta',
+    'roles.empty': 'Sin roles de proveedor definidos.',
+    'bid.title': 'Enviar Propuesta',
+    'bid.no_provider': 'Activa tu perfil de proveedor para enviar propuestas.',
+    'bid.go_profile': 'Ir a Perfil',
   },
 } as const;
 

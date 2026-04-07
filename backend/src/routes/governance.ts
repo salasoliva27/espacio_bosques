@@ -24,7 +24,7 @@ import {
   getTransactionsForProject, addTransaction,
   isVotingOpen, setVotingWindow, MILESTONE_VOTING_WINDOWS,
 } from '../data/governance';
-import { DEMO_PROJECTS } from '../data/simStore';
+import { DEMO_PROJECTS, getProviderUserProfile } from '../data/simStore';
 
 const router = Router();
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY || '' });
@@ -54,17 +54,32 @@ router.post('/proposals', requireAuth, (req: AuthRequest, res: Response) => {
     return res.status(400).json({ error: 'Missing: milestoneId, projectId, providerId' });
   }
 
-  const provider = getProvider(providerId) || SIM_PROVIDERS.find(p => p.id === providerId);
-  if (!provider) return res.status(404).json({ error: 'Provider not found' });
-  if (provider.status !== 'VERIFIED') return res.status(403).json({ error: 'Provider must be VERIFIED to submit proposals' });
+  let resolvedProviderId: string;
+  let resolvedProviderName: string;
+
+  if (providerId === 'self') {
+    // Self-provider: use the user's own provider profile
+    const selfProfile = getProviderUserProfile(req.user!.id);
+    if (!selfProfile || !selfProfile.enabled) {
+      return res.status(403).json({ error: 'Enable your provider profile first' });
+    }
+    resolvedProviderId = req.user!.id;
+    resolvedProviderName = selfProfile.companyName || req.user!.email || 'Provider';
+  } else {
+    const provider = getProvider(providerId) || SIM_PROVIDERS.find(p => p.id === providerId);
+    if (!provider) return res.status(404).json({ error: 'Provider not found' });
+    if (provider.status !== 'VERIFIED') return res.status(403).json({ error: 'Provider must be VERIFIED to submit proposals' });
+    resolvedProviderId = providerId;
+    resolvedProviderName = provider.name;
+  }
 
   // Check for existing draft
-  const existing = SIM_PROPOSALS.find(p => p.milestoneId === milestoneId && p.providerId === providerId && p.status === 'DRAFT');
+  const existing = SIM_PROPOSALS.find(p => p.milestoneId === milestoneId && p.providerId === resolvedProviderId && p.status === 'DRAFT');
   if (existing) return res.json({ proposal: existing });
 
   const proposal = addProposal({
-    milestoneId, projectId, providerId,
-    providerName: provider.name,
+    milestoneId, projectId, providerId: resolvedProviderId,
+    providerName: resolvedProviderName,
     quotedAmountMxn: 0, timelineDays: 0,
     scope: '', approach: '', experience: '',
     chatMessages: [], documents: [], status: 'DRAFT',

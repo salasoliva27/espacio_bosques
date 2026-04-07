@@ -33,6 +33,7 @@ export interface SimProject {
     description: string;
     durationDays: number;
   }[];
+  requiredRoles?: { id: string; role: string; description: string; milestoneId?: string }[];
   investments: { id: string; amount: string; investor: { id: string; walletAddress: string } }[];
   telemetry: { id: string; timestamp: Date; data: Record<string, unknown> }[];
   reports: unknown[];
@@ -67,6 +68,11 @@ export const DEMO_PROJECTS: SimProject[] = [
       { id: 'm2', title: 'Installation & fiber backbone', status: 'IN_PROGRESS', fundingPercentage: 40, description: 'Install cameras, conduit, and the PoE fiber ring connecting all nodes to the colonia server room', durationDays: 60 },
       { id: 'm3', title: 'AI model deployment & resident app', status: 'PENDING', fundingPercentage: 30, description: 'Deploy on-device anomaly detection model; launch resident alert app with opt-in notifications', durationDays: 45 },
     ],
+    requiredRoles: [
+      { id: 'rr-001-1', role: 'Network Engineer', description: 'Design and deploy the PoE fiber mesh connecting all camera nodes to the colonia server room', milestoneId: 'm2' },
+      { id: 'rr-001-2', role: 'AI/ML Engineer', description: 'Deploy on-device anomaly detection model and integrate with resident alert app', milestoneId: 'm3' },
+      { id: 'rr-001-3', role: 'Security Installer', description: 'Physical installation of 12 edge-AI cameras at approved mounting points across 8 intersections', milestoneId: 'm2' },
+    ],
     investments: [
       { id: 'inv1', amount: ((ETH * BigInt(37)) / BigInt(100)).toString(), investor: { id: 'u1', walletAddress: '0xsim001' } },
       { id: 'inv-sim-seed-1', amount: (ETH * BigInt(75) / BigInt(10000)).toString(), investor: { id: 'sim-user', walletAddress: '0xsimulated' }, mxn: 500, createdAt: new Date('2026-03-10') } as any,
@@ -92,6 +98,10 @@ export const DEMO_PROJECTS: SimProject[] = [
       { id: 'm5', title: 'Hardscape & irrigation', status: 'PENDING', fundingPercentage: 35, description: 'Grading, stone paths, solar drip irrigation system for planted areas', durationDays: 30 },
       { id: 'm6', title: 'Planting & lighting', status: 'PENDING', fundingPercentage: 40, description: 'Native species planting (tepozán, colorín, salvia mexicana), LED post lighting, final handover', durationDays: 45 },
     ],
+    requiredRoles: [
+      { id: 'rr-002-1', role: 'Landscape Architect', description: 'Final planting plan for native CDMX species (tepozán, colorín, salvia mexicana) and LED post lighting layout', milestoneId: 'm6' },
+      { id: 'rr-002-2', role: 'Civil Contractor', description: 'Grading, stone path construction, and solar drip irrigation system installation', milestoneId: 'm5' },
+    ],
     investments: [
       { id: 'inv3', amount: ((ETH * BigInt(21)) / BigInt(100)).toString(), investor: { id: 'u3', walletAddress: '0xsim003' } },
     ],
@@ -116,6 +126,10 @@ export const DEMO_PROJECTS: SimProject[] = [
       { id: 'ml2', title: 'Procurement', status: 'COMPLETED', fundingPercentage: 40, description: 'LED fixtures (NOM-certified), smart dimmer modules, mounting hardware', durationDays: 21 },
       { id: 'ml3', title: 'Installation', status: 'IN_PROGRESS', fundingPercentage: 30, description: 'Install 15 retrofit fixtures + 3 new posts in gap areas; connect to CFE grid', durationDays: 28 },
       { id: 'ml4', title: 'Testing & handover', status: 'PENDING', fundingPercentage: 10, description: 'Municipal inspection, lux compliance, resident acceptance', durationDays: 14 },
+    ],
+    requiredRoles: [
+      { id: 'rr-003-1', role: 'Electrical Contractor', description: 'Install 15 LED retrofit fixtures and 3 new posts; connect to CFE grid with NOM-certified components', milestoneId: 'ml3' },
+      { id: 'rr-003-2', role: 'Municipal Liaison', description: 'Coordinate Alcaldía Miguel Hidalgo inspection, lux compliance certification, and resident acceptance documentation', milestoneId: 'ml4' },
     ],
     investments: [
       { id: 'inv4', amount: ((ETH * BigInt(54)) / BigInt(100)).toString(), investor: { id: 'u4', walletAddress: '0xsim004' } },
@@ -304,6 +318,60 @@ export function addSimInvestment(projectId: string, ethAmount: number, mxnAmount
 
   persistData();
   return true;
+}
+
+// ── Provider User Profiles ────────────────────────────────────────────
+
+export interface ProviderService {
+  id: string;
+  name: string;
+  description: string;
+  deliverables: string[];
+  typicalPriceMxn: string;
+  chatMessages: { role: 'user' | 'assistant'; content: string }[];
+  finalized: boolean;
+  createdAt: string;
+}
+
+export interface ProviderUserProfile {
+  userId: string;
+  enabled: boolean;
+  companyName: string;
+  specialty: string;
+  rfc: string;
+  services: ProviderService[];
+  createdAt: string;
+}
+
+const providerProfileStore = new Map<string, ProviderUserProfile>();
+
+export function getProviderUserProfile(userId: string): ProviderUserProfile | null {
+  return providerProfileStore.get(userId) ?? null;
+}
+
+export function upsertProviderUserProfile(userId: string, data: Partial<Omit<ProviderUserProfile, 'userId'>>): ProviderUserProfile {
+  const existing = providerProfileStore.get(userId) ?? {
+    userId, enabled: false, companyName: '', specialty: '', rfc: '', services: [], createdAt: new Date().toISOString(),
+  };
+  const updated = { ...existing, ...data, userId };
+  providerProfileStore.set(userId, updated);
+  return updated;
+}
+
+export function addProviderService(userId: string, service: ProviderService): ProviderUserProfile {
+  const profile = upsertProviderUserProfile(userId, {});
+  profile.services.push(service);
+  providerProfileStore.set(userId, profile);
+  return profile;
+}
+
+export function updateProviderService(userId: string, serviceId: string, data: Partial<ProviderService>): ProviderService | null {
+  const profile = providerProfileStore.get(userId);
+  if (!profile) return null;
+  const idx = profile.services.findIndex(s => s.id === serviceId);
+  if (idx === -1) return null;
+  profile.services[idx] = { ...profile.services[idx], ...data };
+  return profile.services[idx];
 }
 
 // ── Init ──────────────────────────────────────────────────────────────

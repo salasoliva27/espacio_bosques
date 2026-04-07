@@ -159,6 +159,7 @@ router.post("/", async (req: Request, res: Response) => {
       investments: [],
       telemetry: [],
       reports: [],
+      requiredRoles: [],
       _count: { investments: 0 },
       aiGenerated: aiGenerated || false,
       aiBlueprint: aiBlueprint || null,

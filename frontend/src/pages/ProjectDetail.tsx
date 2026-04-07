@@ -6,6 +6,7 @@ import InvestModal from '../components/InvestModal';
 import MilestoneCalendar from '../components/MilestoneCalendar';
 import VotingSection from '../components/VotingSection';
 import TransactionLedger from '../components/TransactionLedger';
+import BidModal from '../components/BidModal';
 
 const STATUS_STYLES: Record<string, { color: string; bg: string }> = {
   COMPLETED:  { color: '#10b981', bg: 'rgba(16,185,129,0.12)' },
@@ -19,6 +20,7 @@ export default function ProjectDetail() {
   const [project, setProject] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [showInvest, setShowInvest] = useState(false);
+  const [bidRole, setBidRole] = useState<any>(null);
   const t = useT();
 
   useEffect(() => { fetchProject(); }, [id]);
@@ -136,6 +138,49 @@ export default function ProjectDetail() {
                 })}
               </div>
             </div>
+
+            {/* Providers Needed */}
+            <div className="rounded-xl p-6" style={{ background: '#0d1520', border: '1px solid #1e2d3d' }}>
+              <h2 className="text-base font-semibold mb-4" style={{ color: '#e8f4f0' }}>{t('roles.title')}</h2>
+              {!project.requiredRoles || project.requiredRoles.length === 0 ? (
+                <p className="text-sm" style={{ color: '#6b7280' }}>{t('roles.empty')}</p>
+              ) : (
+                <div className="space-y-4">
+                  {project.requiredRoles.map((role: any) => {
+                    const linkedMilestone = project.milestones.find((m: any) => m.id === role.milestoneId);
+                    return (
+                      <div
+                        key={role.id}
+                        className="rounded-lg p-4"
+                        style={{ background: '#0a1420', border: '1px solid #1e2d3d' }}
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-semibold mb-1" style={{ color: '#e8f4f0' }}>{role.role}</p>
+                            <p className="text-xs leading-relaxed mb-2" style={{ color: '#6b7280' }}>{role.description}</p>
+                            {linkedMilestone && (
+                              <span
+                                className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full"
+                                style={{ background: 'rgba(0,229,196,0.08)', color: '#00e5c4', border: '1px solid rgba(0,229,196,0.15)' }}
+                              >
+                                {t('roles.milestone')}: {linkedMilestone.title}
+                              </span>
+                            )}
+                          </div>
+                          <button
+                            onClick={() => setBidRole(role)}
+                            className="shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold transition-opacity hover:opacity-80"
+                            style={{ background: 'rgba(0,229,196,0.12)', color: '#00e5c4', border: '1px solid rgba(0,229,196,0.2)' }}
+                          >
+                            {t('roles.bid_btn')}
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Right column */}
@@ -211,6 +256,17 @@ export default function ProjectDetail() {
           projectId={project.id}
           projectTitle={project.title}
           onClose={() => { setShowInvest(false); fetchProject(); }}
+        />
+      )}
+
+      {bidRole && (
+        <BidModal
+          projectId={project.id}
+          projectTitle={project.title}
+          role={bidRole}
+          milestones={project.milestones}
+          onClose={() => setBidRole(null)}
+          onSubmitted={() => { setBidRole(null); }}
         />
       )}
     </div>

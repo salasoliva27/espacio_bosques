@@ -1,11 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/auth';
 import { useT } from '../context/LanguageContext';
-import { Pencil, Check, X, ArrowLeft, TrendingUp, Layers } from 'lucide-react';
+import { Pencil, Check, X, ArrowLeft, TrendingUp, Layers, ChevronDown, ChevronUp, Send, Loader2 } from 'lucide-react';
 import type { User } from '@supabase/supabase-js';
-
-const API = import.meta.env.VITE_BACKEND_URL ?? 'http://localhost:3001';
 
 interface SimInvestment {
   id: string;
@@ -14,6 +12,27 @@ interface SimInvestment {
   projectCategory: string;
   ethAmount: number;
   mxnAmount: number;
+  createdAt: string;
+}
+
+interface ProviderService {
+  id: string;
+  name: string;
+  description: string;
+  deliverables: string[];
+  typicalPriceMxn: string;
+  chatMessages: { role: 'user' | 'assistant'; content: string }[];
+  finalized: boolean;
+  createdAt: string;
+}
+
+interface ProviderProfile {
+  userId: string;
+  enabled: boolean;
+  companyName: string;
+  specialty: string;
+  rfc: string;
+  services: ProviderService[];
   createdAt: string;
 }
 
@@ -35,12 +54,166 @@ function memberSince(user: User): string {
   return new Date(user.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'long' });
 }
 
+// ── Inline AI Service Chat Panel ────────────────────────────────────────
+
+interface ServiceChatPanelProps {
+  token: string;
+  onDone: () => void;
+  onCancel: () => void;
+}
+
+function ServiceChatPanel({ token, onDone, onCancel }: ServiceChatPanelProps) {
+  const [serviceId, setServiceId] = useState<string | null>(null);
+  const [messages, setMessages] = useState<{ role: 'user' | 'assistant'; content: string }[]>([]);
+  const [input, setInput] = useState('');
+  const [sending, setSending] = useState(false);
+  const [ready, setReady] = useState(false);
+  const [error, setError] = useState('');
+  const chatEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    startService();
+  }, []);
+
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
+  async function startService() {
+    try {
+      const res = await fetch('/api/profile/provider/services', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (!res.ok) { setError(data.error || 'Failed to start service'); return; }
+      setServiceId(data.service.id);
+      setMessages(data.service.chatMessages || []);
+    } catch (err: any) {
+      setError(err.message);
+    }
+  }
+
+  async function sendMessage() {
+    if (!input.trim() || !serviceId || sending) return;
+    const userMsg = input.trim();
+    setInput('');
+    setSending(true);
+    setMessages(prev => [...prev, { role: 'user', content: userMsg }]);
+
+    try {
+      const res = await fetch(`/api/profile/provider/services/${serviceId}/chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ message: userMsg }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setError(data.error || 'Chat error'); setSending(false); return; }
+      setMessages(prev => [...prev, { role: 'assistant', content: data.message }]);
+      if (data.ready) {
+        // Finalize the service
+        await fetch(`/api/profile/provider/services/${serviceId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ finalized: true }),
+        });
+        setReady(true);
+      }
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setSending(false);
+    }
+  }
+
+  if (ready) {
+    return (
+      <div className="rounded-xl p-5 mt-3" style={{ background: '#0a1420', border: '1px solid rgba(0,229,196,0.2)' }}>
+        <p className="text-sm font-medium mb-3" style={{ color: '#00e5c4' }}>Service defined and saved.</p>
+        <button
+          onClick={onDone}
+          className="text-sm font-medium px-4 py-2 rounded-lg transition-opacity hover:opacity-80"
+          style={{ background: 'rgba(0,229,196,0.12)', color: '#00e5c4', border: '1px solid rgba(0,229,196,0.2)' }}
+        >
+          View services
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-xl mt-3" style={{ background: '#0a1420', border: '1px solid #1e2d3d' }}>
+      <div className="p-4 space-y-3 max-h-64 overflow-y-auto">
+        {messages.map((msg, i) => (
+          <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+            <div
+              className="rounded-xl px-3 py-2 text-sm max-w-[90%] leading-relaxed"
+              style={msg.role === 'user'
+                ? { background: 'rgba(0,229,196,0.1)', color: '#e8f4f0', border: '1px solid rgba(0,229,196,0.15)' }
+                : { background: '#0d1520', color: '#9ca3af', border: '1px solid #1e2d3d' }
+              }
+            >
+              {msg.content}
+            </div>
+          </div>
+        ))}
+        {sending && (
+          <div className="flex justify-start">
+            <div className="rounded-xl px-3 py-2 text-sm" style={{ background: '#0d1520', border: '1px solid #1e2d3d', color: '#6b7280' }}>
+              <Loader2 size={12} className="animate-spin inline mr-1" />Thinking…
+            </div>
+          </div>
+        )}
+        {!serviceId && !error && (
+          <div className="flex justify-start">
+            <div className="rounded-xl px-3 py-2 text-sm" style={{ background: '#0d1520', border: '1px solid #1e2d3d', color: '#6b7280' }}>
+              <Loader2 size={12} className="animate-spin inline mr-1" />Starting…
+            </div>
+          </div>
+        )}
+        <div ref={chatEndRef} />
+      </div>
+      {error && <p className="px-4 pb-2 text-xs" style={{ color: '#f87171' }}>{error}</p>}
+      <div className="p-3 flex gap-2" style={{ borderTop: '1px solid #1e2d3d' }}>
+        <input
+          className="flex-1 rounded-lg px-3 py-2 text-sm outline-none"
+          style={{ background: '#111c2a', border: '1px solid #1e2d3d', color: '#e8f4f0' }}
+          placeholder="Your response…"
+          value={input}
+          onChange={e => setInput(e.target.value)}
+          onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } }}
+          disabled={sending || !serviceId}
+        />
+        <button
+          onClick={sendMessage}
+          disabled={sending || !input.trim() || !serviceId}
+          className="p-2 rounded-lg transition-opacity hover:opacity-80 disabled:opacity-40"
+          style={{ background: 'rgba(0,229,196,0.1)', color: '#00e5c4', border: '1px solid rgba(0,229,196,0.2)' }}
+        >
+          <Send size={14} />
+        </button>
+        <button
+          onClick={onCancel}
+          className="p-2 rounded-lg transition-opacity hover:opacity-70"
+          style={{ background: '#1e2d3d', color: '#6b7280' }}
+        >
+          <X size={14} />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ── Main Profile Component ───────────────────────────────────────────────
+
 export default function Profile() {
   const navigate = useNavigate();
   const t = useT();
   const [user, setUser] = useState<User | null>(null);
+  const [token, setToken] = useState<string>('');
   const [investments, setInvestments] = useState<SimInvestment[]>([]);
   const [loadingInv, setLoadingInv] = useState(true);
+  const [activeTab, setActiveTab] = useState<'member' | 'provider'>('member');
 
   // Edit name state
   const [editing, setEditing] = useState(false);
@@ -48,19 +221,36 @@ export default function Profile() {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
 
+  // Provider state
+  const [providerProfile, setProviderProfile] = useState<ProviderProfile | null>(null);
+  const [loadingProvider, setLoadingProvider] = useState(false);
+  const [savingProvider, setSavingProvider] = useState(false);
+  const [companyName, setCompanyName] = useState('');
+  const [specialty, setSpecialty] = useState('');
+  const [rfc, setRfc] = useState('');
+  const [showServiceChat, setShowServiceChat] = useState(false);
+  const [expandedService, setExpandedService] = useState<string | null>(null);
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!session) { navigate('/'); return; }
       setUser(session.user);
+      setToken(session.access_token);
       setNameInput(session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || '');
       fetchInvestments(session.access_token);
     });
   }, [navigate]);
 
-  async function fetchInvestments(token: string) {
+  useEffect(() => {
+    if (activeTab === 'provider' && token && !providerProfile) {
+      fetchProviderProfile();
+    }
+  }, [activeTab, token]);
+
+  async function fetchInvestments(tok: string) {
     try {
-      const res = await fetch(`${API}/api/invest/me`, {
-        headers: { Authorization: `Bearer ${token}` },
+      const res = await fetch('/api/invest/me', {
+        headers: { Authorization: `Bearer ${tok}` },
       });
       if (res.ok) {
         const data = await res.json();
@@ -68,6 +258,26 @@ export default function Profile() {
       }
     } finally {
       setLoadingInv(false);
+    }
+  }
+
+  async function fetchProviderProfile() {
+    setLoadingProvider(true);
+    try {
+      const res = await fetch('/api/profile/provider', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (data.profile) {
+        setProviderProfile(data.profile);
+        setCompanyName(data.profile.companyName || '');
+        setSpecialty(data.profile.specialty || '');
+        setRfc(data.profile.rfc || '');
+      } else {
+        setProviderProfile(null);
+      }
+    } finally {
+      setLoadingProvider(false);
     }
   }
 
@@ -90,6 +300,41 @@ export default function Profile() {
     setNameInput(user?.user_metadata?.full_name || user?.email?.split('@')[0] || '');
     setSaveError('');
     setEditing(false);
+  }
+
+  async function toggleProviderEnabled() {
+    const newEnabled = !providerProfile?.enabled;
+    setSavingProvider(true);
+    try {
+      const res = await fetch('/api/profile/provider', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ enabled: newEnabled }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setProviderProfile(data.profile);
+        setCompanyName(data.profile.companyName || '');
+        setSpecialty(data.profile.specialty || '');
+        setRfc(data.profile.rfc || '');
+      }
+    } finally {
+      setSavingProvider(false);
+    }
+  }
+
+  async function saveProviderField(field: string, value: string) {
+    try {
+      const res = await fetch('/api/profile/provider', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ [field]: value }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setProviderProfile(data.profile);
+      }
+    } catch {}
   }
 
   const totalMxn = investments.reduce((sum, inv) => sum + inv.mxnAmount, 0);
@@ -166,6 +411,14 @@ export default function Profile() {
                   >
                     <Pencil size={12} />
                   </button>
+                  {providerProfile?.enabled && (
+                    <span
+                      className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
+                      style={{ background: 'rgba(0,229,196,0.1)', color: '#00e5c4', border: '1px solid rgba(0,229,196,0.2)' }}
+                    >
+                      {t('provider.enabled_badge')}
+                    </span>
+                  )}
                 </div>
               )}
               {saveError && <p className="text-xs mb-1" style={{ color: '#f87171' }}>{saveError}</p>}
@@ -177,81 +430,298 @@ export default function Profile() {
           </div>
         </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-2 gap-4 mb-6">
-          <div className="rounded-xl p-4 flex items-center gap-3" style={{ background: '#0d1520', border: '1px solid #1e2d3d' }}>
-            <div className="p-2 rounded-lg" style={{ background: 'rgba(0,229,196,0.1)' }}>
-              <Layers size={16} style={{ color: '#00e5c4' }} />
-            </div>
-            <div>
-              <p className="text-xs" style={{ color: '#6b7280' }}>{t('profile.stat_projects')}</p>
-              <p className="text-xl font-bold" style={{ color: '#e5e7eb' }}>
-                {new Set(investments.map(i => i.projectId)).size}
-              </p>
-            </div>
-          </div>
-          <div className="rounded-xl p-4 flex items-center gap-3" style={{ background: '#0d1520', border: '1px solid #1e2d3d' }}>
-            <div className="p-2 rounded-lg" style={{ background: 'rgba(0,229,196,0.1)' }}>
-              <TrendingUp size={16} style={{ color: '#00e5c4' }} />
-            </div>
-            <div>
-              <p className="text-xs" style={{ color: '#6b7280' }}>{t('profile.stat_invested')}</p>
-              <p className="text-xl font-bold" style={{ color: '#e5e7eb' }}>{formatMxn(totalMxn)}</p>
-            </div>
-          </div>
+        {/* Tabs */}
+        <div className="flex gap-1 mb-6 p-1 rounded-xl" style={{ background: '#0d1520', border: '1px solid #1e2d3d' }}>
+          {(['member', 'provider'] as const).map(tab => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className="flex-1 py-2 text-sm font-medium rounded-lg transition-all"
+              style={activeTab === tab
+                ? { background: 'rgba(0,229,196,0.12)', color: '#00e5c4', border: '1px solid rgba(0,229,196,0.2)' }
+                : { color: '#6b7280', border: '1px solid transparent' }
+              }
+            >
+              {tab === 'member' ? t('member.tab') : t('provider.tab')}
+            </button>
+          ))}
         </div>
 
-        {/* Investment history */}
-        <div className="rounded-xl" style={{ background: '#0d1520', border: '1px solid #1e2d3d' }}>
-          <div className="px-5 py-4" style={{ borderBottom: '1px solid #1e2d3d' }}>
-            <h2 className="text-sm font-semibold" style={{ color: '#e5e7eb' }}>{t('profile.investments')}</h2>
-          </div>
+        {/* Member Tab */}
+        {activeTab === 'member' && (
+          <>
+            {/* Stats */}
+            <div className="grid grid-cols-2 gap-4 mb-6">
+              <div className="rounded-xl p-4 flex items-center gap-3" style={{ background: '#0d1520', border: '1px solid #1e2d3d' }}>
+                <div className="p-2 rounded-lg" style={{ background: 'rgba(0,229,196,0.1)' }}>
+                  <Layers size={16} style={{ color: '#00e5c4' }} />
+                </div>
+                <div>
+                  <p className="text-xs" style={{ color: '#6b7280' }}>{t('profile.stat_projects')}</p>
+                  <p className="text-xl font-bold" style={{ color: '#e5e7eb' }}>
+                    {new Set(investments.map(i => i.projectId)).size}
+                  </p>
+                </div>
+              </div>
+              <div className="rounded-xl p-4 flex items-center gap-3" style={{ background: '#0d1520', border: '1px solid #1e2d3d' }}>
+                <div className="p-2 rounded-lg" style={{ background: 'rgba(0,229,196,0.1)' }}>
+                  <TrendingUp size={16} style={{ color: '#00e5c4' }} />
+                </div>
+                <div>
+                  <p className="text-xs" style={{ color: '#6b7280' }}>{t('profile.stat_invested')}</p>
+                  <p className="text-xl font-bold" style={{ color: '#e5e7eb' }}>{formatMxn(totalMxn)}</p>
+                </div>
+              </div>
+            </div>
 
-          {loadingInv ? (
-            <div className="px-5 py-8 text-center">
-              <p className="text-sm" style={{ color: '#6b7280' }}>{t('app.loading')}</p>
+            {/* Investment history */}
+            <div className="rounded-xl" style={{ background: '#0d1520', border: '1px solid #1e2d3d' }}>
+              <div className="px-5 py-4" style={{ borderBottom: '1px solid #1e2d3d' }}>
+                <h2 className="text-sm font-semibold" style={{ color: '#e5e7eb' }}>{t('profile.investments')}</h2>
+              </div>
+
+              {loadingInv ? (
+                <div className="px-5 py-8 text-center">
+                  <p className="text-sm" style={{ color: '#6b7280' }}>{t('app.loading')}</p>
+                </div>
+              ) : investments.length === 0 ? (
+                <div className="px-5 py-10 text-center">
+                  <p className="text-sm mb-3" style={{ color: '#6b7280' }}>{t('profile.no_investments')}</p>
+                  <button
+                    onClick={() => navigate('/dashboard')}
+                    className="text-sm font-medium px-4 py-2 rounded-lg transition-opacity hover:opacity-80"
+                    style={{ background: 'rgba(0,229,196,0.12)', color: '#00e5c4', border: '1px solid rgba(0,229,196,0.2)' }}
+                  >
+                    {t('profile.browse_projects')}
+                  </button>
+                </div>
+              ) : (
+                <ul>
+                  {investments.map((inv, i) => (
+                    <li
+                      key={inv.id}
+                      className="px-5 py-4 flex items-center justify-between cursor-pointer transition-colors hover:bg-white/[0.02]"
+                      style={{ borderTop: i > 0 ? '1px solid #1e2d3d' : undefined }}
+                      onClick={() => navigate(`/projects/${inv.projectId}`)}
+                    >
+                      <div className="min-w-0 mr-4">
+                        <p className="text-sm font-medium truncate" style={{ color: '#e5e7eb' }}>{inv.projectTitle}</p>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <span
+                            className="text-[10px] font-semibold px-1.5 py-0.5 rounded uppercase tracking-wide"
+                            style={{ background: 'rgba(0,229,196,0.1)', color: '#00e5c4' }}
+                          >
+                            {inv.projectCategory}
+                          </span>
+                          <span className="text-xs" style={{ color: '#6b7280' }}>{formatDate(inv.createdAt)}</span>
+                        </div>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <p className="text-sm font-semibold" style={{ color: '#00e5c4' }}>{formatMxn(inv.mxnAmount)}</p>
+                        <p className="text-xs" style={{ color: '#4b5563' }}>{inv.ethAmount.toFixed(4)} ETH</p>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
-          ) : investments.length === 0 ? (
-            <div className="px-5 py-10 text-center">
-              <p className="text-sm mb-3" style={{ color: '#6b7280' }}>{t('profile.no_investments')}</p>
-              <button
-                onClick={() => navigate('/dashboard')}
-                className="text-sm font-medium px-4 py-2 rounded-lg transition-opacity hover:opacity-80"
-                style={{ background: 'rgba(0,229,196,0.12)', color: '#00e5c4', border: '1px solid rgba(0,229,196,0.2)' }}
-              >
-                {t('profile.browse_projects')}
-              </button>
-            </div>
-          ) : (
-            <ul>
-              {investments.map((inv, i) => (
-                <li
-                  key={inv.id}
-                  className="px-5 py-4 flex items-center justify-between cursor-pointer transition-colors hover:bg-white/[0.02]"
-                  style={{ borderTop: i > 0 ? '1px solid #1e2d3d' : undefined }}
-                  onClick={() => navigate(`/projects/${inv.projectId}`)}
-                >
-                  <div className="min-w-0 mr-4">
-                    <p className="text-sm font-medium truncate" style={{ color: '#e5e7eb' }}>{inv.projectTitle}</p>
-                    <div className="flex items-center gap-2 mt-0.5">
+          </>
+        )}
+
+        {/* Provider Tab */}
+        {activeTab === 'provider' && (
+          <div className="space-y-5">
+            {loadingProvider ? (
+              <div className="flex items-center justify-center py-10">
+                <Loader2 size={24} className="animate-spin" style={{ color: '#00e5c4' }} />
+              </div>
+            ) : (
+              <>
+                {/* Enable toggle */}
+                <div className="rounded-xl p-5" style={{ background: '#0d1520', border: '1px solid #1e2d3d' }}>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-semibold" style={{ color: '#e5e7eb' }}>{t('provider.enable_toggle')}</p>
+                      <p className="text-xs mt-0.5" style={{ color: '#6b7280' }}>
+                        {providerProfile?.enabled
+                          ? 'Your profile is visible to project managers.'
+                          : 'Enable to submit bids on community projects.'}
+                      </p>
+                    </div>
+                    <button
+                      onClick={toggleProviderEnabled}
+                      disabled={savingProvider}
+                      className="relative w-12 h-6 rounded-full transition-colors flex-shrink-0 disabled:opacity-60"
+                      style={{
+                        background: providerProfile?.enabled ? '#00e5c4' : '#1e2d3d',
+                        border: '1px solid ' + (providerProfile?.enabled ? '#00e5c4' : '#2d3f54'),
+                      }}
+                    >
                       <span
-                        className="text-[10px] font-semibold px-1.5 py-0.5 rounded uppercase tracking-wide"
-                        style={{ background: 'rgba(0,229,196,0.1)', color: '#00e5c4' }}
-                      >
-                        {inv.projectCategory}
-                      </span>
-                      <span className="text-xs" style={{ color: '#6b7280' }}>{formatDate(inv.createdAt)}</span>
+                        className="absolute top-0.5 w-5 h-5 rounded-full transition-transform"
+                        style={{
+                          background: providerProfile?.enabled ? '#080c10' : '#6b7280',
+                          transform: providerProfile?.enabled ? 'translateX(1.5rem)' : 'translateX(0.125rem)',
+                        }}
+                      />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Profile fields — show only when enabled */}
+                {providerProfile?.enabled && (
+                  <div className="rounded-xl p-5 space-y-4" style={{ background: '#0d1520', border: '1px solid #1e2d3d' }}>
+                    <h3 className="text-sm font-semibold" style={{ color: '#e5e7eb' }}>Provider Details</h3>
+
+                    <div>
+                      <label className="block text-xs font-medium mb-1.5" style={{ color: '#6b7280' }}>
+                        {t('provider.company_name')}
+                      </label>
+                      <input
+                        className="w-full rounded-lg px-3 py-2 text-sm outline-none"
+                        style={{ background: '#111c2a', border: '1px solid #1e2d3d', color: '#e8f4f0' }}
+                        value={companyName}
+                        onChange={e => setCompanyName(e.target.value)}
+                        onBlur={() => saveProviderField('companyName', companyName)}
+                        placeholder="e.g. Contratos CDMX S.A. de C.V."
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-medium mb-1.5" style={{ color: '#6b7280' }}>
+                        {t('provider.specialty')}
+                      </label>
+                      <input
+                        className="w-full rounded-lg px-3 py-2 text-sm outline-none"
+                        style={{ background: '#111c2a', border: '1px solid #1e2d3d', color: '#e8f4f0' }}
+                        value={specialty}
+                        onChange={e => setSpecialty(e.target.value)}
+                        onBlur={() => saveProviderField('specialty', specialty)}
+                        placeholder="e.g. LED Electrical Installation"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-medium mb-1.5" style={{ color: '#6b7280' }}>
+                        {t('provider.rfc')}
+                      </label>
+                      <input
+                        className="w-full rounded-lg px-3 py-2 text-sm outline-none"
+                        style={{ background: '#111c2a', border: '1px solid #1e2d3d', color: '#e8f4f0' }}
+                        value={rfc}
+                        onChange={e => setRfc(e.target.value)}
+                        onBlur={() => saveProviderField('rfc', rfc)}
+                        placeholder="XAXX010101000"
+                      />
                     </div>
                   </div>
-                  <div className="text-right shrink-0">
-                    <p className="text-sm font-semibold" style={{ color: '#00e5c4' }}>{formatMxn(inv.mxnAmount)}</p>
-                    <p className="text-xs" style={{ color: '#4b5563' }}>{inv.ethAmount.toFixed(4)} ETH</p>
+                )}
+
+                {/* Services */}
+                {providerProfile?.enabled && (
+                  <div className="rounded-xl p-5" style={{ background: '#0d1520', border: '1px solid #1e2d3d' }}>
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-sm font-semibold" style={{ color: '#e5e7eb' }}>{t('provider.services_title')}</h3>
+                      {!showServiceChat && (
+                        <button
+                          onClick={() => setShowServiceChat(true)}
+                          className="text-xs font-medium px-3 py-1.5 rounded-lg transition-opacity hover:opacity-80"
+                          style={{ background: 'rgba(0,229,196,0.1)', color: '#00e5c4', border: '1px solid rgba(0,229,196,0.2)' }}
+                        >
+                          + {t('provider.add_service')}
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Inline chat for adding a service */}
+                    {showServiceChat && (
+                      <ServiceChatPanel
+                        token={token}
+                        onDone={() => { setShowServiceChat(false); fetchProviderProfile(); }}
+                        onCancel={() => setShowServiceChat(false)}
+                      />
+                    )}
+
+                    {/* Services list */}
+                    {!providerProfile?.services || providerProfile.services.length === 0 ? (
+                      <p className="text-sm mt-3" style={{ color: '#6b7280' }}>{t('provider.no_services')}</p>
+                    ) : (
+                      <div className="space-y-3 mt-3">
+                        {providerProfile.services.map(svc => (
+                          <div
+                            key={svc.id}
+                            className="rounded-lg"
+                            style={{ background: '#0a1420', border: '1px solid #1e2d3d' }}
+                          >
+                            {/* Service header */}
+                            <button
+                              className="w-full flex items-center justify-between p-4 text-left"
+                              onClick={() => setExpandedService(expandedService === svc.id ? null : svc.id)}
+                            >
+                              <div className="flex items-center gap-3 min-w-0">
+                                <p className="text-sm font-semibold truncate" style={{ color: '#e8f4f0' }}>
+                                  {svc.name || 'Unnamed service'}
+                                </p>
+                                <span
+                                  className="shrink-0 text-[10px] font-semibold px-2 py-0.5 rounded-full"
+                                  style={svc.finalized
+                                    ? { background: 'rgba(16,185,129,0.1)', color: '#10b981', border: '1px solid rgba(16,185,129,0.2)' }
+                                    : { background: '#1e2d3d', color: '#6b7280', border: '1px solid #2d3f54' }
+                                  }
+                                >
+                                  {svc.finalized ? t('provider.service_finalized') : t('provider.service_draft')}
+                                </span>
+                              </div>
+                              {expandedService === svc.id
+                                ? <ChevronUp size={14} style={{ color: '#6b7280', flexShrink: 0 }} />
+                                : <ChevronDown size={14} style={{ color: '#6b7280', flexShrink: 0 }} />
+                              }
+                            </button>
+
+                            {/* Expanded service details */}
+                            {expandedService === svc.id && (
+                              <div className="px-4 pb-4 space-y-3" style={{ borderTop: '1px solid #1e2d3d' }}>
+                                {svc.description && (
+                                  <p className="text-xs leading-relaxed pt-3" style={{ color: '#9ca3af' }}>{svc.description}</p>
+                                )}
+                                {svc.deliverables && svc.deliverables.length > 0 && (
+                                  <div>
+                                    <p className="text-xs font-semibold mb-1.5" style={{ color: '#6b7280' }}>{t('provider.deliverables')}</p>
+                                    <ul className="space-y-1">
+                                      {svc.deliverables.map((d, i) => (
+                                        <li key={i} className="flex items-start gap-2 text-xs" style={{ color: '#9ca3af' }}>
+                                          <span style={{ color: '#00e5c4', flexShrink: 0 }}>·</span>
+                                          {d}
+                                        </li>
+                                      ))}
+                                    </ul>
+                                  </div>
+                                )}
+                                {svc.typicalPriceMxn && (
+                                  <div className="flex items-center gap-2">
+                                    <p className="text-xs font-semibold" style={{ color: '#6b7280' }}>{t('provider.price_range')}:</p>
+                                    <p className="text-xs" style={{ color: '#00e5c4' }}>{svc.typicalPriceMxn}</p>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
+                )}
+
+                {/* Prompt to enable if not done */}
+                {!providerProfile?.enabled && !loadingProvider && (
+                  <p className="text-sm text-center" style={{ color: '#4b5563' }}>
+                    Enable your provider profile above to register services and submit bids.
+                  </p>
+                )}
+              </>
+            )}
+          </div>
+        )}
 
       </div>
     </div>
