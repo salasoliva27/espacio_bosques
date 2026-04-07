@@ -266,7 +266,7 @@ function ServiceChatPanel({ token, onDone, onCancel }: ServiceChatPanelProps) {
         /* Still chatting */
         <div className="space-y-2 p-3" style={{ borderTop: '1px solid #1e2d3d' }}>
           {/* "I'm done" button — shown once there are at least 3 user messages */}
-          {msgCount >= 3 && (
+          {msgCount >= 7 && (
             <button
               onClick={finalizeService}
               disabled={finalizing || sending}

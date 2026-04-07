@@ -200,21 +200,29 @@ router.post('/provider/services/:serviceId/finalize', requireAuth, async (req: A
   }
 
   try {
+    // Anthropic requires messages to start with 'user' — strip leading assistant intro if present
+    const rawMessages = service.chatMessages.map(m => ({ role: m.role, content: m.content }));
+    const messagesForExtraction = rawMessages[0]?.role === 'assistant' ? rawMessages.slice(1) : rawMessages;
+
+    if (messagesForExtraction.length === 0 || messagesForExtraction[0]?.role !== 'user') {
+      return res.status(400).json({ error: 'Not enough conversation to extract a service. Keep chatting.' });
+    }
+
     const extractionResponse = await anthropic.messages.create({
       model: process.env.ANTHROPIC_MODEL || 'claude-sonnet-4-6',
       max_tokens: 512,
       system: `You are a data extractor. Read the conversation and output ONLY a valid JSON object — no other text, no markdown, no explanation.
 
-Required format (all fields required, use empty string or empty array if unknown):
+Required format:
 {"name":"short professional title","description":"what they do and how","deliverables":["deliverable 1","deliverable 2"],"typicalPriceMxn":"price range in MXN"}
 
 Rules:
-- name: short title, max 6 words
-- description: 1-2 sentences, specific
-- deliverables: list of concrete things the client receives
-- typicalPriceMxn: format like "40,000–80,000 MXN" or "2,000 MXN/day"
-- Output ONLY the JSON. No other text.`,
-      messages: service.chatMessages.map(m => ({ role: m.role, content: m.content })),
+- name: REQUIRED — infer the best short title (max 6 words) from whatever was described, even if incomplete
+- description: 1-2 sentences about what they do. Use whatever was shared.
+- deliverables: list what the client receives. Use ["Service delivery"] if not specified.
+- typicalPriceMxn: price range mentioned, or empty string if none given
+- Output ONLY the JSON. No markdown fences. No explanation.`,
+      messages: messagesForExtraction,
     });
 
     const raw = (extractionResponse.content.find(b => b.type === 'text') as any)?.text ?? '';
@@ -227,6 +235,13 @@ Rules:
       extracted = JSON.parse(cleaned);
     } catch {
       extracted = extractJsonObject(raw);
+    }
+
+    // Fallback: if name is missing or empty, derive it from description or use a generic title
+    if (extracted && !extracted.name) {
+      extracted.name = extracted.description
+        ? extracted.description.split(' ').slice(0, 5).join(' ')
+        : 'Professional Service';
     }
 
     if (!extracted || !extracted.name) {
