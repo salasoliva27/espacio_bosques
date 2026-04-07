@@ -10,7 +10,9 @@
  *   POST /api/test/reset        → wipe all sim investments (keeps seed funding)
  */
 import { Router, Request, Response } from 'express';
-import { DEMO_PROJECTS, addSimInvestment, getSimUserInvestments, addSimBalance, getSimBalance } from '../data/simStore';
+import { DEMO_PROJECTS, addSimInvestment, getSimUserInvestments, addSimBalance, getSimBalance,
+         getProviderUserProfile, upsertProviderUserProfile, addProviderService, updateProviderService, deleteProviderService,
+         ProviderService } from '../data/simStore';
 import { SIM_PROVIDERS, updateProviderStatus } from '../data/providers';
 import { SIM_PROPOSALS, SIM_VOTES, SIM_TRANSACTIONS, addProposal, updateProposal, castVote, setVotingWindow } from '../data/governance';
 import { getQuote } from '../services/bitso';
@@ -101,6 +103,33 @@ router.get('/', (_req: Request, res: Response) => {
         path: '/api/test/governance/reset',
         description: 'Wipe all proposals, votes, and test transactions',
         example: `curl -s -X POST http://localhost:3001/api/test/governance/reset`,
+      },
+      {
+        method: 'GET',
+        path: '/api/test/profile',
+        description: 'Dump provider profile and services for sim-user',
+        example: `curl -s http://localhost:3001/api/test/profile | jq '.'`,
+      },
+      {
+        method: 'POST',
+        path: '/api/test/profile/service',
+        description: 'Seed a finalized provider service for sim-user (skips AI chat)',
+        body: { name: 'string', description: 'string', typicalPriceMxn: 'string', deliverables: 'string[]' },
+        example: `curl -s -X POST http://localhost:3001/api/test/profile/service \\
+  -H 'Content-Type: application/json' \\
+  -d '{"name":"LED Installation","typicalPriceMxn":"50,000 MXN"}'`,
+      },
+      {
+        method: 'DELETE',
+        path: '/api/test/profile/service/:serviceId',
+        description: 'Delete a specific provider service by ID',
+        example: `curl -s -X DELETE http://localhost:3001/api/test/profile/service/svc-xxx`,
+      },
+      {
+        method: 'POST',
+        path: '/api/test/profile/reset',
+        description: 'Wipe all provider services for sim-user (keeps profile enabled)',
+        example: `curl -s -X POST http://localhost:3001/api/test/profile/reset`,
       },
     ],
   });
@@ -289,6 +318,61 @@ router.post('/governance/reset', (_req: Request, res: Response) => {
   SIM_PROPOSALS.splice(0, SIM_PROPOSALS.length);
   SIM_VOTES.splice(0, SIM_VOTES.length);
   res.json({ ok: true, cleared: { proposals: true, votes: true }, note: 'Seed transactions in SIM_TRANSACTIONS preserved' });
+});
+
+/* ── GET /api/test/profile ────────────────────────────────────── */
+router.get('/profile', (_req: Request, res: Response) => {
+  const profile = getProviderUserProfile('sim-user');
+  if (!profile) return res.json({ profile: null, message: 'No provider profile for sim-user yet' });
+  res.json({
+    profile: {
+      userId: profile.userId,
+      enabled: profile.enabled,
+      companyName: profile.companyName,
+      specialty: profile.specialty,
+      rfc: profile.rfc,
+      services: profile.services.map(s => ({
+        id: s.id,
+        name: s.name,
+        finalized: s.finalized,
+        typicalPriceMxn: s.typicalPriceMxn,
+        messageCount: s.chatMessages.length,
+      })),
+    },
+  });
+});
+
+/* ── POST /api/test/profile/service ───────────────────────────── */
+router.post('/profile/service', (req: Request, res: Response) => {
+  upsertProviderUserProfile('sim-user', { enabled: true });
+  const service: ProviderService = {
+    id: `svc-test-${Date.now()}`,
+    name: req.body.name || 'Test Service',
+    description: req.body.description || 'Seeded via test harness',
+    deliverables: Array.isArray(req.body.deliverables) ? req.body.deliverables : ['Test deliverable'],
+    typicalPriceMxn: req.body.typicalPriceMxn || '10,000 MXN',
+    chatMessages: [],
+    finalized: true,
+    createdAt: new Date().toISOString(),
+  };
+  addProviderService('sim-user', service);
+  res.json({ ok: true, service: { id: service.id, name: service.name } });
+});
+
+/* ── DELETE /api/test/profile/service/:serviceId ──────────────── */
+router.delete('/profile/service/:serviceId', (req: Request, res: Response) => {
+  const ok = deleteProviderService('sim-user', req.params.serviceId);
+  if (!ok) return res.status(404).json({ error: `Service not found: ${req.params.serviceId}` });
+  res.json({ ok: true });
+});
+
+/* ── POST /api/test/profile/reset ─────────────────────────────── */
+router.post('/profile/reset', (_req: Request, res: Response) => {
+  const profile = getProviderUserProfile('sim-user');
+  if (!profile) return res.json({ ok: true, cleared: 0 });
+  const count = profile.services.length;
+  upsertProviderUserProfile('sim-user', { services: [] });
+  res.json({ ok: true, cleared: count });
 });
 
 /* ── POST /api/test/reset ──────────────────────────────────────── */
