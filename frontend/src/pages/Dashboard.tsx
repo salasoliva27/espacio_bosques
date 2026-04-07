@@ -28,6 +28,15 @@ const CATEGORY_COLORS: Record<string, string> = {
   education: '#f59e0b',
 };
 
+// Curated Unsplash photos per category — free, no attribution required
+const CATEGORY_PHOTOS: Record<string, string> = {
+  INFRASTRUCTURE: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?auto=format&fit=crop&w=800&q=75',
+  COMMUNITY: 'https://images.unsplash.com/photo-1444492417251-9c84a5fa18e0?auto=format&fit=crop&w=800&q=75',
+  ENVIRONMENTAL: 'https://images.unsplash.com/photo-1569924370197-de82acfad0a4?auto=format&fit=crop&w=800&q=75',
+  TECHNOLOGY: 'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=800&q=75',
+  EDUCATION: 'https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=800&q=75',
+};
+
 export default function Dashboard() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
@@ -95,12 +104,35 @@ export default function Dashboard() {
                 className="group flex flex-col rounded-xl overflow-hidden transition-all hover:-translate-y-0.5"
                 style={{ background: '#0d1520', border: '1px solid #1e2d3d' }}
               >
-                {/* Card top accent */}
-                <div style={{ height: 3, background: catColor }} />
+                {/* Cover photo */}
+                <div className="relative h-40 overflow-hidden">
+                  <img
+                    src={CATEGORY_PHOTOS[project.category] || CATEGORY_PHOTOS.COMMUNITY}
+                    alt={project.title}
+                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    loading="lazy"
+                  />
+                  <div
+                    className="absolute inset-0"
+                    style={{ background: 'linear-gradient(to top, rgba(13,21,32,0.95) 0%, rgba(13,21,32,0.2) 60%, transparent 100%)' }}
+                  />
+                  {/* Status badge over photo */}
+                  <div className="absolute top-3 right-3">
+                    <span className="text-xs font-medium px-2 py-0.5 rounded-full" style={{ background: 'rgba(8,12,16,0.7)', color: project.status === 'ACTIVE' ? '#10b981' : '#6b7280', backdropFilter: 'blur(4px)' }}>
+                      ● {project.status}
+                    </span>
+                  </div>
+                  {/* Category badge bottom-left */}
+                  <div className="absolute bottom-3 left-3">
+                    <span className="text-xs font-semibold px-2 py-0.5 rounded-full" style={{ background: `${catColor}33`, color: catColor, backdropFilter: 'blur(4px)' }}>
+                      {project.category}
+                    </span>
+                  </div>
+                </div>
 
                 <div className="flex flex-col flex-1 p-5">
-                  {/* Category + status */}
-                  <div className="flex items-center justify-between mb-3">
+                  {/* Category + status — hidden, now on photo */}
+                  <div className="flex items-center justify-between mb-3 hidden">
                     <span className="text-xs font-semibold px-2 py-0.5 rounded-full" style={{ background: `${catColor}22`, color: catColor }}>
                       {project.category}
                     </span>

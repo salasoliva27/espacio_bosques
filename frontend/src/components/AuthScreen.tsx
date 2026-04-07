@@ -52,7 +52,11 @@ export default function AuthScreen({ onSuccess }: AuthScreenProps) {
       provider: 'google',
       options: { redirectTo: window.location.origin },
     });
-    if (oauthError) setError(oauthError.message);
+    if (oauthError) {
+      // "provider is not enabled" = Google OAuth not configured in Supabase dashboard
+      const notConfigured = oauthError.message.toLowerCase().includes('not enabled') || oauthError.message.toLowerCase().includes('unsupported provider');
+      setError(notConfigured ? t('auth.google_unavailable') : (oauthError.message || t('auth.error_generic')));
+    }
   };
 
   return (
