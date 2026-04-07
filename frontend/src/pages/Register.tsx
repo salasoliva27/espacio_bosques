@@ -1,12 +1,8 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/auth';
 import { validateRfc, formatRfc, extractBirthDate, formatBirthDate } from '../lib/rfc';
 import { useLanguage } from '../context/LanguageContext';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
-
-type BlacklistStatus = 'idle' | 'checking' | 'clean' | 'presunto' | 'definitivo' | 'service_unavailable';
 
 export default function Register() {
   const { lang, toggle } = useLanguage();
@@ -19,43 +15,18 @@ export default function Register() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [rfcError, setRfcError] = useState('');
-  const [blacklistStatus, setBlacklistStatus] = useState<BlacklistStatus>('idle');
   const [birthDate, setBirthDate] = useState<Date | null>(null);
-  const rfcDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const checkRfc = async (rfcVal: string) => {
-    setBlacklistStatus('checking');
-    try {
-      const res = await fetch(`${API_URL}/api/rfc/validate`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ rfc: rfcVal }),
-      });
-      const data = await res.json();
-      if (data.birthDate) {
-        setBirthDate(new Date(data.birthDate + 'T12:00:00'));
-      }
-      const bl = data.blacklist?.status ?? 'service_unavailable';
-      setBlacklistStatus(bl as BlacklistStatus);
-    } catch {
-      setBlacklistStatus('service_unavailable');
-    }
-  };
 
   const handleRfcChange = (val: string) => {
     const formatted = formatRfc(val);
     setRfc(formatted);
-    setBlacklistStatus('idle');
     setBirthDate(null);
 
     if (formatted.length >= 13) {
       const result = validateRfc(formatted, fullName);
       setRfcError(result.valid ? '' : (result.error ?? ''));
       if (result.valid) {
-        const bd = extractBirthDate(formatted);
-        setBirthDate(bd);
-        if (rfcDebounceRef.current) clearTimeout(rfcDebounceRef.current);
-        rfcDebounceRef.current = setTimeout(() => checkRfc(formatted), 600);
+        setBirthDate(extractBirthDate(formatted));
       }
     } else {
       setRfcError('');
@@ -67,24 +38,9 @@ export default function Register() {
     setError('');
     setRfcError('');
 
-    // Structural RFC validation
     const rfcResult = validateRfc(rfc, fullName);
     if (!rfcResult.valid) {
       setRfcError(rfcResult.error ?? 'RFC inválido');
-      return;
-    }
-
-    // Block if RFC is on SAT's confirmed fraud list
-    if (blacklistStatus === 'definitivo') {
-      setRfcError(lang === 'es'
-        ? 'Este RFC aparece en el listado definitivo del SAT (Art. 69-B). No es posible registrarse.'
-        : 'This RFC appears on the SAT confirmed fraud list (Art. 69-B). Registration is not allowed.');
-      return;
-    }
-
-    // If blacklist check is still in progress, wait
-    if (blacklistStatus === 'checking') {
-      setError(lang === 'es' ? 'Verificando RFC, un momento…' : 'Verifying RFC, please wait…');
       return;
     }
 
@@ -98,13 +54,11 @@ export default function Register() {
       const metadata: Record<string, any> = {
         full_name: fullName.trim(),
         rfc: formatRfc(rfc),
-        rfc_verified: blacklistStatus === 'clean',
-        rfc_status: blacklistStatus, // 'clean' | 'presunto' | 'service_unavailable'
+        rfc_verified: false,   // SAT validation deferred to go-live
+        rfc_status: 'pending',
       };
-      // Store extracted birth date if available
       if (birthDate) {
-        const iso = birthDate.toISOString().slice(0, 10);
-        metadata.birth_date = iso;
+        metadata.birth_date = birthDate.toISOString().slice(0, 10);
       }
 
       const { error: signUpError } = await supabase.auth.signUp({
@@ -114,7 +68,6 @@ export default function Register() {
       });
 
       if (signUpError) throw signUpError;
-
       navigate('/auth?registered=1');
     } catch (err: any) {
       setError(err.message || (lang === 'es' ? 'Error al crear la cuenta.' : 'Error creating account.'));
@@ -219,55 +172,21 @@ export default function Register() {
                   color: '#e8f4f0',
                 }}
               />
-              {/* RFC status line */}
               <div className="mt-1.5 space-y-1">
                 {rfcError ? (
                   <p className="text-xs" style={{ color: '#ef4444' }}>{rfcError}</p>
                 ) : rfc.length === 13 && !rfcError ? (
                   <>
-                    {/* Birth date extracted from RFC */}
                     {birthDate && (
                       <p className="text-xs" style={{ color: '#6b7280' }}>
                         {es
-                          ? `RFC detecta fecha de nacimiento: ${formatBirthDate(birthDate, 'es')}`
-                          : `RFC encodes birth date: ${formatBirthDate(birthDate, 'en')}`}
+                          ? `Fecha de nacimiento: ${formatBirthDate(birthDate, 'es')}`
+                          : `Birth date: ${formatBirthDate(birthDate, 'en')}`}
                       </p>
                     )}
-                    {/* SAT 69-B blacklist check status */}
-                    {blacklistStatus === 'checking' && (
-                      <p className="text-xs" style={{ color: '#6b7280' }}>
-                        {es ? '⏳ Verificando lista SAT 69-B…' : '⏳ Checking SAT 69-B list…'}
-                      </p>
-                    )}
-                    {blacklistStatus === 'clean' && (
-                      <p className="text-xs font-medium" style={{ color: '#00e5c4' }}>
-                        {es ? '✓ RFC verificado — no aparece en listas SAT' : '✓ RFC verified — not on SAT lists'}
-                      </p>
-                    )}
-                    {blacklistStatus === 'presunto' && (
-                      <p className="text-xs" style={{ color: '#f59e0b' }}>
-                        {es
-                          ? '⚠ Este RFC aparece como presunto en Art. 69-B SAT. Puedes continuar pero será revisado.'
-                          : '⚠ This RFC appears as presumed on SAT Art. 69-B. You may continue but it will be reviewed.'}
-                      </p>
-                    )}
-                    {blacklistStatus === 'definitivo' && (
-                      <p className="text-xs" style={{ color: '#ef4444' }}>
-                        {es ? '✗ RFC en listado definitivo SAT 69-B — registro no permitido' : '✗ RFC on SAT 69-B confirmed list — registration not allowed'}
-                      </p>
-                    )}
-                    {blacklistStatus === 'service_unavailable' && (
-                      <p className="text-xs" style={{ color: '#f59e0b' }}>
-                        {es
-                          ? '⚠ Lista SAT no disponible — validación estructural aplicada'
-                          : '⚠ SAT list unavailable — structural validation applied'}
-                      </p>
-                    )}
-                    {blacklistStatus === 'idle' && !rfcError && (
-                      <p className="text-xs" style={{ color: '#00e5c4' }}>
-                        {es ? '✓ Formato válido' : '✓ Valid format'}
-                      </p>
-                    )}
+                    <p className="text-xs font-medium" style={{ color: '#00e5c4' }}>
+                      {es ? '✓ RFC válido' : '✓ Valid RFC'}
+                    </p>
                   </>
                 ) : (
                   <p className="text-xs" style={{ color: '#4b5563' }}>
@@ -288,15 +207,11 @@ export default function Register() {
 
             <button
               type="submit"
-              disabled={loading || !!rfcError || blacklistStatus === 'checking' || blacklistStatus === 'definitivo'}
+              disabled={loading || !!rfcError}
               className="w-full py-2.5 rounded-lg text-sm font-semibold transition-opacity hover:opacity-90 disabled:opacity-50 mt-2"
               style={{ background: '#00e5c4', color: '#080c10' }}
             >
-              {loading
-                ? (es ? 'Creando cuenta…' : 'Creating account…')
-                : blacklistStatus === 'checking'
-                  ? (es ? 'Verificando…' : 'Verifying…')
-                  : (es ? 'Crear cuenta' : 'Create account')}
+              {loading ? (es ? 'Creando cuenta…' : 'Creating account…') : (es ? 'Crear cuenta' : 'Create account')}
             </button>
           </form>
 
@@ -305,15 +220,6 @@ export default function Register() {
               {es ? '¿Ya tienes cuenta? Inicia sesión' : 'Already have an account? Sign in'}
             </Link>
           </div>
-        </div>
-
-        {/* Info box */}
-        <div className="mt-4 rounded-xl p-4" style={{ background: '#0a1520', border: '1px solid #1e2d3d' }}>
-          <p className="text-xs leading-relaxed" style={{ color: '#4b5563' }}>
-            {es
-              ? 'Tu RFC se valida estructuralmente y se verifica contra la lista pública SAT Art. 69-B (actualizada mensualmente).'
-              : 'Your RFC is structurally validated and checked against the public SAT Art. 69-B list (updated monthly).'}
-          </p>
         </div>
       </div>
     </div>
