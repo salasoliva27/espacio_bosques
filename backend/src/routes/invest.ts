@@ -10,7 +10,7 @@ import { fundProject } from '../services/wallet';
 import { requireAuth, AuthRequest } from '../middleware/auth';
 import { logger } from '../utils/logger';
 import { SIMULATION_MODE } from '../config/mode';
-import { addSimInvestment, getSimUserInvestments } from '../data/simStore';
+import { addSimInvestment, getSimUserInvestments, deductSimBalance, getSimBalance } from '../data/simStore';
 
 const router = Router();
 
@@ -55,15 +55,27 @@ router.post('/buy', requireAuth, async (req: AuthRequest, res: Response) => {
       return res.status(400).json({ error: 'mxn must be at least 100' });
     }
 
+    // 0. Check simulated balance (sim mode only)
+    if (SIMULATION_MODE()) {
+      const balance = getSimBalance(req.user!.id);
+      if (balance < amount) {
+        return res.status(400).json({
+          error: `Saldo insuficiente. Tienes $${balance.toLocaleString('es-MX')} MXN disponibles.`,
+          balance,
+        });
+      }
+    }
+
     // 1. Get Bitso quote (or simulation)
     const order = await simulateBuy(amount);
 
     // 2. Fund project escrow (simulation tx)
     const { txHash, simulation } = await fundProject(projectId, order.eth);
 
-    // 3. Update in-memory funding progress (simulation mode)
+    // 3. Update in-memory funding progress + deduct balance (simulation mode)
     if (SIMULATION_MODE()) {
       addSimInvestment(projectId, order.eth, amount, req.user?.id);
+      deductSimBalance(req.user!.id, amount);
     }
 
     logger.info('[invest] investment recorded', {
@@ -83,6 +95,7 @@ router.post('/buy', requireAuth, async (req: AuthRequest, res: Response) => {
       eth: order.eth,
       rate: order.rate,
       simulation: SIMULATION_MODE(),
+      remainingBalance: SIMULATION_MODE() ? getSimBalance(req.user!.id) : undefined,
       message: SIMULATION_MODE()
         ? 'Inversión simulada registrada correctamente ✓'
         : 'Inversión completada',

@@ -102,6 +102,32 @@ export interface SimUserInvestment {
 // Rate used for MXN display — approximate Bitso sandbox rate
 const ETH_MXN_RATE = 65000;
 
+// ── Simulated MXN balances ─────────────────────────────────────────
+// In production this would be the user's Bitso wallet balance (fetched via Bitso API).
+// Platform NEVER holds real funds — balance is always Bitso-custodied.
+const DEFAULT_SIM_BALANCE_MXN = 10_000; // every new sim user starts with $10,000 MXN
+const userBalances = new Map<string, number>(); // userId → MXN balance
+
+export function getSimBalance(userId: string): number {
+  if (!userBalances.has(userId)) userBalances.set(userId, DEFAULT_SIM_BALANCE_MXN);
+  return userBalances.get(userId)!;
+}
+
+export function addSimBalance(userId: string, mxn: number): number {
+  const current = getSimBalance(userId);
+  const next = Math.max(0, current + mxn);
+  userBalances.set(userId, next);
+  return next;
+}
+
+/** Returns false if insufficient funds. */
+export function deductSimBalance(userId: string, mxn: number): boolean {
+  const current = getSimBalance(userId);
+  if (current < mxn) return false;
+  userBalances.set(userId, current - mxn);
+  return true;
+}
+
 /**
  * Return all investments for a specific user across all projects.
  * userId should be the Supabase user ID from req.user.id.

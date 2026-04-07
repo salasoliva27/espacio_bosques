@@ -62,6 +62,8 @@ const translations = {
     'invest.close': 'Close',
     'invest.error_quote': 'Failed to get quote',
     'invest.error_confirm': 'Failed to confirm investment',
+    'invest.balance_label': 'Available balance',
+    'invest.balance_remaining': 'Remaining balance',
     // CreateProject
     'create.title': 'Create Project with AI',
     'create.step1_title': 'Step 1: Describe Your Idea',
@@ -177,6 +179,8 @@ const translations = {
     'invest.close': 'Cerrar',
     'invest.error_quote': 'Error al obtener cotización',
     'invest.error_confirm': 'Error al confirmar inversión',
+    'invest.balance_label': 'Saldo disponible',
+    'invest.balance_remaining': 'Saldo restante',
     'create.title': 'Crear Proyecto con IA',
     'create.step1_title': 'Paso 1: Describe tu idea',
     'create.step1_desc': 'Describe tu idea de proyecto comunitario para la colonia Bosques. La IA la convertirá en una propuesta completa con hitos y estructura de financiamiento.',

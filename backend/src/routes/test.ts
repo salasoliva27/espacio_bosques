@@ -10,7 +10,7 @@
  *   POST /api/test/reset        → wipe all sim investments (keeps seed funding)
  */
 import { Router, Request, Response } from 'express';
-import { DEMO_PROJECTS, addSimInvestment, getSimUserInvestments } from '../data/simStore';
+import { DEMO_PROJECTS, addSimInvestment, getSimUserInvestments, addSimBalance, getSimBalance } from '../data/simStore';
 import { getQuote } from '../services/bitso';
 
 const router = Router();
@@ -40,6 +40,18 @@ router.get('/', (_req: Request, res: Response) => {
         example: `curl -s -X POST http://localhost:3001/api/test/invest \\
   -H 'Content-Type: application/json' \\
   -d '{"mxn": 100}'`,
+      },
+      {
+        method: 'POST',
+        path: '/api/test/add-balance',
+        description: 'Credit MXN balance to a user',
+        body: {
+          userId: 'string (optional, defaults to demo-test-user)',
+          mxn: 'number (positive to add, negative to subtract)',
+        },
+        example: `curl -s -X POST http://localhost:3001/api/test/add-balance \\
+  -H 'Content-Type: application/json' \\
+  -d '{"mxn": 5000}'`,
       },
       {
         method: 'POST',
@@ -83,7 +95,10 @@ router.get('/state', (_req: Request, res: Response) => {
     };
   });
 
-  res.json({ projects });
+  res.json({
+    projects,
+    balanceNote: 'Use POST /api/test/add-balance to credit MXN to a user. Default: $10,000 MXN per new user.',
+  });
 });
 
 /* ── POST /api/test/invest ─────────────────────────────────────── */
@@ -117,6 +132,16 @@ router.post('/invest', async (req: Request, res: Response) => {
   } catch (err: any) {
     return res.status(500).json({ error: err.message });
   }
+});
+
+/* ── POST /api/test/add-balance ───────────────────────────────── */
+router.post('/add-balance', (req: Request, res: Response) => {
+  const userId: string = req.body.userId ?? DEMO_USER_ID;
+  const mxn: number = Number(req.body.mxn ?? 5000);
+  if (isNaN(mxn)) return res.status(400).json({ error: 'mxn must be a number' });
+
+  const newBalance = addSimBalance(userId, mxn);
+  return res.json({ ok: true, userId, added: mxn, balance: newBalance });
 });
 
 /* ── POST /api/test/reset ──────────────────────────────────────── */

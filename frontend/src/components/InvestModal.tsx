@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { supabase } from '../lib/auth';
 import { useT } from '../context/LanguageContext';
@@ -35,6 +35,7 @@ export default function InvestModal({ projectId, projectTitle, onClose }: Invest
   const [result, setResult] = useState<BuyResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [balance, setBalance] = useState<number | null>(null);
   const t = useT();
 
   const getAuthHeader = async (): Promise<string> => {
@@ -42,6 +43,18 @@ export default function InvestModal({ projectId, projectTitle, onClose }: Invest
     const token = data.session?.access_token;
     return token ? `Bearer ${token}` : 'Bearer sim-token';
   };
+
+  // Fetch balance on mount
+  useEffect(() => {
+    supabase.auth.getSession().then(async ({ data }) => {
+      const token = data.session?.access_token;
+      if (!token) return;
+      try {
+        const res = await axios.get('/api/balance/me', { headers: { Authorization: `Bearer ${token}` } });
+        setBalance(res.data.mxn);
+      } catch { /* ignore */ }
+    });
+  }, []);
 
   const handleGetQuote = async () => {
     const amount = parseFloat(mxn);
@@ -74,6 +87,7 @@ export default function InvestModal({ projectId, projectTitle, onClose }: Invest
         { headers: { Authorization: authHeader } }
       );
       setResult(data);
+      if (data.remainingBalance !== undefined) setBalance(data.remainingBalance);
       setStep('success');
     } catch (err: any) {
       setError(err.response?.data?.error || t('invest.error_confirm'));
@@ -92,6 +106,14 @@ export default function InvestModal({ projectId, projectTitle, onClose }: Invest
 
         {step === 'amount' && (
           <div className="space-y-4">
+            {balance !== null && (
+              <div className="flex items-center justify-between text-xs px-3 py-2 rounded-lg" style={{ background: '#080c10', border: '1px solid #1e2d3d' }}>
+                <span style={{ color: '#6b7280' }}>{t('invest.balance_label')}</span>
+                <span className="font-semibold" style={{ color: '#00e5c4' }}>
+                  ${balance.toLocaleString('es-MX')} MXN
+                </span>
+              </div>
+            )}
             <div>
               <label className="block text-xs mb-1.5" style={{ color: '#9ca3af' }}>{t('invest.amount_label')}</label>
               <div className="relative">
@@ -155,6 +177,12 @@ export default function InvestModal({ projectId, projectTitle, onClose }: Invest
             </div>
             {result.simulation && (
               <div className="text-xs py-1.5 px-3 rounded-lg" style={{ background: '#1a1200', color: '#f59e0b' }}>{t('invest.sim_tx')}</div>
+            )}
+            {balance !== null && (
+              <div className="flex items-center justify-between text-xs px-3 py-2 rounded-lg" style={{ background: '#080c10', border: '1px solid #1e2d3d' }}>
+                <span style={{ color: '#6b7280' }}>{t('invest.balance_remaining')}</span>
+                <span className="font-semibold" style={{ color: '#00e5c4' }}>${balance.toLocaleString('es-MX')} MXN</span>
+              </div>
             )}
             <div className="text-left text-xs space-y-1 py-3 px-4 rounded-xl" style={{ background: '#080c10' }}>
               <div className="flex gap-2">

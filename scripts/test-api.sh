@@ -106,14 +106,42 @@ authenticated_flow() {
     jq --arg id "$PROJECT_ID" '.projects[] | select(.id == $id) | {fundingPct, raisedEth, investmentCount}'
 }
 
+# ── add balance (no auth) ─────────────────────────────────────────────────────
+add_balance() {
+  local user="${2:-$DEMO_USER_ID}"
+  local amount="${3:-5000}"
+  hdr "Add balance — ${amount} MXN to ${user}"
+  curl -sf -X POST "$BACKEND/api/test/add-balance" \
+    -H 'Content-Type: application/json' \
+    -d "{\"userId\": \"$user\", \"mxn\": $amount}" | jq .
+}
+
+# ── check authenticated balance ───────────────────────────────────────────────
+check_balance() {
+  hdr "Supabase sign-in (${DEMO_EMAIL})"
+  local auth_resp TOKEN
+  auth_resp=$(curl -sf -X POST \
+    "${SUPABASE_URL}/auth/v1/token?grant_type=password" \
+    -H "apikey: ${ANON_KEY}" \
+    -H 'Content-Type: application/json' \
+    -d "{\"email\": \"${DEMO_EMAIL}\", \"password\": \"${DEMO_PASS}\"}")
+  TOKEN=$(echo "$auth_resp" | jq -r '.access_token')
+  [[ "$TOKEN" == "null" || -z "$TOKEN" ]] && fail "Auth failed"
+
+  hdr "GET /api/balance/me"
+  curl -sf "$BACKEND/api/balance/me" -H "Authorization: Bearer ${TOKEN}" | jq .
+}
+
 # ── router ────────────────────────────────────────────────────────────────────
 check_backend
 
 case "${1:-}" in
-  --state)  dump_state ;;
-  --reset)  reset_investments ;;
-  --sim)    sim_invest ;;
-  *)        authenticated_flow ;;
+  --state)         dump_state ;;
+  --reset)         reset_investments ;;
+  --sim)           sim_invest ;;
+  --balance)       check_balance ;;
+  --add-balance)   add_balance "$@" ;;
+  *)               authenticated_flow ;;
 esac
 
 echo ""
