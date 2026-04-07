@@ -13,20 +13,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
 
 export const signOut = () => supabase.auth.signOut();
 
-const SIM_USER = {
-  id: 'sim-user',
-  email: 'demo@bosques.mx',
-  role: 'authenticated',
-  user_metadata: { full_name: 'Demo Usuario' },
-  created_at: '2024-01-01T00:00:00Z',
-} as any;
-
-const SIM_SESSION = { user: SIM_USER, access_token: 'sim-token', token_type: 'bearer' } as any;
-
-/** Use instead of supabase.auth.getSession() — returns sim session in SIMULATION_MODE */
+/** Returns the current session — always uses real Supabase auth. */
 export async function getSession() {
-  if (import.meta.env.VITE_SIMULATION_MODE === 'true') {
-    return { data: { session: SIM_SESSION }, error: null };
-  }
   return supabase.auth.getSession();
 }

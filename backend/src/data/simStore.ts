@@ -97,6 +97,13 @@ function loadPersistedData(): void {
         providerProfileStore.set(userId, profile as ProviderUserProfile);
       }
     }
+
+    // Restore user balances
+    if (data.balances && typeof data.balances === 'object') {
+      for (const [userId, balance] of Object.entries(data.balances as Record<string, number>)) {
+        userBalances.set(userId, Number(balance));
+      }
+    }
   } catch {
     // Ignore load errors — start fresh
   }
@@ -113,10 +120,16 @@ export function persistData(): void {
     providerProfileStore.forEach((profile, userId) => {
       providerProfilesObj[userId] = profile;
     });
+    // Persist user balances so they survive restarts
+    const balancesObj: Record<string, number> = {};
+    userBalances.forEach((balance, userId) => {
+      balancesObj[userId] = balance;
+    });
     fs.writeFileSync(DATA_FILE, JSON.stringify({
       projects: userCreatedProjects,
       comments: commentsObj,
       providerProfiles: providerProfilesObj,
+      balances: balancesObj,
     }, null, 2), 'utf8');
   } catch {
     // Ignore write errors
@@ -210,6 +223,7 @@ export function addSimBalance(userId: string, mxn: number): number {
   const current = getSimBalance(userId);
   const next = Math.max(0, current + mxn);
   userBalances.set(userId, next);
+  persistData();
   return next;
 }
 
@@ -217,6 +231,7 @@ export function deductSimBalance(userId: string, mxn: number): boolean {
   const current = getSimBalance(userId);
   if (current < mxn) return false;
   userBalances.set(userId, current - mxn);
+  persistData();
   return true;
 }
 

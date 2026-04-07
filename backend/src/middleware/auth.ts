@@ -1,6 +1,12 @@
 /**
- * Supabase JWT auth middleware — validates the Bearer token issued by Supabase Auth.
- * In simulation mode, accepts any token and sets a mock user.
+ * Supabase JWT auth middleware.
+ *
+ * SIMULATION_MODE does NOT bypass real auth.
+ * It only signals that blockchain/Bitso operations are simulated.
+ *
+ * Token handling:
+ *  - Real Supabase JWT → always validated against Supabase, real user ID used
+ *  - Literal "sim-token" → only accepted in simulation mode, sets id="sim-user" (test harness only)
  */
 import { Request, Response, NextFunction } from 'express';
 import { createClient } from '@supabase/supabase-js';
@@ -10,7 +16,6 @@ import { logger } from '../utils/logger';
 const supabaseUrl = process.env.SUPABASE_URL!;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
-// Lazy-init to avoid crashing when env vars aren't set
 let _supabase: ReturnType<typeof createClient> | null = null;
 function getSupabase() {
   if (!_supabase && supabaseUrl && supabaseKey) {
@@ -43,18 +48,22 @@ export async function requireAuth(
 
   const token = authHeader.slice(7);
 
-  // In simulation mode, accept any non-empty token
-  if (SIMULATION_MODE()) {
-    req.user = { id: 'sim-user', email: 'demo@bosques.mx', role: 'authenticated' };
-    next();
+  // Allow literal sim-token only in simulation mode (test harness / curl scripts)
+  if (token === 'sim-token') {
+    if (SIMULATION_MODE()) {
+      req.user = { id: 'sim-user', email: 'test@bosques.mx', role: 'authenticated' };
+      next();
+      return;
+    }
+    res.status(401).json({ error: 'sim-token not accepted outside simulation mode' });
     return;
   }
 
+  // Real JWT — validate against Supabase regardless of simulation mode
   const supabase = getSupabase();
   if (!supabase) {
-    logger.warn('[auth] Supabase not configured — allowing request (dev only)');
-    req.user = { id: 'dev-user', email: 'dev@bosques.mx', role: 'authenticated' };
-    next();
+    logger.error('[auth] Supabase not configured — cannot validate JWT');
+    res.status(503).json({ error: 'Auth service not configured' });
     return;
   }
 
