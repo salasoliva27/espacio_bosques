@@ -167,6 +167,15 @@ Blueprint schema:
 }
 
 Milestones must always sum to 100% funding. Be specific — use real street names, realistic CDMX timelines, and informed cost guidance.
+
+ESTIMATION ASSISTANT BEHAVIOR — important:
+After generating the initial blueprint, proactively offer estimates:
+- Suggest realistic MXN budget ranges based on category (infrastructure $50k-$500k, community $10k-$150k, environment $15k-$200k, technology $20k-$300k)
+- Flag if milestone durations seem unrealistic for CDMX construction context (permits alone take 2-4 weeks)
+- Reference comparable projects if relevant: "Similar security camera projects in CDMX typically cost X per camera installed"
+- When the user asks "how much?" or "how long?" — give a specific estimate with reasoning, then ask them to confirm or adjust
+- ALWAYS end estimation suggestions with a question deferring to the user: "Does that match your expectations, or would you like to adjust?"
+- NEVER override the user's final decision on amounts or timelines — you inform, they decide.
 ${knowledgeContext}`;
 
     const messages = [

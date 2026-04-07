@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import axios from 'axios';
-import { supabase } from '../lib/auth';
 import { useT } from '../context/LanguageContext';
 import InvestModal from '../components/InvestModal';
+import MilestoneCalendar from '../components/MilestoneCalendar';
+import VotingSection from '../components/VotingSection';
+import TransactionLedger from '../components/TransactionLedger';
 
 const STATUS_STYLES: Record<string, { color: string; bg: string }> = {
   COMPLETED:  { color: '#10b981', bg: 'rgba(16,185,129,0.12)' },
@@ -88,6 +90,11 @@ export default function ProjectDetail() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Milestone calendar — full width */}
+          <div className="col-span-full">
+            <MilestoneCalendar milestones={project.milestones} projectCreatedAt={project.createdAt} />
+          </div>
+
           {/* Left column */}
           <div className="lg:col-span-2 space-y-5">
             {/* About */}
@@ -191,6 +198,12 @@ export default function ProjectDetail() {
             )}
           </div>
         </div>
+      </div>
+
+      {/* Voting + Transaction ledger */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-10 space-y-6">
+        <VotingSection projectId={project.id} milestones={project.milestones} />
+        <TransactionLedger projectId={project.id} />
       </div>
 
       {showInvest && (

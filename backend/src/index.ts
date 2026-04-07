@@ -19,6 +19,7 @@ import investRoutes from "./routes/invest";
 import testRoutes from "./routes/test";
 import balanceRoutes from "./routes/balance";
 import providerRoutes from "./routes/providers";
+import governanceRoutes from "./routes/governance";
 
 // Initialize environment
 dotenv.config({ path: "../.env" });
@@ -66,6 +67,7 @@ app.use("/api/reports", reportRoutes);
 app.use("/api/invest", investRoutes);
 app.use("/api/balance", balanceRoutes);
 app.use("/api/providers", providerRoutes);
+app.use("/api/governance", governanceRoutes);
 
 // Test harness — simulation mode only
 import { SIMULATION_MODE } from "./config/mode";
