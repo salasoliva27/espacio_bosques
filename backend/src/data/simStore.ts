@@ -1,14 +1,18 @@
 /**
- * In-memory simulation store.
- * Shared between routes/projects.ts and routes/invest.ts so that
- * investments recorded during a session are reflected on the dashboard.
+ * In-memory simulation store with JSON persistence.
+ * Shared between routes so that investments + projects survive a restart.
  *
  * Goals are intentionally small (1 ETH = ~65,000 MXN) so that a typical
  * 1,000 MXN investment (~0.015 ETH) produces ~1.5% visible progress.
  */
 
+import * as fs from 'fs';
+import * as path from 'path';
+
 // 1 ETH in wei
 const ETH = BigInt('1000000000000000000');
+
+const DATA_FILE = path.join(__dirname, '../../sim-data.json');
 
 export interface SimProject {
   id: string;
@@ -35,6 +39,16 @@ export interface SimProject {
   _count: { investments: number };
 }
 
+export interface SimComment {
+  id: string;
+  projectId: string;
+  userId: string;
+  walletAddress: string;
+  username: string;
+  text: string;
+  createdAt: string; // ISO string for easy serialization
+}
+
 export const DEMO_PROJECTS: SimProject[] = [
   {
     id: 'demo-project-001',
@@ -43,9 +57,8 @@ export const DEMO_PROJECTS: SimProject[] = [
       'Deploy a mesh of AI-powered security cameras with real-time incident alerts across Paseo de las Palmas and connecting streets. Footage is processed on-device; no cloud storage. Residents receive push alerts for unusual activity and can review clips via the Espacio Bosques app.',
     category: 'INFRASTRUCTURE',
     status: 'ACTIVE',
-    // Goal: 1 ETH — 1,000 MXN ≈ 0.015 ETH ≈ 1.5% progress per investment
     fundingGoal: (ETH).toString(),
-    fundingRaised: ((ETH * BigInt(37)) / BigInt(100)).toString(), // 37% pre-funded
+    fundingRaised: ((ETH * BigInt(37)) / BigInt(100)).toString(),
     createdAt: new Date('2026-01-15'),
     updatedAt: new Date('2026-04-01'),
     planner: { id: 'planner-001', walletAddress: '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266', role: 'PLANNER' },
@@ -56,7 +69,6 @@ export const DEMO_PROJECTS: SimProject[] = [
     ],
     investments: [
       { id: 'inv1', amount: ((ETH * BigInt(37)) / BigInt(100)).toString(), investor: { id: 'u1', walletAddress: '0xsim001' } },
-      // Pre-seeded sim-user investment (500 MXN ≈ 0.0075 ETH)
       { id: 'inv-sim-seed-1', amount: (ETH * BigInt(75) / BigInt(10000)).toString(), investor: { id: 'sim-user', walletAddress: '0xsimulated' }, mxn: 500, createdAt: new Date('2026-03-10') } as any,
     ],
     telemetry: [{ id: 't1', timestamp: new Date(), data: { uptimePercent: 98.5, batteryPercent: 87 } }],
@@ -71,7 +83,7 @@ export const DEMO_PROJECTS: SimProject[] = [
     category: 'COMMUNITY',
     status: 'ACTIVE',
     fundingGoal: (ETH).toString(),
-    fundingRaised: ((ETH * BigInt(21)) / BigInt(100)).toString(), // 21% pre-funded
+    fundingRaised: ((ETH * BigInt(21)) / BigInt(100)).toString(),
     createdAt: new Date('2026-02-20'),
     updatedAt: new Date('2026-04-02'),
     planner: { id: 'planner-002', walletAddress: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8', role: 'PLANNER' },
@@ -87,26 +99,130 @@ export const DEMO_PROJECTS: SimProject[] = [
     reports: [],
     _count: { investments: 1 },
   },
+  {
+    id: 'demo-project-003',
+    title: 'LED Lighting — Paseo de las Palmas Corridor',
+    summary:
+      'Comprehensive LED retrofit of the 1.2 km Paseo de las Palmas stretch between Presa Angostura and Presa Falcón. Replaces sodium vapor lamps with smart LEDs, reduces energy consumption 60%, and improves pedestrian safety during evening hours.',
+    category: 'INFRASTRUCTURE',
+    status: 'ACTIVE',
+    fundingGoal: (ETH).toString(),
+    fundingRaised: ((ETH * BigInt(54)) / BigInt(100)).toString(),
+    createdAt: new Date('2026-02-01'),
+    updatedAt: new Date('2026-04-05'),
+    planner: { id: 'planner-003', walletAddress: '0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC', role: 'PLANNER' },
+    milestones: [
+      { id: 'ml1', title: 'Site survey & permit filing', status: 'COMPLETED', fundingPercentage: 20, description: 'Lux measurements, Alcaldía Miguel Hidalgo permit, CFE connection approval', durationDays: 35 },
+      { id: 'ml2', title: 'Procurement', status: 'COMPLETED', fundingPercentage: 40, description: 'LED fixtures (NOM-certified), smart dimmer modules, mounting hardware', durationDays: 21 },
+      { id: 'ml3', title: 'Installation', status: 'IN_PROGRESS', fundingPercentage: 30, description: 'Install 15 retrofit fixtures + 3 new posts in gap areas; connect to CFE grid', durationDays: 28 },
+      { id: 'ml4', title: 'Testing & handover', status: 'PENDING', fundingPercentage: 10, description: 'Municipal inspection, lux compliance, resident acceptance', durationDays: 14 },
+    ],
+    investments: [
+      { id: 'inv4', amount: ((ETH * BigInt(54)) / BigInt(100)).toString(), investor: { id: 'u4', walletAddress: '0xsim004' } },
+    ],
+    telemetry: [],
+    reports: [],
+    _count: { investments: 4 },
+  },
 ];
+
+// ── Comments store ─────────────────────────────────────────────────────
+const commentStore = new Map<string, SimComment[]>();
+
+// Seed demo comments
+commentStore.set('demo-project-001', [
+  { id: 'c1', projectId: 'demo-project-001', userId: 'u2', walletAddress: '0xsim002', username: 'Vecino Bosques', text: 'Excelente proyecto, llevan semanas con la cámara en la esquina de Palmas sin funcionar.', createdAt: '2026-04-01T09:15:00.000Z' },
+  { id: 'c2', projectId: 'demo-project-001', userId: 'u3', walletAddress: '0xsim003', username: 'Residente Explanada', text: 'Ya aporté 1,000 MXN. ¿Cuándo instalan las cámaras en Presa Falcón?', createdAt: '2026-04-02T14:30:00.000Z' },
+]);
+commentStore.set('demo-project-002', [
+  { id: 'c3', projectId: 'demo-project-002', userId: 'u1', walletAddress: '0xsim001', username: 'Planificador Palmas', text: 'El diseño final ya fue aprobado por el arquitecto paisajista. ¡Iniciamos en 2 semanas!', createdAt: '2026-04-03T11:00:00.000Z' },
+]);
+
+// ── Persistence ───────────────────────────────────────────────────────
+
+function loadPersistedData(): void {
+  try {
+    if (!fs.existsSync(DATA_FILE)) return;
+    const raw = fs.readFileSync(DATA_FILE, 'utf8');
+    const data = JSON.parse(raw);
+
+    if (Array.isArray(data.projects)) {
+      for (const p of data.projects) {
+        if (!DEMO_PROJECTS.find(d => d.id === p.id)) {
+          DEMO_PROJECTS.push({
+            ...p,
+            createdAt: new Date(p.createdAt),
+            updatedAt: new Date(p.updatedAt),
+            investments: (p.investments || []).map((inv: any) => ({
+              ...inv,
+              createdAt: inv.createdAt ? new Date(inv.createdAt) : undefined,
+            })),
+          });
+        }
+      }
+    }
+
+    if (data.comments && typeof data.comments === 'object') {
+      for (const [projectId, comments] of Object.entries(data.comments as Record<string, SimComment[]>)) {
+        const existing = commentStore.get(projectId) ?? [];
+        const existingIds = new Set(existing.map(c => c.id));
+        const newComments = (comments as SimComment[]).filter(c => !existingIds.has(c.id));
+        if (newComments.length > 0) {
+          commentStore.set(projectId, [...existing, ...newComments]);
+        }
+      }
+    }
+  } catch {
+    // Ignore load errors — start fresh
+  }
+}
+
+export function persistData(): void {
+  try {
+    const userCreatedProjects = DEMO_PROJECTS.filter(p => p.id.startsWith('sim-'));
+    const commentsObj: Record<string, SimComment[]> = {};
+    commentStore.forEach((comments, projectId) => {
+      commentsObj[projectId] = comments;
+    });
+    fs.writeFileSync(DATA_FILE, JSON.stringify({ projects: userCreatedProjects, comments: commentsObj }, null, 2), 'utf8');
+  } catch {
+    // Ignore write errors
+  }
+}
+
+/** Add a user-created sim project to the store and persist it. */
+export function addSimProject(project: SimProject): void {
+  DEMO_PROJECTS.unshift(project);
+  persistData();
+}
+
+// ── Comments ──────────────────────────────────────────────────────────
+
+export function getProjectComments(projectId: string): SimComment[] {
+  return (commentStore.get(projectId) ?? []).slice().reverse(); // newest first
+}
+
+export function addProjectComment(comment: SimComment): void {
+  const existing = commentStore.get(comment.projectId) ?? [];
+  commentStore.set(comment.projectId, [...existing, comment]);
+  persistData();
+}
+
+// ── Balances ──────────────────────────────────────────────────────────
 
 export interface SimUserInvestment {
   id: string;
   projectId: string;
   projectTitle: string;
   projectCategory: string;
-  ethAmount: number;   // ETH float
-  mxnAmount: number;   // MXN (approximate)
+  ethAmount: number;
+  mxnAmount: number;
   createdAt: Date;
 }
 
-// Rate used for MXN display — approximate Bitso sandbox rate
 const ETH_MXN_RATE = 65000;
-
-// ── Simulated MXN balances ─────────────────────────────────────────
-// In production this would be the user's Bitso wallet balance (fetched via Bitso API).
-// Platform NEVER holds real funds — balance is always Bitso-custodied.
-const DEFAULT_SIM_BALANCE_MXN = 10_000; // every new sim user starts with $10,000 MXN
-const userBalances = new Map<string, number>(); // userId → MXN balance
+const DEFAULT_SIM_BALANCE_MXN = 10_000;
+const userBalances = new Map<string, number>();
 
 export function getSimBalance(userId: string): number {
   if (!userBalances.has(userId)) userBalances.set(userId, DEFAULT_SIM_BALANCE_MXN);
@@ -120,7 +236,6 @@ export function addSimBalance(userId: string, mxn: number): number {
   return next;
 }
 
-/** Returns false if insufficient funds. */
 export function deductSimBalance(userId: string, mxn: number): boolean {
   const current = getSimBalance(userId);
   if (current < mxn) return false;
@@ -128,10 +243,6 @@ export function deductSimBalance(userId: string, mxn: number): boolean {
   return true;
 }
 
-/**
- * Return all investments for a specific user across all projects.
- * userId should be the Supabase user ID from req.user.id.
- */
 export function getSimUserInvestments(userId: string): SimUserInvestment[] {
   const results: SimUserInvestment[] = [];
   for (const project of DEMO_PROJECTS) {
@@ -153,16 +264,10 @@ export function getSimUserInvestments(userId: string): SimUserInvestment[] {
   return results.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
 }
 
-/**
- * Record a simulated investment against a project.
- * Converts ETH float → wei string and adds it to fundingRaised.
- * Returns false if project not found.
- */
 export function addSimInvestment(projectId: string, ethAmount: number, mxnAmount?: number, userId?: string): boolean {
   const project = DEMO_PROJECTS.find((p) => p.id === projectId);
   if (!project) return false;
 
-  // Convert ETH float to wei (1 ETH = 1e18 wei)
   const weiAmount = BigInt(Math.round(ethAmount * 1e12)) * BigInt(1e6);
   project.fundingRaised = (BigInt(project.fundingRaised) + weiAmount).toString();
   project.updatedAt = new Date();
@@ -177,5 +282,9 @@ export function addSimInvestment(projectId: string, ethAmount: number, mxnAmount
   project.investments.push(inv);
   project._count.investments += 1;
 
+  persistData();
   return true;
 }
+
+// ── Init ──────────────────────────────────────────────────────────────
+loadPersistedData();
