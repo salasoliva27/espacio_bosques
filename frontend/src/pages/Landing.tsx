@@ -13,8 +13,7 @@ import { useT } from '../context/LanguageContext';
 // SPLINE_HERO   → hero section right panel (desktop split layout)
 // SPLINE_ACCENT → full-width band between stats and "how it works"
 //
-const SPLINE_HERO   = import.meta.env.VITE_SPLINE_HERO   || '';
-const SPLINE_ACCENT = import.meta.env.VITE_SPLINE_ACCENT || '';
+const SPLINE_HERO = import.meta.env.VITE_SPLINE_HERO || '';
 
 const Spline = lazy(() => import('@splinetool/react-spline'));
 
@@ -69,7 +68,7 @@ function SplineScene({ url, className = '', style }: { url: string; className?: 
 // ── Search Bar ────────────────────────────────────────────────────────
 interface SearchResult { projects: any[]; providers: any[]; query: string }
 
-function SearchBar() {
+function SearchBar({ compact = false }: { compact?: boolean }) {
   const t = useT();
   const navigate = useNavigate();
   const [query, setQuery] = useState('');
@@ -113,21 +112,25 @@ function SearchBar() {
   const total = results ? results.projects.length + results.providers.length : 0;
 
   return (
-    <div ref={containerRef} className="relative w-full max-w-xl mx-auto">
+    <div ref={containerRef} className="relative w-full">
       {/* Input */}
       <div
-        className="flex items-center gap-2 px-4 py-3 rounded-2xl"
-        style={{ background: '#0d1520', border: `1px solid ${open ? 'rgba(0,229,196,0.4)' : '#1e2d3d'}`, transition: 'border-color 0.2s' }}
+        className={`flex items-center gap-2 rounded-xl backdrop-blur-sm ${compact ? 'px-3 py-2' : 'px-4 py-3 rounded-2xl'}`}
+        style={{
+          background: compact ? 'rgba(13,21,32,0.7)' : '#0d1520',
+          border: `1px solid ${open ? 'rgba(0,229,196,0.4)' : compact ? 'rgba(255,255,255,0.1)' : '#1e2d3d'}`,
+          transition: 'border-color 0.2s',
+        }}
       >
-        <Search size={16} style={{ color: '#4b5563', flexShrink: 0 }} />
+        <Search size={compact ? 13 : 16} style={{ color: '#4b5563', flexShrink: 0 }} />
         <input
           value={query}
           onChange={handleChange}
           onKeyDown={handleKeyDown}
           onFocus={() => { if (results && total > 0) setOpen(true); }}
           placeholder={t('search.placeholder')}
-          className="flex-1 bg-transparent text-sm outline-none"
-          style={{ color: '#e8f4f0' }}
+          className="flex-1 bg-transparent outline-none"
+          style={{ color: '#e8f4f0', fontSize: compact ? '13px' : '14px' }}
         />
         {loading && (
           <div className="w-4 h-4 rounded-full border-2 animate-spin flex-shrink-0"
@@ -204,8 +207,7 @@ function SearchBar() {
 
 export default function Landing() {
   const t = useT();
-  const hasHeroScene   = Boolean(SPLINE_HERO);
-  const hasAccentScene = Boolean(SPLINE_ACCENT);
+  const hasHeroScene = Boolean(SPLINE_HERO);
 
   const features = [
     { photo: PHOTOS.blueprint,    icon: Sparkles,   titleKey: 'landing.feat1_title' as const, descKey: 'landing.feat1_desc' as const },
@@ -289,7 +291,7 @@ export default function Landing() {
             {t('landing.hero_sub')}
           </p>
 
-          <div className={`flex flex-wrap gap-3 ${hasHeroScene ? '' : 'justify-center'}`}>
+          <div className={`flex flex-wrap gap-3 mb-6 ${hasHeroScene ? '' : 'justify-center'}`}>
             <Link
               to="/dashboard"
               className="flex items-center gap-2 px-7 py-3.5 rounded-xl text-sm font-bold transition-all hover:scale-[1.02] hover:shadow-lg"
@@ -304,6 +306,11 @@ export default function Landing() {
             >
               <Sparkles size={14} /> {t('landing.pitch')}
             </Link>
+          </div>
+
+          {/* Search */}
+          <div className={hasHeroScene ? 'max-w-md' : 'max-w-md mx-auto'}>
+            <SearchBar compact />
           </div>
         </div>
 
@@ -335,52 +342,6 @@ export default function Landing() {
         </div>
       </div>
 
-      {/* ── SEARCH BAR ────────────────────────────────────────────────── */}
-      <section className="py-10 px-4" style={{ background: '#080c10' }}>
-        <div className="max-w-xl mx-auto">
-          <p className="text-xs font-semibold tracking-widest uppercase text-center mb-4" style={{ color: '#4b5563' }}>
-            {t('search.placeholder')}
-          </p>
-          <SearchBar />
-        </div>
-      </section>
-
-      {/* ── SPLINE ACCENT BAND — only rendered when scene is configured ── */}
-      {hasAccentScene && (
-        <section
-          className="relative overflow-hidden"
-          style={{ height: 380, background: 'linear-gradient(to bottom, #0a0f17, #080c10)' }}
-          aria-label="3D visualization"
-        >
-          <div
-            className="absolute inset-0 pointer-events-none"
-            style={{ background: 'radial-gradient(ellipse 50% 80% at 50% 50%, rgba(0,229,196,0.05) 0%, transparent 70%)' }}
-          />
-          <div className="absolute inset-0">
-            <SplineScene url={SPLINE_ACCENT} />
-          </div>
-          {/* Fade edges */}
-          <div
-            className="absolute inset-x-0 top-0 h-20 pointer-events-none"
-            style={{ background: 'linear-gradient(to bottom, #0a0f17, transparent)' }}
-          />
-          <div
-            className="absolute inset-x-0 bottom-0 h-20 pointer-events-none"
-            style={{ background: 'linear-gradient(to top, #080c10, transparent)' }}
-          />
-          {/* Centered label */}
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <div className="text-center">
-              <p className="text-xs font-semibold tracking-widest uppercase mb-2" style={{ color: 'rgba(0,229,196,0.5)' }}>
-                {t('landing.section_tech')}
-              </p>
-              <h2 className="text-xl font-bold" style={{ color: 'rgba(232,244,240,0.6)' }}>
-                {t('landing.built_for')}
-              </h2>
-            </div>
-          </div>
-        </section>
-      )}
 
       {/* ── HOW IT WORKS ──────────────────────────────────────────────── */}
       <section className="max-w-5xl mx-auto px-4 sm:px-6 py-20">
@@ -401,12 +362,10 @@ export default function Landing() {
 
       {/* ── FEATURES — photo cards ─────────────────────────────────────── */}
       <section className="max-w-5xl mx-auto px-4 sm:px-6 pb-20">
-        {!hasAccentScene && (
-          <div className="mb-12">
-            <p className="text-xs font-semibold tracking-widest uppercase mb-3" style={{ color: '#00e5c4' }}>{t('landing.section_tech')}</p>
-            <h2 className="text-2xl sm:text-3xl font-bold" style={{ color: '#e8f4f0' }}>{t('landing.built_for')}</h2>
-          </div>
-        )}
+        <div className="mb-12">
+          <p className="text-xs font-semibold tracking-widest uppercase mb-3" style={{ color: '#00e5c4' }}>{t('landing.section_tech')}</p>
+          <h2 className="text-2xl sm:text-3xl font-bold" style={{ color: '#e8f4f0' }}>{t('landing.built_for')}</h2>
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
           {features.map(({ photo, icon: Icon, titleKey, descKey }) => (
             <div
