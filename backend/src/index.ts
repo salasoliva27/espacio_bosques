@@ -16,6 +16,7 @@ import aiRoutes from "./routes/ai";
 import simulationRoutes from "./routes/simulation";
 import reportRoutes from "./routes/reports";
 import investRoutes from "./routes/invest";
+import testRoutes from "./routes/test";
 
 // Initialize environment
 dotenv.config({ path: "../.env" });
@@ -50,6 +51,13 @@ app.use("/api/ai", aiRoutes);
 app.use("/api/simulate", simulationRoutes);
 app.use("/api/reports", reportRoutes);
 app.use("/api/invest", investRoutes);
+
+// Test harness — simulation mode only
+import { SIMULATION_MODE } from "./config/mode";
+if (SIMULATION_MODE()) {
+  app.use("/api/test", testRoutes);
+  logger.info("🧪 Test harness mounted at /api/test (simulation mode)");
+}
 
 // 404 handler
 app.use((req, res) => {
