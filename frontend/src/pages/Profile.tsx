@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/auth';
-import { t } from '../lib/i18n';
+import { useT } from '../context/LanguageContext';
 import { Pencil, Check, X, ArrowLeft, TrendingUp, Layers } from 'lucide-react';
 import type { User } from '@supabase/supabase-js';
 
@@ -37,6 +37,7 @@ function memberSince(user: User): string {
 
 export default function Profile() {
   const navigate = useNavigate();
+  const t = useT();
   const [user, setUser] = useState<User | null>(null);
   const [investments, setInvestments] = useState<SimInvestment[]>([]);
   const [loadingInv, setLoadingInv] = useState(true);

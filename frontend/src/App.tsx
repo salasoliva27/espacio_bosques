@@ -2,8 +2,7 @@ import { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { supabase } from './lib/auth';
-import { LanguageProvider, useLanguage } from './context/LanguageContext';
-import { t } from './lib/i18n';
+import { LanguageProvider, useT } from './context/LanguageContext';
 import SimulationBanner from './components/SimulationBanner';
 import AuthScreen from './components/AuthScreen';
 import Navbar from './components/Navbar';
@@ -17,8 +16,7 @@ import Profile from './pages/Profile';
 const queryClient = new QueryClient();
 
 function AppInner() {
-  const { lang } = useLanguage(); // re-render on lang change
-  void lang;
+  const t = useT();
   // undefined = loading, null = logged out, object = logged in
   const [session, setSession] = useState<any>(undefined);
 

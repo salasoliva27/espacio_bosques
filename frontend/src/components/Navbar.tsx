@@ -1,14 +1,14 @@
 import { Link, useLocation } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { supabase, signOut } from '../lib/auth';
-import { useLanguage } from '../context/LanguageContext';
-import { t } from '../lib/i18n';
+import { useLanguage, useT } from '../context/LanguageContext';
 import { LayoutGrid, Plus, LogOut, Globe, UserCircle } from 'lucide-react';
 import type { User } from '@supabase/supabase-js';
 
 export default function Navbar() {
   const [user, setUser] = useState<User | null>(null);
   const { lang, toggle } = useLanguage();
+  const t = useT();
   const location = useLocation();
 
   useEffect(() => {

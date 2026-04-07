@@ -1,11 +1,9 @@
 import { Link } from 'react-router-dom';
 import { Sparkles, ShieldCheck, BarChart3, ArrowRight, MapPin } from 'lucide-react';
-import { useLanguage } from '../context/LanguageContext';
-import { t } from '../lib/i18n';
+import { useT } from '../context/LanguageContext';
 
 export default function Landing() {
-  const { lang } = useLanguage();
-  void lang; // re-render on language change
+  const t = useT();
 
   const features = [
     {

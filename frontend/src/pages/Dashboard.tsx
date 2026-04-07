@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
-import { useLanguage } from '../context/LanguageContext';
-import { t } from '../lib/i18n';
+import { useT } from '../context/LanguageContext';
 
 interface Project {
   id: string;
@@ -32,8 +31,7 @@ const CATEGORY_COLORS: Record<string, string> = {
 export default function Dashboard() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
-  const { lang } = useLanguage();
-  void lang;
+  const t = useT();
 
   useEffect(() => { fetchProjects(); }, []);
 

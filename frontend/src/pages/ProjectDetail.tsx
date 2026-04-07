@@ -2,8 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import axios from 'axios';
 import { supabase } from '../lib/auth';
-import { useLanguage } from '../context/LanguageContext';
-import { t } from '../lib/i18n';
+import { useT } from '../context/LanguageContext';
 import InvestModal from '../components/InvestModal';
 
 const STATUS_STYLES: Record<string, { color: string; bg: string }> = {
@@ -18,8 +17,7 @@ export default function ProjectDetail() {
   const [project, setProject] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [showInvest, setShowInvest] = useState(false);
-  const { lang } = useLanguage();
-  void lang;
+  const t = useT();
 
   useEffect(() => { fetchProject(); }, [id]);
 

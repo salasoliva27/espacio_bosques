@@ -2,8 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/auth';
-import { useLanguage } from '../context/LanguageContext';
-import { t } from '../lib/i18n';
+import { useT } from '../context/LanguageContext';
 import { Sparkles, Send, ChevronRight, CheckCircle2, Clock, Layers } from 'lucide-react';
 
 interface Milestone {
@@ -50,8 +49,7 @@ export default function CreateProject() {
   const chatBottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const navigate = useNavigate();
-  const { lang } = useLanguage();
-  void lang;
+  const t = useT();
 
   useEffect(() => {
     chatBottomRef.current?.scrollIntoView({ behavior: 'smooth' });

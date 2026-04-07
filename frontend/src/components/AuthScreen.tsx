@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { supabase } from '../lib/auth';
-import { useLanguage } from '../context/LanguageContext';
-import { t } from '../lib/i18n';
+import { useLanguage, useT } from '../context/LanguageContext';
 
 interface AuthScreenProps {
   onSuccess: () => void;
@@ -17,6 +16,7 @@ export default function AuthScreen({ onSuccess }: AuthScreenProps) {
   const [message, setMessage] = useState('');
   const [pendingEmail, setPendingEmail] = useState('');
   const { lang, toggle } = useLanguage();
+  const t = useT();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

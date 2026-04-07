@@ -247,8 +247,16 @@ export function setLang(lang: Lang): void {
   localStorage.setItem('lang', lang);
 }
 
-export function t(key: TranslationKey, vars?: Record<string, string>): string {
-  const str = (translations[currentLang] as any)[key] ?? (translations.en as any)[key] ?? key;
+/** Pure translation function — takes lang explicitly. Prefer useT() in components. */
+export function translate(key: TranslationKey, lang: Lang, vars?: Record<string, string>): string {
+  const str = (translations[lang] as any)[key] ?? (translations.en as any)[key] ?? key;
   if (!vars) return str;
   return Object.entries(vars).reduce((s, [k, v]) => s.replace(`{${k}}`, v), str);
 }
+
+/** Legacy: reads module-level currentLang. Only use outside React components. */
+export function t(key: TranslationKey, vars?: Record<string, string>): string {
+  return translate(key, currentLang, vars);
+}
+
+export type { TranslationKey };

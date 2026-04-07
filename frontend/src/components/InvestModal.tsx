@@ -1,8 +1,7 @@
 import { useState } from 'react';
 import axios from 'axios';
 import { supabase } from '../lib/auth';
-import { useLanguage } from '../context/LanguageContext';
-import { t } from '../lib/i18n';
+import { useT } from '../context/LanguageContext';
 
 interface InvestModalProps {
   projectId: string;
@@ -36,8 +35,7 @@ export default function InvestModal({ projectId, projectTitle, onClose }: Invest
   const [result, setResult] = useState<BuyResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const { lang } = useLanguage();
-  void lang;
+  const t = useT();
 
   const getAuthHeader = async (): Promise<string> => {
     const { data } = await supabase.auth.getSession();
