@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { supabase } from './lib/auth';
-import { LanguageProvider, useT } from './context/LanguageContext';
+import { LanguageProvider } from './context/LanguageContext';
 import SimulationBanner from './components/SimulationBanner';
 import AuthScreen from './components/AuthScreen';
 import Navbar from './components/Navbar';
@@ -15,78 +15,86 @@ import Profile from './pages/Profile';
 import Providers from './pages/Providers';
 import ProposalSubmit from './pages/ProposalSubmit';
 import Feed from './pages/Feed';
+import Register from './pages/Register';
+import CompleteProfile from './pages/CompleteProfile';
 
 const queryClient = new QueryClient();
+const SIM = import.meta.env.VITE_SIMULATION_MODE === 'true';
 
 function AppInner() {
-  const t = useT();
-  // undefined = loading, null = logged out, object = logged in
   const [session, setSession] = useState<any>(undefined);
+  const location = useLocation();
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-    });
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, session) => {
-      setSession(session);
-    });
-
+    supabase.auth.getSession().then(({ data: { session } }) => setSession(session ?? null));
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, s) => setSession(s ?? null));
     return () => subscription.unsubscribe();
   }, []);
 
+  // Loading spinner
   if (session === undefined) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: '#080c10' }}>
-        <p style={{ color: '#9ca3af', fontSize: '14px' }}>{t('app.loading')}</p>
+        <div className="w-6 h-6 rounded-full border-2 animate-spin"
+          style={{ borderColor: 'rgba(0,229,196,0.3)', borderTopColor: '#00e5c4' }} />
       </div>
     );
   }
 
-  if (!session) {
-    return (
-      <>
-        <SimulationBanner />
-        <div style={{ paddingTop: import.meta.env.VITE_SIMULATION_MODE === 'true' ? '28px' : '0' }}>
-          <AuthScreen onSuccess={() => {}} />
-        </div>
-      </>
-    );
+  // Public routes — accessible without a session
+  if (location.pathname === '/register') {
+    return session ? <Navigate to="/dashboard" replace /> : <Register />;
+  }
+  if (location.pathname === '/auth') {
+    return session ? <Navigate to="/dashboard" replace /> : <AuthScreen />;
   }
 
+  // No session → force to sign-in
+  if (!session) return <Navigate to="/auth" replace />;
+
+  // Session exists but RFC not collected yet → complete profile
+  const hasRfc = Boolean(session.user?.user_metadata?.rfc);
+  if (!hasRfc && location.pathname !== '/register/complete') {
+    return <Navigate to="/register/complete" replace />;
+  }
+  if (location.pathname === '/register/complete') {
+    return hasRfc
+      ? <Navigate to="/dashboard" replace />
+      : <CompleteProfile user={session.user} />;
+  }
+
+  // Fully authenticated
   return (
     <QueryClientProvider client={queryClient}>
-      <Router>
-        <SimulationBanner />
-        <div
-          className="min-h-screen bg-gray-50"
-          style={{ paddingTop: import.meta.env.VITE_SIMULATION_MODE === 'true' ? '28px' : '0' }}
-        >
-          <Navbar />
-          <Routes>
-            <Route path="/" element={<Landing />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/projects/:id" element={<ProjectDetail />} />
-            <Route path="/create" element={<CreateProject />} />
-            <Route path="/reports/:projectId" element={<Reports />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/providers" element={<Providers />} />
-            <Route path="/projects/:projectId/milestones/:milestoneId/propose" element={<ProposalSubmit />} />
-            <Route path="/feed" element={<Feed />} />
-            <Route path="/auth/callback" element={<Dashboard />} />
-          </Routes>
-        </div>
-      </Router>
+      <div className="min-h-screen" style={{ background: '#080c10' }}>
+        <Navbar />
+        <Routes>
+          <Route path="/" element={<Landing />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/projects/:id" element={<ProjectDetail />} />
+          <Route path="/create" element={<CreateProject />} />
+          <Route path="/reports/:projectId" element={<Reports />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/providers" element={<Providers />} />
+          <Route path="/projects/:projectId/milestones/:milestoneId/propose" element={<ProposalSubmit />} />
+          <Route path="/feed" element={<Feed />} />
+          <Route path="/auth/callback" element={<Navigate to="/dashboard" replace />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </div>
     </QueryClientProvider>
   );
 }
 
-function App() {
+export default function App() {
   return (
     <LanguageProvider>
-      <AppInner />
+      <Router>
+        <SimulationBanner />
+        <div style={{ paddingTop: SIM ? '28px' : '0' }}>
+          <AppInner />
+        </div>
+      </Router>
     </LanguageProvider>
   );
 }
-
-export default App;
