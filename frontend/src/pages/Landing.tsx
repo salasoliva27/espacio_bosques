@@ -34,13 +34,36 @@ const PHOTOS = {
   transparency: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=900&q=75',
 };
 
-const STAT_VALUES = ['2', '47', '$1.2M', '6'];
 const STAT_KEYS = [
   'landing.stat1_label',
   'landing.stat2_label',
   'landing.stat3_label',
   'landing.stat4_label',
 ] as const;
+
+function formatMxn(mxn: number): string {
+  if (mxn === 0) return '$0';
+  if (mxn >= 1_000_000) return `$${(mxn / 1_000_000).toFixed(1)}M`;
+  if (mxn >= 1_000) return `$${(mxn / 1_000).toFixed(0)}K`;
+  return `$${mxn.toLocaleString()}`;
+}
+
+function useStats() {
+  const [values, setValues] = useState(['0', '0', '$0', '0']);
+
+  useEffect(() => {
+    axios.get('/api/stats').then(({ data }) => {
+      setValues([
+        String(data.projects),
+        String(data.investors),
+        formatMxn(data.fundedMxn),
+        String(data.milestones),
+      ]);
+    }).catch(() => {}); // keep zeros on error
+  }, []);
+
+  return values;
+}
 
 const STEP_NUMBERS = ['01', '02', '03'];
 const STEP_TITLE_KEYS = ['landing.step1_title', 'landing.step2_title', 'landing.step3_title'] as const;
@@ -208,6 +231,7 @@ function SearchBar({ compact = false }: { compact?: boolean }) {
 export default function Landing() {
   const t = useT();
   const hasHeroScene = Boolean(SPLINE_HERO);
+  const statValues = useStats();
 
   const features = [
     { photo: PHOTOS.blueprint,    icon: Sparkles,   titleKey: 'landing.feat1_title' as const, descKey: 'landing.feat1_desc' as const },
@@ -328,7 +352,7 @@ export default function Landing() {
       <div style={{ borderTop: '1px solid #1e2d3d', borderBottom: '1px solid #1e2d3d', background: '#0a0f17' }}>
         <div className="max-w-5xl mx-auto px-4">
           <div className="grid grid-cols-2 sm:grid-cols-4">
-            {STAT_VALUES.map((value, i) => (
+            {statValues.map((value, i) => (
               <div
                 key={STAT_KEYS[i]}
                 className="flex flex-col items-center justify-center py-6 px-4"

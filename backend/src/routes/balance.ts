@@ -12,6 +12,7 @@ import { Router, Response } from 'express';
 import { requireAuth, AuthRequest } from '../middleware/auth';
 import { getSimBalance, addSimBalance } from '../data/simStore';
 import { SIMULATION_MODE } from '../config/mode';
+import { getAccountBalance } from '../services/bitso';
 
 const router = Router();
 
@@ -57,6 +58,49 @@ router.post('/deposit', requireAuth, (req: AuthRequest, res: Response) => {
     balance: newBalance,
     simulation: true,
     note: 'Production: user sends SPEI to their Bitso account — Espacio Bosques never holds funds.',
+  });
+});
+
+/**
+ * GET /api/balance/bitso
+ * Fetches the real MXN balance from the Bitso sandbox account.
+ * Requires real BITSO_API_KEY / BITSO_API_SECRET in .env.
+ */
+router.get('/bitso', requireAuth, async (_req: AuthRequest, res: Response) => {
+  const result = await getAccountBalance();
+  return res.json(result);
+});
+
+/**
+ * POST /api/balance/sync-bitso
+ * Simulation-only: reads the real Bitso sandbox MXN balance and seeds it
+ * into the user's sim wallet (replaces current balance with Bitso amount).
+ * This lets you simulate spending your real sandbox funds.
+ */
+router.post('/sync-bitso', requireAuth, async (req: AuthRequest, res: Response) => {
+  if (!SIMULATION_MODE()) {
+    return res.status(403).json({ error: 'Only available in simulation mode' });
+  }
+
+  const bitso = await getAccountBalance();
+  if (!bitso.connected) {
+    return res.status(502).json({
+      error: bitso.error,
+      hint: 'Add your real Bitso sandbox API keys to .env (BITSO_API_KEY, BITSO_API_SECRET)',
+    });
+  }
+
+  // Set sim balance to exactly the Bitso sandbox MXN balance
+  const userId = req.user!.id;
+  const currentBalance = getSimBalance(userId);
+  const delta = bitso.mxn - currentBalance;
+  addSimBalance(userId, delta);
+
+  return res.json({
+    synced: true,
+    bitsoMxn: bitso.mxn,
+    simBalance: bitso.mxn,
+    note: 'Sim wallet seeded from Bitso sandbox. Spending here simulates your sandbox account.',
   });
 });
 

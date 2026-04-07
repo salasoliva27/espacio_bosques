@@ -330,5 +330,32 @@ export function deleteProviderService(userId: string, serviceId: string): boolea
   return true;
 }
 
+// ── Platform Stats ────────────────────────────────────────────────────
+
+export function getSimStats(): {
+  projects: number;
+  investors: number;
+  fundedMxn: number;
+  milestones: number;
+} {
+  const uniqueInvestors = new Set(
+    DEMO_PROJECTS.flatMap(p => p.investments.map(i => i.investor.id))
+  ).size;
+
+  const fundedMxn = DEMO_PROJECTS.reduce((sum, p) => {
+    const ethRaised = Number(BigInt(p.fundingRaised)) / 1e18;
+    return sum + Math.round(ethRaised * ETH_MXN_RATE);
+  }, 0);
+
+  const milestones = DEMO_PROJECTS.reduce((sum, p) => sum + p.milestones.length, 0);
+
+  return {
+    projects: DEMO_PROJECTS.length,
+    investors: uniqueInvestors,
+    fundedMxn,
+    milestones,
+  };
+}
+
 // ── Init ──────────────────────────────────────────────────────────────
 loadPersistedData();
