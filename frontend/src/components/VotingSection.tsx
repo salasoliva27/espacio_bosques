@@ -1,10 +1,11 @@
 /**
  * VotingSection — per-milestone proposals + live vote counts + cast vote.
- * Renders only for milestones that have an open voting window.
+ * Renders only for milestones that have submitted proposals or an open voting window.
  */
 import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../lib/auth';
+import { useT } from '../context/LanguageContext';
 import { Vote, ChevronDown, ChevronUp, ExternalLink } from 'lucide-react';
 
 interface Milestone { id: string; title: string; status: string; }
@@ -33,6 +34,7 @@ function fmt(n: number) {
 }
 
 function MilestoneVoting({ projectId, milestone }: { projectId: string; milestone: Milestone }) {
+  const t = useT();
   const [proposals, setProposals] = useState<Proposal[]>([]);
   const [voteState, setVoteState] = useState<VoteState | null>(null);
   const [expanded, setExpanded] = useState<string | null>(null);
@@ -69,7 +71,6 @@ function MilestoneVoting({ projectId, milestone }: { projectId: string; mileston
   }
 
   const deadline = voteState?.votingDeadline ? new Date(voteState.votingDeadline) : null;
-  const QUORUM = 0.30;
 
   return (
     <div className="rounded-xl overflow-hidden" style={{ background: '#0d1520', border: '1px solid #1e2d3d' }}>
@@ -81,18 +82,18 @@ function MilestoneVoting({ projectId, milestone }: { projectId: string; mileston
         <div className="flex items-center gap-2.5">
           <Vote size={15} style={{ color: '#00e5c4' }} />
           <span className="text-sm font-semibold" style={{ color: '#e8f4f0' }}>
-            Voting · {milestone.title}
+            {t('gov.voting_milestone', { title: milestone.title })}
           </span>
           {voteState?.votingOpen && (
             <span className="text-xs px-2 py-0.5 rounded-full font-medium" style={{ background: 'rgba(0,229,196,0.12)', color: '#00e5c4' }}>
-              OPEN
+              {t('gov.voting_open')}
             </span>
           )}
         </div>
         <div className="flex items-center gap-3">
           <span className="text-xs" style={{ color: '#6b7280' }}>
-            {voteState?.totalVotes ?? 0} votes
-            {deadline && ` · closes ${deadline.toLocaleDateString('es-MX', { day: 'numeric', month: 'short' })}`}
+            {voteState?.totalVotes ?? 0} {t('gov.votes')}
+            {deadline && ` · ${t('gov.closes', { date: deadline.toLocaleDateString('es-MX', { day: 'numeric', month: 'short' }) })}`}
           </span>
           {open ? <ChevronUp size={14} style={{ color: '#6b7280' }} /> : <ChevronDown size={14} style={{ color: '#6b7280' }} />}
         </div>
@@ -101,7 +102,7 @@ function MilestoneVoting({ projectId, milestone }: { projectId: string; mileston
       {open && (
         <div className="px-5 pb-5 space-y-3">
           {proposals.length === 0 ? (
-            <p className="text-sm" style={{ color: '#6b7280' }}>No proposals submitted yet.</p>
+            <p className="text-sm" style={{ color: '#6b7280' }}>{t('gov.no_proposals')}</p>
           ) : (
             proposals.map(p => {
               const voteCount = voteState?.results.find(r => r.proposalId === p.id)?.votes ?? 0;
@@ -115,12 +116,12 @@ function MilestoneVoting({ projectId, milestone }: { projectId: string; mileston
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="text-sm font-semibold truncate" style={{ color: '#e8f4f0' }}>{p.providerName}</span>
-                        {isWinning && <span className="text-xs px-1.5 py-0.5 rounded font-medium" style={{ background: 'rgba(16,185,129,0.15)', color: '#10b981' }}>Leading</span>}
-                        {isMyVote && <span className="text-xs px-1.5 py-0.5 rounded font-medium" style={{ background: 'rgba(0,229,196,0.12)', color: '#00e5c4' }}>Your vote</span>}
+                        {isWinning && <span className="text-xs px-1.5 py-0.5 rounded font-medium" style={{ background: 'rgba(16,185,129,0.15)', color: '#10b981' }}>{t('gov.leading')}</span>}
+                        {isMyVote && <span className="text-xs px-1.5 py-0.5 rounded font-medium" style={{ background: 'rgba(0,229,196,0.12)', color: '#00e5c4' }}>{t('gov.your_vote')}</span>}
                       </div>
                       <div className="flex gap-3 text-xs mt-0.5" style={{ color: '#6b7280' }}>
                         <span>{fmt(p.quotedAmountMxn)}</span>
-                        <span>{p.timelineDays} days</span>
+                        <span>{p.timelineDays} {t('create.days')}</span>
                       </div>
                     </div>
                     <div className="text-right flex-shrink-0">
@@ -141,14 +142,14 @@ function MilestoneVoting({ projectId, milestone }: { projectId: string; mileston
                     onClick={() => setExpanded(expanded === p.id ? null : p.id)}
                   >
                     {expanded === p.id ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
-                    {expanded === p.id ? 'Hide details' : 'Show scope & approach'}
+                    {expanded === p.id ? t('gov.hide_details') : t('gov.show_details')}
                   </button>
 
                   {expanded === p.id && (
                     <div className="space-y-2 text-xs mb-3" style={{ color: '#9ca3af' }}>
-                      {p.scope && <p><span className="font-medium" style={{ color: '#e8f4f0' }}>Scope: </span>{p.scope}</p>}
-                      {p.approach && <p><span className="font-medium" style={{ color: '#e8f4f0' }}>Approach: </span>{p.approach}</p>}
-                      {p.experience && <p><span className="font-medium" style={{ color: '#e8f4f0' }}>Experience: </span>{p.experience}</p>}
+                      {p.scope && <p><span className="font-medium" style={{ color: '#e8f4f0' }}>{t('gov.scope')} </span>{p.scope}</p>}
+                      {p.approach && <p><span className="font-medium" style={{ color: '#e8f4f0' }}>{t('gov.approach')} </span>{p.approach}</p>}
+                      {p.experience && <p><span className="font-medium" style={{ color: '#e8f4f0' }}>{t('gov.experience')} </span>{p.experience}</p>}
                     </div>
                   )}
 
@@ -160,7 +161,7 @@ function MilestoneVoting({ projectId, milestone }: { projectId: string; mileston
                       className="mt-1 w-full py-2 rounded-lg text-xs font-bold transition-opacity hover:opacity-90 disabled:opacity-40"
                       style={{ background: '#00e5c4', color: '#080c10' }}
                     >
-                      {voting ? 'Recording vote…' : 'Vote for this proposal'}
+                      {voting ? t('gov.voting_btn') : t('gov.vote_btn')}
                     </button>
                   )}
                 </div>
@@ -173,11 +174,11 @@ function MilestoneVoting({ projectId, milestone }: { projectId: string; mileston
             <div className="flex items-center gap-2 text-xs pt-1" style={{ color: '#6b7280' }}>
               <div className="w-24 h-1.5 rounded-full" style={{ background: '#1e2d3d' }}>
                 <div className="h-1.5 rounded-full" style={{
-                  width: `${Math.min((voteState.totalVotes / (voteState.totalVotes / QUORUM || 1)) * 100, 100)}%`,
+                  width: `${Math.min(voteState.totalVotes > 0 ? 40 : 0, 100)}%`,
                   background: voteState.totalVotes > 0 ? '#3b82f6' : '#374151'
                 }} />
               </div>
-              <span>30% quorum required</span>
+              <span>{t('gov.quorum')}</span>
             </div>
           )}
 
@@ -188,7 +189,7 @@ function MilestoneVoting({ projectId, milestone }: { projectId: string; mileston
               className="inline-flex items-center gap-1.5 text-xs font-medium hover:opacity-80"
               style={{ color: '#00e5c4' }}
             >
-              <ExternalLink size={11} /> Submit a bid for this milestone
+              <ExternalLink size={11} /> {t('gov.submit_bid')}
             </Link>
           )}
         </div>
@@ -198,9 +199,10 @@ function MilestoneVoting({ projectId, milestone }: { projectId: string; mileston
 }
 
 export default function VotingSection({ projectId, milestones }: Props) {
+  const t = useT();
   return (
     <div className="space-y-4">
-      <h2 className="text-base font-semibold" style={{ color: '#e8f4f0' }}>Provider Bids & Voting</h2>
+      <h2 className="text-base font-semibold" style={{ color: '#e8f4f0' }}>{t('gov.section_title')}</h2>
       {milestones.map(m => (
         <MilestoneVoting key={m.id} projectId={projectId} milestone={m} />
       ))}

@@ -4,6 +4,7 @@
  */
 import { useState, useEffect } from 'react';
 import { Banknote } from 'lucide-react';
+import { useT } from '../context/LanguageContext';
 
 interface Transaction {
   id: string;
@@ -27,6 +28,7 @@ function fmtDate(d: string | Date) {
 }
 
 export default function TransactionLedger({ projectId }: Props) {
+  const t = useT();
   const [txs, setTxs] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -43,23 +45,25 @@ export default function TransactionLedger({ projectId }: Props) {
     <div className="rounded-xl p-6" style={{ background: '#0d1520', border: '1px solid #1e2d3d' }}>
       <div className="flex items-center gap-2 mb-5">
         <Banknote size={15} style={{ color: '#00e5c4' }} />
-        <h2 className="text-base font-semibold" style={{ color: '#e8f4f0' }}>Disbursement Ledger</h2>
-        <span className="text-xs ml-auto" style={{ color: '#6b7280' }}>Public · {txs.length} records</span>
+        <h2 className="text-base font-semibold" style={{ color: '#e8f4f0' }}>{t('ledger.title')}</h2>
+        <span className="text-xs ml-auto" style={{ color: '#6b7280' }}>
+          {t('ledger.public_records', { n: String(txs.length) })}
+        </span>
       </div>
 
       {txs.length === 0 ? (
-        <p className="text-sm" style={{ color: '#6b7280' }}>No disbursements recorded yet.</p>
+        <p className="text-sm" style={{ color: '#6b7280' }}>{t('ledger.empty')}</p>
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full text-xs">
             <thead>
               <tr style={{ color: '#6b7280', borderBottom: '1px solid #1e2d3d' }}>
-                <th className="text-left py-2 pr-4 font-medium">Milestone</th>
-                <th className="text-left py-2 pr-4 font-medium">Provider</th>
-                <th className="text-left py-2 pr-4 font-medium">Bank</th>
-                <th className="text-left py-2 pr-4 font-medium">CFDI</th>
-                <th className="text-right py-2 pr-4 font-medium">Amount</th>
-                <th className="text-right py-2 font-medium">Date</th>
+                <th className="text-left py-2 pr-4 font-medium">{t('ledger.col_milestone')}</th>
+                <th className="text-left py-2 pr-4 font-medium">{t('ledger.col_provider')}</th>
+                <th className="text-left py-2 pr-4 font-medium">{t('ledger.col_bank')}</th>
+                <th className="text-left py-2 pr-4 font-medium">{t('ledger.col_cfdi')}</th>
+                <th className="text-right py-2 pr-4 font-medium">{t('ledger.col_amount')}</th>
+                <th className="text-right py-2 font-medium">{t('ledger.col_date')}</th>
               </tr>
             </thead>
             <tbody>
@@ -81,10 +85,10 @@ export default function TransactionLedger({ projectId }: Props) {
             <tfoot>
               <tr>
                 <td colSpan={4} className="pt-4 text-xs" style={{ color: '#4b5563' }}>
-                  All provider names match their SAT RFC legal name. No aliases allowed.
+                  {t('ledger.footer')}
                 </td>
                 <td className="pt-4 text-right font-bold tabular-nums" style={{ color: '#e8f4f0' }}>
-                  {fmt(txs.reduce((s, t) => s + t.amountMxn, 0))}
+                  {fmt(txs.reduce((s, tx) => s + tx.amountMxn, 0))}
                 </td>
                 <td />
               </tr>

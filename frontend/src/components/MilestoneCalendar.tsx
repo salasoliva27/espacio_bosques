@@ -2,6 +2,8 @@
  * MilestoneCalendar — horizontal timeline showing milestone date ranges.
  * Dates are computed sequentially from projectCreatedAt + durationDays.
  */
+import { useT } from '../context/LanguageContext';
+
 interface Milestone {
   id: string;
   title: string;
@@ -40,10 +42,10 @@ function fmt(date: Date): string {
 }
 
 export default function MilestoneCalendar({ milestones, projectCreatedAt }: Props) {
+  const t = useT();
   const base = new Date(projectCreatedAt);
   const totalDays = milestones.reduce((s, m) => s + m.durationDays, 0);
 
-  // Compute start/end per milestone
   let cursor = base;
   const segments = milestones.map(m => {
     const start = cursor;
@@ -57,9 +59,9 @@ export default function MilestoneCalendar({ milestones, projectCreatedAt }: Prop
   return (
     <div className="rounded-xl p-6" style={{ background: '#0d1520', border: '1px solid #1e2d3d' }}>
       <div className="flex items-center justify-between mb-5">
-        <h2 className="text-base font-semibold" style={{ color: '#e8f4f0' }}>Project Timeline</h2>
+        <h2 className="text-base font-semibold" style={{ color: '#e8f4f0' }}>{t('cal.title')}</h2>
         <span className="text-xs" style={{ color: '#6b7280' }}>
-          {fmt(base)} → {fmt(projectEnd)} · {totalDays} days
+          {fmt(base)} → {fmt(projectEnd)} · {t('cal.days_total', { n: String(totalDays) })}
         </span>
       </div>
 
@@ -83,7 +85,7 @@ export default function MilestoneCalendar({ milestones, projectCreatedAt }: Prop
         })}
       </div>
 
-      {/* Segment labels below bar */}
+      {/* Segment labels */}
       <div className="space-y-2">
         {segments.map((seg, i) => {
           const color = STATUS_COLOR[seg.status] || STATUS_COLOR.PENDING;
@@ -91,10 +93,7 @@ export default function MilestoneCalendar({ milestones, projectCreatedAt }: Prop
           return (
             <div key={seg.id} className="flex items-center gap-3 text-xs">
               <span className="font-bold tabular-nums" style={{ color: '#6b7280', minWidth: 20 }}>{i + 1}</span>
-              <span
-                className="px-2 py-0.5 rounded-full text-xs font-medium"
-                style={{ background: bg, color }}
-              >
+              <span className="px-2 py-0.5 rounded-full text-xs font-medium" style={{ background: bg, color }}>
                 {seg.status}
               </span>
               <span className="flex-1 truncate font-medium" style={{ color: '#e8f4f0' }}>{seg.title}</span>

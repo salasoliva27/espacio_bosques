@@ -106,6 +106,52 @@ authenticated_flow() {
     jq --arg id "$PROJECT_ID" '.projects[] | select(.id == $id) | {fundingPct, raisedEth, investmentCount}'
 }
 
+# ── governance flow (no auth required) ───────────────────────────────────────
+governance_flow() {
+  hdr "Governance state (before seed)"
+  curl -sf "$BACKEND/api/test/governance" | jq '.totals'
+
+  hdr "POST /api/test/governance/seed — create proposal + open voting"
+  local seed
+  seed=$(curl -sf -X POST "$BACKEND/api/test/governance/seed")
+  echo "$seed" | jq .
+  local PROP_ID
+  PROP_ID=$(echo "$seed" | jq -r '.proposal.id')
+  ok "Proposal seeded: $PROP_ID"
+
+  hdr "GET /api/governance/milestones/m2/proposals (public)"
+  curl -sf "$BACKEND/api/governance/milestones/m2/proposals" \
+    -H 'Authorization: Bearer sim-token' | jq '.proposals[] | {id, providerName, quotedAmountMxn, timelineDays}'
+
+  hdr "GET /api/governance/milestones/m2/votes (before voting)"
+  curl -sf "$BACKEND/api/governance/milestones/m2/votes" \
+    -H 'Authorization: Bearer sim-token' | jq '{totalVotes, votingOpen, myVote}'
+
+  hdr "POST /api/test/governance/vote — cast vote as test-investor-1"
+  curl -sf -X POST "$BACKEND/api/test/governance/vote" \
+    -H 'Content-Type: application/json' \
+    -d "{\"proposalId\": \"$PROP_ID\", \"investorId\": \"test-investor-1\"}" | jq .
+  ok "Vote cast"
+
+  hdr "POST /api/test/governance/vote — cast vote as test-investor-2"
+  curl -sf -X POST "$BACKEND/api/test/governance/vote" \
+    -H 'Content-Type: application/json' \
+    -d "{\"proposalId\": \"$PROP_ID\", \"investorId\": \"test-investor-2\"}" | jq .
+
+  hdr "GET /api/governance/milestones/m2/votes (after 2 votes)"
+  curl -sf "$BACKEND/api/governance/milestones/m2/votes" \
+    -H 'Authorization: Bearer sim-token' | jq '{totalVotes, votingOpen, results}'
+
+  hdr "GET /api/governance/projects/demo-project-001/transactions (ledger)"
+  curl -sf "$BACKEND/api/governance/projects/demo-project-001/transactions" | \
+    jq '.transactions[] | {milestoneTitle, providerName, bankMasked, amountMxn}'
+
+  hdr "Governance state (after)"
+  curl -sf "$BACKEND/api/test/governance" | jq '.totals'
+
+  ok "Governance flow complete"
+}
+
 # ── add balance (no auth) ─────────────────────────────────────────────────────
 add_balance() {
   local user="${2:-$DEMO_USER_ID}"
@@ -141,6 +187,7 @@ case "${1:-}" in
   --sim)           sim_invest ;;
   --balance)       check_balance ;;
   --add-balance)   add_balance "$@" ;;
+  --governance)    governance_flow ;;
   *)               authenticated_flow ;;
 esac
 
