@@ -18,6 +18,7 @@ import reportRoutes from "./routes/reports";
 import investRoutes from "./routes/invest";
 import testRoutes from "./routes/test";
 import balanceRoutes from "./routes/balance";
+import providerRoutes from "./routes/providers";
 
 // Initialize environment
 dotenv.config({ path: "../.env" });
@@ -31,8 +32,19 @@ const PORT = process.env.PORT || 3001;
 
 // Middleware
 app.use(helmet());
+const CORS_ORIGINS = [
+  process.env.CORS_ORIGIN,
+  "http://localhost:5173",
+  "http://127.0.0.1:5173",
+].filter(Boolean) as string[];
+
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || "http://localhost:5173",
+  origin: (origin, callback) => {
+    // Allow requests with no origin (curl, Playwright direct, etc.)
+    if (!origin) return callback(null, true);
+    if (CORS_ORIGINS.includes(origin)) return callback(null, true);
+    callback(new Error(`CORS blocked: ${origin}`));
+  },
   credentials: true,
 }));
 app.use(express.json());
@@ -53,6 +65,7 @@ app.use("/api/simulate", simulationRoutes);
 app.use("/api/reports", reportRoutes);
 app.use("/api/invest", investRoutes);
 app.use("/api/balance", balanceRoutes);
+app.use("/api/providers", providerRoutes);
 
 // Test harness — simulation mode only
 import { SIMULATION_MODE } from "./config/mode";

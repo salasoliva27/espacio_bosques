@@ -12,6 +12,7 @@ import ProjectDetail from './pages/ProjectDetail';
 import CreateProject from './pages/CreateProject';
 import Reports from './pages/Reports';
 import Profile from './pages/Profile';
+import Providers from './pages/Providers';
 
 const queryClient = new QueryClient();
 
@@ -67,6 +68,7 @@ function AppInner() {
             <Route path="/create" element={<CreateProject />} />
             <Route path="/reports/:projectId" element={<Reports />} />
             <Route path="/profile" element={<Profile />} />
+            <Route path="/providers" element={<Providers />} />
             <Route path="/auth/callback" element={<Dashboard />} />
           </Routes>
         </div>

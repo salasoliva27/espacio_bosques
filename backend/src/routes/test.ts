@@ -11,6 +11,7 @@
  */
 import { Router, Request, Response } from 'express';
 import { DEMO_PROJECTS, addSimInvestment, getSimUserInvestments, addSimBalance, getSimBalance } from '../data/simStore';
+import { SIM_PROVIDERS, updateProviderStatus } from '../data/providers';
 import { getQuote } from '../services/bitso';
 
 const router = Router();
@@ -58,6 +59,18 @@ router.get('/', (_req: Request, res: Response) => {
         path: '/api/test/reset',
         description: 'Wipe all sim-user investments (seed funding stays)',
         example: `curl -s -X POST http://localhost:3001/api/test/reset`,
+      },
+      {
+        method: 'GET',
+        path: '/api/test/providers',
+        description: 'List all sim providers with document counts and status',
+        example: `curl -s http://localhost:3001/api/test/providers | jq '.'`,
+      },
+      {
+        method: 'POST',
+        path: '/api/test/providers/:id/verify',
+        description: 'Mark a provider as VERIFIED',
+        example: `curl -s -X POST http://localhost:3001/api/test/providers/prov-002/verify`,
       },
     ],
   });
@@ -142,6 +155,23 @@ router.post('/add-balance', (req: Request, res: Response) => {
 
   const newBalance = addSimBalance(userId, mxn);
   return res.json({ ok: true, userId, added: mxn, balance: newBalance });
+});
+
+/* ── GET /api/test/providers ───────────────────────────────────── */
+router.get('/providers', (_req: Request, res: Response) => {
+  const list = SIM_PROVIDERS.map(({ documents, ...p }) => ({
+    ...p,
+    documentCount: documents.length,
+    documents: documents.map(d => ({ id: d.id, type: d.type, filename: d.filename, uploadedAt: d.uploadedAt })),
+  }));
+  res.json({ providers: list, total: list.length });
+});
+
+/* ── POST /api/test/providers/:id/verify ──────────────────────── */
+router.post('/providers/:id/verify', (req: Request, res: Response) => {
+  const provider = updateProviderStatus(req.params.id, 'VERIFIED');
+  if (!provider) return res.status(404).json({ error: `Provider not found: ${req.params.id}` });
+  res.json({ ok: true, provider: { id: provider.id, name: provider.name, status: provider.status } });
 });
 
 /* ── POST /api/test/reset ──────────────────────────────────────── */
