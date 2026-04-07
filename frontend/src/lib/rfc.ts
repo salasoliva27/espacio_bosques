@@ -158,3 +158,36 @@ export function validateRfc(rfc: string, fullName?: string): RfcValidationResult
 export function formatRfc(rfc: string): string {
   return rfc.toUpperCase().trim();
 }
+
+/**
+ * Extract birth date from RFC (positions 5-10 = YYMMDD).
+ * Returns a Date object or null if the date is invalid.
+ */
+export function extractBirthDate(rfc: string): Date | null {
+  const upper = rfc.toUpperCase().trim();
+  if (upper.length < 10) return null;
+  const datePart = upper.slice(4, 10);
+  const yy = parseInt(datePart.slice(0, 2), 10);
+  const mm = parseInt(datePart.slice(2, 4), 10);
+  const dd = parseInt(datePart.slice(4, 6), 10);
+  const currentYY = new Date().getFullYear() % 100;
+  const fullYear = yy > currentYY ? 1900 + yy : 2000 + yy;
+  const date = new Date(fullYear, mm - 1, dd);
+  if (date.getMonth() !== mm - 1 || date.getDate() !== dd) return null;
+  return date;
+}
+
+const MONTHS_ES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+const MONTHS_EN = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+/**
+ * Format a Date as a readable string.
+ * ES: "12 de marzo de 1985"
+ * EN: "March 12, 1985"
+ */
+export function formatBirthDate(date: Date, lang: 'es' | 'en' = 'es'): string {
+  if (lang === 'es') {
+    return `${date.getDate()} de ${MONTHS_ES[date.getMonth()]} de ${date.getFullYear()}`;
+  }
+  return `${MONTHS_EN[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`;
+}

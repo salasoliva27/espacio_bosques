@@ -23,6 +23,7 @@ import governanceRoutes from "./routes/governance";
 import feedRoutes from "./routes/feed";
 import profileRoutes from "./routes/profile";
 import statsRoutes from "./routes/stats";
+import rfcRoutes from "./routes/rfc";
 
 // Initialize environment
 dotenv.config({ path: "../.env" });
@@ -78,6 +79,7 @@ app.use("/api/governance", governanceRoutes);
 app.use("/api/feed", feedRoutes);
 app.use("/api/profile", profileRoutes);
 app.use("/api/stats", statsRoutes);
+app.use("/api/rfc", rfcRoutes);
 
 // Test harness — simulation mode only
 import { SIMULATION_MODE } from "./config/mode";

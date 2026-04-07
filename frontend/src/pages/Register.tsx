@@ -1,8 +1,12 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/auth';
-import { validateRfc, formatRfc } from '../lib/rfc';
+import { validateRfc, formatRfc, extractBirthDate, formatBirthDate } from '../lib/rfc';
 import { useLanguage } from '../context/LanguageContext';
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+
+type SatStatus = 'idle' | 'checking' | 'found' | 'not_found' | 'service_unavailable';
 
 export default function Register() {
   const { lang, toggle } = useLanguage();
@@ -15,13 +19,57 @@ export default function Register() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [rfcError, setRfcError] = useState('');
+  const [satStatus, setSatStatus] = useState<SatStatus>('idle');
+  const [satMessage, setSatMessage] = useState('');
+  const [birthDate, setBirthDate] = useState<Date | null>(null);
+  const satDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const checkRfcWithSat = async (rfcVal: string) => {
+    setSatStatus('checking');
+    setSatMessage('');
+    try {
+      const res = await fetch(`${API_URL}/api/rfc/validate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rfc: rfcVal }),
+      });
+      const data = await res.json();
+      if (data.birthDate) {
+        const d = new Date(data.birthDate + 'T12:00:00'); // noon to avoid UTC offset issues
+        setBirthDate(d);
+      }
+      if (data.status === 'found') {
+        setSatStatus('found');
+      } else if (data.status === 'not_found') {
+        setSatStatus('not_found');
+        setSatMessage(data.message || 'RFC no encontrado en el padrón del SAT');
+      } else {
+        // service_unavailable — degrade gracefully, don't block
+        setSatStatus('service_unavailable');
+        setSatMessage('');
+      }
+    } catch {
+      setSatStatus('service_unavailable');
+    }
+  };
 
   const handleRfcChange = (val: string) => {
     const formatted = formatRfc(val);
     setRfc(formatted);
+    setSatStatus('idle');
+    setBirthDate(null);
+
     if (formatted.length >= 13) {
       const result = validateRfc(formatted, fullName);
       setRfcError(result.valid ? '' : (result.error ?? ''));
+      if (result.valid) {
+        // Extract birth date immediately (doesn't need SAT call)
+        const bd = extractBirthDate(formatted);
+        setBirthDate(bd);
+        // Debounce the SAT check
+        if (satDebounceRef.current) clearTimeout(satDebounceRef.current);
+        satDebounceRef.current = setTimeout(() => checkRfcWithSat(formatted), 600);
+      }
     } else {
       setRfcError('');
     }
@@ -32,10 +80,24 @@ export default function Register() {
     setError('');
     setRfcError('');
 
-    // Validate RFC before submitting
+    // Structural RFC validation
     const rfcResult = validateRfc(rfc, fullName);
     if (!rfcResult.valid) {
       setRfcError(rfcResult.error ?? 'RFC inválido');
+      return;
+    }
+
+    // Block if SAT says RFC doesn't exist
+    if (satStatus === 'not_found') {
+      setRfcError(lang === 'es'
+        ? 'El RFC no está registrado en el padrón del SAT. Verifica que sea correcto.'
+        : 'This RFC is not registered with SAT. Please verify it is correct.');
+      return;
+    }
+
+    // If SAT check is still pending, wait for it
+    if (satStatus === 'checking') {
+      setError(lang === 'es' ? 'Verificando RFC con SAT, un momento…' : 'Verifying RFC with SAT, please wait…');
       return;
     }
 
@@ -46,20 +108,26 @@ export default function Register() {
 
     setLoading(true);
     try {
+      const metadata: Record<string, any> = {
+        full_name: fullName.trim(),
+        rfc: formatRfc(rfc),
+        rfc_verified: satStatus === 'found',
+        rfc_status: satStatus, // 'found' | 'service_unavailable' (not_found is blocked above)
+      };
+      // Store extracted birth date if available
+      if (birthDate) {
+        const iso = birthDate.toISOString().slice(0, 10);
+        metadata.birth_date = iso;
+      }
+
       const { error: signUpError } = await supabase.auth.signUp({
         email,
         password,
-        options: {
-          data: {
-            full_name: fullName.trim(),
-            rfc: formatRfc(rfc),
-          },
-        },
+        options: { data: metadata },
       });
 
       if (signUpError) throw signUpError;
 
-      // Redirect to login with success message
       navigate('/auth?registered=1');
     } catch (err: any) {
       setError(err.message || (lang === 'es' ? 'Error al crear la cuenta.' : 'Error creating account.'));
@@ -165,13 +233,48 @@ export default function Register() {
                 }}
               />
               {/* RFC status line */}
-              <div className="mt-1">
+              <div className="mt-1.5 space-y-1">
                 {rfcError ? (
                   <p className="text-xs" style={{ color: '#ef4444' }}>{rfcError}</p>
-                ) : rfc.length === 13 ? (
-                  <p className="text-xs" style={{ color: '#00e5c4' }}>
-                    {es ? '✓ Formato válido' : '✓ Valid format'}
-                  </p>
+                ) : rfc.length === 13 && !rfcError ? (
+                  <>
+                    {/* Birth date extracted from RFC */}
+                    {birthDate && (
+                      <p className="text-xs" style={{ color: '#6b7280' }}>
+                        {es
+                          ? `RFC detecta fecha de nacimiento: ${formatBirthDate(birthDate, 'es')}`
+                          : `RFC encodes birth date: ${formatBirthDate(birthDate, 'en')}`}
+                      </p>
+                    )}
+                    {/* SAT registry check status */}
+                    {satStatus === 'checking' && (
+                      <p className="text-xs" style={{ color: '#6b7280' }}>
+                        {es ? '⏳ Verificando con el padrón del SAT…' : '⏳ Checking SAT registry…'}
+                      </p>
+                    )}
+                    {satStatus === 'found' && (
+                      <p className="text-xs font-medium" style={{ color: '#00e5c4' }}>
+                        {es ? '✓ RFC registrado y activo en el SAT' : '✓ RFC registered and active with SAT'}
+                      </p>
+                    )}
+                    {satStatus === 'not_found' && (
+                      <p className="text-xs" style={{ color: '#ef4444' }}>
+                        {es ? '✗ RFC no encontrado en el padrón del SAT' : '✗ RFC not found in SAT registry'}
+                      </p>
+                    )}
+                    {satStatus === 'service_unavailable' && (
+                      <p className="text-xs" style={{ color: '#f59e0b' }}>
+                        {es
+                          ? '⚠ Validación SAT no disponible — validación estructural aplicada'
+                          : '⚠ SAT check unavailable — structural validation applied'}
+                      </p>
+                    )}
+                    {satStatus === 'idle' && !rfcError && (
+                      <p className="text-xs" style={{ color: '#00e5c4' }}>
+                        {es ? '✓ Formato válido' : '✓ Valid format'}
+                      </p>
+                    )}
+                  </>
                 ) : (
                   <p className="text-xs" style={{ color: '#4b5563' }}>
                     {es
@@ -180,11 +283,6 @@ export default function Register() {
                   </p>
                 )}
               </div>
-              <p className="text-xs mt-1" style={{ color: '#374151' }}>
-                {es
-                  ? 'Validación estructural basada en tu nombre. La verificación contra el SAT requiere autorización.'
-                  : 'Structural validation against your name. SAT database verification requires authorization.'}
-              </p>
             </div>
 
             {/* Global error */}
@@ -196,13 +294,15 @@ export default function Register() {
 
             <button
               type="submit"
-              disabled={loading || !!rfcError}
+              disabled={loading || !!rfcError || satStatus === 'checking' || satStatus === 'not_found'}
               className="w-full py-2.5 rounded-lg text-sm font-semibold transition-opacity hover:opacity-90 disabled:opacity-50 mt-2"
               style={{ background: '#00e5c4', color: '#080c10' }}
             >
               {loading
                 ? (es ? 'Creando cuenta…' : 'Creating account…')
-                : (es ? 'Crear cuenta' : 'Create account')}
+                : satStatus === 'checking'
+                  ? (es ? 'Verificando RFC…' : 'Verifying RFC…')
+                  : (es ? 'Crear cuenta' : 'Create account')}
             </button>
           </form>
 
