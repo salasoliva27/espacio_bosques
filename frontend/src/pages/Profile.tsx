@@ -409,14 +409,23 @@ export default function Profile() {
     setEditing(false);
   }
 
+  const [providerEnableError, setProviderEnableError] = useState('');
+
   async function toggleProviderEnabled() {
     const newEnabled = !providerProfile?.enabled;
+    setProviderEnableError('');
     setSavingProvider(true);
     try {
+      const body: any = { enabled: newEnabled };
+      if (newEnabled) {
+        body.companyName = companyName;
+        body.specialty = specialty;
+        body.rfc = rfc;
+      }
       const res = await fetch('/api/profile/provider', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ enabled: newEnabled }),
+        body: JSON.stringify(body),
       });
       const data = await res.json();
       if (res.ok) {
@@ -424,6 +433,8 @@ export default function Profile() {
         setCompanyName(data.profile.companyName || '');
         setSpecialty(data.profile.specialty || '');
         setRfc(data.profile.rfc || '');
+      } else {
+        setProviderEnableError(data.error || 'Could not enable provider profile.');
       }
     } finally {
       setSavingProvider(false);
@@ -667,8 +678,11 @@ export default function Profile() {
                       <p className="text-xs mt-0.5" style={{ color: '#6b7280' }}>
                         {providerProfile?.enabled
                           ? 'Your profile is visible to project managers.'
-                          : 'Enable to submit bids on community projects.'}
+                          : 'Fill in your details below, then enable to submit bids.'}
                       </p>
+                      {providerEnableError && (
+                        <p className="text-xs mt-2 px-2 py-1.5 rounded-lg" style={{ background: 'rgba(239,68,68,0.08)', color: '#f87171' }}>{providerEnableError}</p>
+                      )}
                     </div>
                     <button
                       onClick={toggleProviderEnabled}
@@ -690,8 +704,8 @@ export default function Profile() {
                   </div>
                 </div>
 
-                {/* Profile fields — show only when enabled */}
-                {providerProfile?.enabled && (
+                {/* Profile fields — always visible so user can fill before enabling */}
+                {(
                   <div className="rounded-xl p-5 space-y-4" style={{ background: '#0d1520', border: '1px solid #1e2d3d' }}>
                     <h3 className="text-sm font-semibold" style={{ color: '#e5e7eb' }}>Provider Details</h3>
 

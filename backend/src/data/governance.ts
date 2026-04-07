@@ -105,21 +105,7 @@ export interface SimTransaction {
   status: 'PENDING' | 'COMPLETED';
 }
 
-export const SIM_TRANSACTIONS: SimTransaction[] = [
-  {
-    id: 'tx-001',
-    projectId: 'demo-project-001',
-    milestoneId: 'm1',
-    milestoneTitle: 'Hardware procurement & site survey',
-    providerId: 'prov-001',
-    providerName: 'Constructora Bosques S.A. de C.V.',
-    bankMasked: 'BBVA ****4614',
-    cfdiUuid: 'A1B2C3D4-E5F6-7890-ABCD-EF1234567890',
-    amountMxn: 45000,
-    date: new Date('2026-02-15'),
-    status: 'COMPLETED',
-  },
-];
+export const SIM_TRANSACTIONS: SimTransaction[] = [];
 
 export function addTransaction(data: Omit<SimTransaction, 'id'>): SimTransaction {
   const tx: SimTransaction = { ...data, id: `tx-${Date.now()}` };

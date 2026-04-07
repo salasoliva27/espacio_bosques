@@ -69,10 +69,33 @@ router.get('/provider', requireAuth, (req: AuthRequest, res: Response) => {
 router.put('/provider', requireAuth, (req: AuthRequest, res: Response) => {
   const { enabled, companyName, specialty, rfc } = req.body;
   const updates: any = {};
+
+  // If trying to enable, require all three fields to be present and non-empty
+  if (enabled === true) {
+    const existing = getProviderUserProfile(req.user!.id);
+    const resolvedCompany = (companyName ?? existing?.companyName ?? '').trim();
+    const resolvedSpecialty = (specialty ?? existing?.specialty ?? '').trim();
+    const resolvedRfc = (rfc ?? existing?.rfc ?? '').trim();
+
+    if (!resolvedCompany || !resolvedSpecialty || !resolvedRfc) {
+      return res.status(400).json({
+        error: 'Company name, specialty, and RFC are required before enabling your provider profile.',
+        missing: {
+          companyName: !resolvedCompany,
+          specialty: !resolvedSpecialty,
+          rfc: !resolvedRfc,
+        },
+      });
+    }
+    updates.companyName = resolvedCompany;
+    updates.specialty = resolvedSpecialty;
+    updates.rfc = resolvedRfc;
+  }
+
   if (enabled !== undefined) updates.enabled = Boolean(enabled);
-  if (companyName !== undefined) updates.companyName = String(companyName);
-  if (specialty !== undefined) updates.specialty = String(specialty);
-  if (rfc !== undefined) updates.rfc = String(rfc);
+  if (companyName !== undefined) updates.companyName = String(companyName).trim();
+  if (specialty !== undefined) updates.specialty = String(specialty).trim();
+  if (rfc !== undefined) updates.rfc = String(rfc).trim();
 
   const profile = upsertProviderUserProfile(req.user!.id, updates);
   logger.info('[profile] provider profile updated', { userId: req.user!.id });

@@ -50,100 +50,11 @@ export interface SimComment {
   createdAt: string; // ISO string for easy serialization
 }
 
-export const DEMO_PROJECTS: SimProject[] = [
-  {
-    id: 'demo-project-001',
-    title: 'Smart Security Network — Paseo de las Palmas',
-    summary:
-      'Deploy a mesh of AI-powered security cameras with real-time incident alerts across Paseo de las Palmas and connecting streets. Footage is processed on-device; no cloud storage. Residents receive push alerts for unusual activity and can review clips via the Espacio Bosques app.',
-    category: 'INFRASTRUCTURE',
-    status: 'ACTIVE',
-    fundingGoal: (ETH).toString(),
-    fundingRaised: '0',
-    createdAt: new Date('2026-01-15'),
-    updatedAt: new Date('2026-04-01'),
-    planner: { id: 'planner-001', walletAddress: '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266', role: 'PLANNER' },
-    milestones: [
-      { id: 'm1', title: 'Hardware procurement & site survey', status: 'COMPLETED', fundingPercentage: 30, description: 'Purchase 12 edge-AI cameras (Ambarella SoC); map optimal mounting points across 8 intersections', durationDays: 30 },
-      { id: 'm2', title: 'Installation & fiber backbone', status: 'IN_PROGRESS', fundingPercentage: 40, description: 'Install cameras, conduit, and the PoE fiber ring connecting all nodes to the colonia server room', durationDays: 60 },
-      { id: 'm3', title: 'AI model deployment & resident app', status: 'PENDING', fundingPercentage: 30, description: 'Deploy on-device anomaly detection model; launch resident alert app with opt-in notifications', durationDays: 45 },
-    ],
-    requiredRoles: [
-      { id: 'rr-001-1', role: 'Network Engineer', description: 'Design and deploy the PoE fiber mesh connecting all camera nodes to the colonia server room', milestoneId: 'm2' },
-      { id: 'rr-001-2', role: 'AI/ML Engineer', description: 'Deploy on-device anomaly detection model and integrate with resident alert app', milestoneId: 'm3' },
-      { id: 'rr-001-3', role: 'Security Installer', description: 'Physical installation of 12 edge-AI cameras at approved mounting points across 8 intersections', milestoneId: 'm2' },
-    ],
-    investments: [],
-    telemetry: [{ id: 't1', timestamp: new Date(), data: { uptimePercent: 98.5, batteryPercent: 87 } }],
-    reports: [],
-    _count: { investments: 1 },
-  },
-  {
-    id: 'demo-project-002',
-    title: 'Pocket Park — Presa Angostura & Explanada',
-    summary:
-      'Convert the unused median lot at Presa Angostura and Explanada into a landscaped pocket park with native CDMX plants, benches, and evening lighting. Designed for the daily walkers and dog owners already using the space informally.',
-    category: 'COMMUNITY',
-    status: 'ACTIVE',
-    fundingGoal: (ETH).toString(),
-    fundingRaised: '0',
-    createdAt: new Date('2026-02-20'),
-    updatedAt: new Date('2026-04-02'),
-    planner: { id: 'planner-002', walletAddress: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8', role: 'PLANNER' },
-    milestones: [
-      { id: 'm4', title: 'Design approval & permits', status: 'COMPLETED', fundingPercentage: 25, description: 'Landscape architect renders, SEDUVI permit, HOA sign-off', durationDays: 21 },
-      { id: 'm5', title: 'Hardscape & irrigation', status: 'PENDING', fundingPercentage: 35, description: 'Grading, stone paths, solar drip irrigation system for planted areas', durationDays: 30 },
-      { id: 'm6', title: 'Planting & lighting', status: 'PENDING', fundingPercentage: 40, description: 'Native species planting (tepozán, colorín, salvia mexicana), LED post lighting, final handover', durationDays: 45 },
-    ],
-    requiredRoles: [
-      { id: 'rr-002-1', role: 'Landscape Architect', description: 'Final planting plan for native CDMX species (tepozán, colorín, salvia mexicana) and LED post lighting layout', milestoneId: 'm6' },
-      { id: 'rr-002-2', role: 'Civil Contractor', description: 'Grading, stone path construction, and solar drip irrigation system installation', milestoneId: 'm5' },
-    ],
-    investments: [],
-    telemetry: [],
-    reports: [],
-    _count: { investments: 1 },
-  },
-  {
-    id: 'demo-project-003',
-    title: 'LED Lighting — Paseo de las Palmas Corridor',
-    summary:
-      'Comprehensive LED retrofit of the 1.2 km Paseo de las Palmas stretch between Presa Angostura and Presa Falcón. Replaces sodium vapor lamps with smart LEDs, reduces energy consumption 60%, and improves pedestrian safety during evening hours.',
-    category: 'INFRASTRUCTURE',
-    status: 'ACTIVE',
-    fundingGoal: (ETH).toString(),
-    fundingRaised: '0',
-    createdAt: new Date('2026-02-01'),
-    updatedAt: new Date('2026-04-05'),
-    planner: { id: 'planner-003', walletAddress: '0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC', role: 'PLANNER' },
-    milestones: [
-      { id: 'ml1', title: 'Site survey & permit filing', status: 'COMPLETED', fundingPercentage: 20, description: 'Lux measurements, Alcaldía Miguel Hidalgo permit, CFE connection approval', durationDays: 35 },
-      { id: 'ml2', title: 'Procurement', status: 'COMPLETED', fundingPercentage: 40, description: 'LED fixtures (NOM-certified), smart dimmer modules, mounting hardware', durationDays: 21 },
-      { id: 'ml3', title: 'Installation', status: 'IN_PROGRESS', fundingPercentage: 30, description: 'Install 15 retrofit fixtures + 3 new posts in gap areas; connect to CFE grid', durationDays: 28 },
-      { id: 'ml4', title: 'Testing & handover', status: 'PENDING', fundingPercentage: 10, description: 'Municipal inspection, lux compliance, resident acceptance', durationDays: 14 },
-    ],
-    requiredRoles: [
-      { id: 'rr-003-1', role: 'Electrical Contractor', description: 'Install 15 LED retrofit fixtures and 3 new posts; connect to CFE grid with NOM-certified components', milestoneId: 'ml3' },
-      { id: 'rr-003-2', role: 'Municipal Liaison', description: 'Coordinate Alcaldía Miguel Hidalgo inspection, lux compliance certification, and resident acceptance documentation', milestoneId: 'ml4' },
-    ],
-    investments: [],
-    telemetry: [],
-    reports: [],
-    _count: { investments: 4 },
-  },
-];
+// Clean launch: no pre-seeded projects. All projects are created by users via the UI.
+export const DEMO_PROJECTS: SimProject[] = [];
 
 // ── Comments store ─────────────────────────────────────────────────────
 const commentStore = new Map<string, SimComment[]>();
-
-// Seed demo comments
-commentStore.set('demo-project-001', [
-  { id: 'c1', projectId: 'demo-project-001', userId: 'u2', walletAddress: '0xsim002', username: 'Vecino Bosques', text: 'Excelente proyecto, llevan semanas con la cámara en la esquina de Palmas sin funcionar.', createdAt: '2026-04-01T09:15:00.000Z' },
-  { id: 'c2', projectId: 'demo-project-001', userId: 'u3', walletAddress: '0xsim003', username: 'Residente Explanada', text: 'Ya aporté 1,000 MXN. ¿Cuándo instalan las cámaras en Presa Falcón?', createdAt: '2026-04-02T14:30:00.000Z' },
-]);
-commentStore.set('demo-project-002', [
-  { id: 'c3', projectId: 'demo-project-002', userId: 'u1', walletAddress: '0xsim001', username: 'Planificador Palmas', text: 'El diseño final ya fue aprobado por el arquitecto paisajista. ¡Iniciamos en 2 semanas!', createdAt: '2026-04-03T11:00:00.000Z' },
-]);
 
 // ── Persistence ───────────────────────────────────────────────────────
 
