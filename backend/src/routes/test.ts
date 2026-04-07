@@ -12,9 +12,9 @@
 import { Router, Request, Response } from 'express';
 import { DEMO_PROJECTS, addSimInvestment, getSimUserInvestments, addSimBalance, getSimBalance,
          getProviderUserProfile, upsertProviderUserProfile, addProviderService, updateProviderService, deleteProviderService,
-         ProviderService } from '../data/simStore';
+         ProviderService, resetSimFull } from '../data/simStore';
 import { SIM_PROVIDERS, updateProviderStatus } from '../data/providers';
-import { SIM_PROPOSALS, SIM_VOTES, SIM_TRANSACTIONS, addProposal, updateProposal, castVote, setVotingWindow } from '../data/governance';
+import { SIM_PROPOSALS, SIM_VOTES, SIM_TRANSACTIONS, addProposal, updateProposal, castVote, setVotingWindow, resetGovernance } from '../data/governance';
 import { getQuote } from '../services/bitso';
 
 const router = Router();
@@ -377,26 +377,29 @@ router.post('/profile/reset', (_req: Request, res: Response) => {
 
 /* ── POST /api/test/reset ──────────────────────────────────────── */
 router.post('/reset', (_req: Request, res: Response) => {
-  // Remove all non-seed investments from every project
-  const SEED_IDS = new Set(['inv1', 'inv3', 'inv-sim-seed-1']);
-
+  // Remove all non-seed investments from every project (seed IDs are now gone, so this clears everything)
   let removed = 0;
   for (const project of DEMO_PROJECTS) {
-    const before = project.investments.length;
-    project.investments = project.investments.filter((inv) => SEED_IDS.has(inv.id));
-    removed += before - project.investments.length;
-
-    // Recalculate fundingRaised from remaining investments
-    let raised = 0n;
-    for (const inv of project.investments) {
-      raised += BigInt(inv.amount);
-    }
-    project.fundingRaised = raised.toString();
-    project._count.investments = project.investments.length;
+    removed += project.investments.length;
+    project.investments = [];
+    project.fundingRaised = '0';
+    project._count.investments = 0;
     project.updatedAt = new Date();
   }
-
   res.json({ ok: true, removed });
+});
+
+/* ── POST /api/test/reset/full ─────────────────────────────────── */
+// Nuclear reset: wipes ALL sim state — projects, balances, governance, profiles.
+// Use before a fresh demo or launch simulation.
+router.post('/reset/full', (_req: Request, res: Response) => {
+  resetSimFull();
+  resetGovernance();
+  res.json({
+    ok: true,
+    message: 'Full reset complete — all projects at 0% funding, all balances cleared, all governance data wiped.',
+    note: 'Users will need to deposit MXN before they can invest.',
+  });
 });
 
 export default router;

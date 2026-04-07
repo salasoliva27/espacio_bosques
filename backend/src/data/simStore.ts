@@ -59,7 +59,7 @@ export const DEMO_PROJECTS: SimProject[] = [
     category: 'INFRASTRUCTURE',
     status: 'ACTIVE',
     fundingGoal: (ETH).toString(),
-    fundingRaised: ((ETH * BigInt(37)) / BigInt(100)).toString(),
+    fundingRaised: '0',
     createdAt: new Date('2026-01-15'),
     updatedAt: new Date('2026-04-01'),
     planner: { id: 'planner-001', walletAddress: '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266', role: 'PLANNER' },
@@ -73,10 +73,7 @@ export const DEMO_PROJECTS: SimProject[] = [
       { id: 'rr-001-2', role: 'AI/ML Engineer', description: 'Deploy on-device anomaly detection model and integrate with resident alert app', milestoneId: 'm3' },
       { id: 'rr-001-3', role: 'Security Installer', description: 'Physical installation of 12 edge-AI cameras at approved mounting points across 8 intersections', milestoneId: 'm2' },
     ],
-    investments: [
-      { id: 'inv1', amount: ((ETH * BigInt(37)) / BigInt(100)).toString(), investor: { id: 'u1', walletAddress: '0xsim001' } },
-      { id: 'inv-sim-seed-1', amount: (ETH * BigInt(75) / BigInt(10000)).toString(), investor: { id: 'sim-user', walletAddress: '0xsimulated' }, mxn: 500, createdAt: new Date('2026-03-10') } as any,
-    ],
+    investments: [],
     telemetry: [{ id: 't1', timestamp: new Date(), data: { uptimePercent: 98.5, batteryPercent: 87 } }],
     reports: [],
     _count: { investments: 1 },
@@ -89,7 +86,7 @@ export const DEMO_PROJECTS: SimProject[] = [
     category: 'COMMUNITY',
     status: 'ACTIVE',
     fundingGoal: (ETH).toString(),
-    fundingRaised: ((ETH * BigInt(21)) / BigInt(100)).toString(),
+    fundingRaised: '0',
     createdAt: new Date('2026-02-20'),
     updatedAt: new Date('2026-04-02'),
     planner: { id: 'planner-002', walletAddress: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8', role: 'PLANNER' },
@@ -102,9 +99,7 @@ export const DEMO_PROJECTS: SimProject[] = [
       { id: 'rr-002-1', role: 'Landscape Architect', description: 'Final planting plan for native CDMX species (tepozán, colorín, salvia mexicana) and LED post lighting layout', milestoneId: 'm6' },
       { id: 'rr-002-2', role: 'Civil Contractor', description: 'Grading, stone path construction, and solar drip irrigation system installation', milestoneId: 'm5' },
     ],
-    investments: [
-      { id: 'inv3', amount: ((ETH * BigInt(21)) / BigInt(100)).toString(), investor: { id: 'u3', walletAddress: '0xsim003' } },
-    ],
+    investments: [],
     telemetry: [],
     reports: [],
     _count: { investments: 1 },
@@ -117,7 +112,7 @@ export const DEMO_PROJECTS: SimProject[] = [
     category: 'INFRASTRUCTURE',
     status: 'ACTIVE',
     fundingGoal: (ETH).toString(),
-    fundingRaised: ((ETH * BigInt(54)) / BigInt(100)).toString(),
+    fundingRaised: '0',
     createdAt: new Date('2026-02-01'),
     updatedAt: new Date('2026-04-05'),
     planner: { id: 'planner-003', walletAddress: '0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC', role: 'PLANNER' },
@@ -131,9 +126,7 @@ export const DEMO_PROJECTS: SimProject[] = [
       { id: 'rr-003-1', role: 'Electrical Contractor', description: 'Install 15 LED retrofit fixtures and 3 new posts; connect to CFE grid with NOM-certified components', milestoneId: 'ml3' },
       { id: 'rr-003-2', role: 'Municipal Liaison', description: 'Coordinate Alcaldía Miguel Hidalgo inspection, lux compliance certification, and resident acceptance documentation', milestoneId: 'ml4' },
     ],
-    investments: [
-      { id: 'inv4', amount: ((ETH * BigInt(54)) / BigInt(100)).toString(), investor: { id: 'u4', walletAddress: '0xsim004' } },
-    ],
+    investments: [],
     telemetry: [],
     reports: [],
     _count: { investments: 4 },
@@ -219,6 +212,30 @@ export function persistData(): void {
   }
 }
 
+/** Full sim reset — wipes all funding, investments, balances, user-created projects, and comments. Keeps project templates. */
+export function resetSimFull(): void {
+  // Reset all demo project funding and investments
+  for (const p of DEMO_PROJECTS) {
+    p.fundingRaised = '0';
+    p.investments = [];
+    p._count.investments = 0;
+  }
+  // Remove user-created projects
+  const userProjectIds = DEMO_PROJECTS.filter(p => p.id.startsWith('sim-')).map(p => p.id);
+  for (const id of userProjectIds) {
+    const idx = DEMO_PROJECTS.findIndex(p => p.id === id);
+    if (idx !== -1) DEMO_PROJECTS.splice(idx, 1);
+  }
+  // Clear balances
+  userBalances.clear();
+  // Clear comments
+  commentStore.clear();
+  // Clear provider profiles
+  providerProfileStore.clear();
+  // Delete persisted file
+  try { if (fs.existsSync(DATA_FILE)) fs.unlinkSync(DATA_FILE); } catch {}
+}
+
 /** Add a user-created sim project to the store and persist it. */
 export function addSimProject(project: SimProject): void {
   DEMO_PROJECTS.unshift(project);
@@ -270,7 +287,7 @@ export interface SimUserInvestment {
 }
 
 const ETH_MXN_RATE = 65000;
-const DEFAULT_SIM_BALANCE_MXN = 10_000;
+const DEFAULT_SIM_BALANCE_MXN = 0; // Users must deposit to invest — clean launch state
 const userBalances = new Map<string, number>();
 
 export function getSimBalance(userId: string): number {

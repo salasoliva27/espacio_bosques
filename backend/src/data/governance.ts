@@ -34,7 +34,7 @@ export interface SimProposal {
 export const SIM_PROPOSALS: SimProposal[] = [];
 
 export function getProposalsForMilestone(milestoneId: string): SimProposal[] {
-  return SIM_PROPOSALS.filter(p => p.milestoneId === milestoneId && p.status === 'SUBMITTED');
+  return SIM_PROPOSALS.filter(p => p.milestoneId === milestoneId && (p.status === 'SUBMITTED' || p.status === 'WINNER'));
 }
 
 export function addProposal(data: Omit<SimProposal, 'id' | 'createdAt' | 'updatedAt'>): SimProposal {
@@ -148,4 +148,14 @@ export function setVotingWindow(milestoneId: string, days: number): Date {
   const deadline = new Date(Date.now() + days * 24 * 60 * 60 * 1000);
   MILESTONE_VOTING_WINDOWS[milestoneId] = deadline;
   return deadline;
+}
+
+/** Full governance reset — clears all proposals, votes, transactions, and voting windows. */
+export function resetGovernance(): void {
+  SIM_PROPOSALS.splice(0);
+  SIM_VOTES.splice(0);
+  SIM_TRANSACTIONS.splice(0);
+  for (const key of Object.keys(MILESTONE_VOTING_WINDOWS)) {
+    delete MILESTONE_VOTING_WINDOWS[key];
+  }
 }

@@ -40,6 +40,9 @@ function MilestoneVoting({ projectId, milestone }: { projectId: string; mileston
   const [expanded, setExpanded] = useState<string | null>(null);
   const [voting, setVoting] = useState(false);
   const [open, setOpen] = useState(true);
+  const [approving, setApproving] = useState<string | null>(null);
+  const [disbursing, setDisbursing] = useState<string | null>(null);
+  const [txDone, setTxDone] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     const { data: { session } } = await supabase.auth.getSession();
@@ -56,6 +59,33 @@ function MilestoneVoting({ projectId, milestone }: { projectId: string; mileston
   useEffect(() => { load(); }, [load]);
 
   if (!voteState?.votingOpen && proposals.length === 0) return null;
+
+  async function approveWinner(proposalId: string) {
+    setApproving(proposalId);
+    const { data: { session } } = await supabase.auth.getSession();
+    const res = await fetch(`/api/governance/proposals/${proposalId}/approve`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${session?.access_token ?? 'sim-token'}` },
+    });
+    if (res.ok) await load();
+    setApproving(null);
+  }
+
+  async function disbursePayment(proposalId: string) {
+    setDisbursing(proposalId);
+    const { data: { session } } = await supabase.auth.getSession();
+    const cfdiUuid = `SIM-${Date.now()}-CFDI`;
+    const res = await fetch(`/api/governance/proposals/${proposalId}/disburse`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session?.access_token ?? 'sim-token'}` },
+      body: JSON.stringify({ cfdiUuid }),
+    });
+    if (res.ok) {
+      setTxDone(proposalId);
+      await load();
+    }
+    setDisbursing(null);
+  }
 
   async function castVote(proposalId: string) {
     if (voting || voteState?.myVote) return;
@@ -163,6 +193,42 @@ function MilestoneVoting({ projectId, milestone }: { projectId: string; mileston
                     >
                       {voting ? t('gov.voting_btn') : t('gov.vote_btn')}
                     </button>
+                  )}
+
+                  {/* Approve winner (when voting closed, proposal is leading and not yet winner) */}
+                  {!voteState?.votingOpen && (p as any).status !== 'WINNER' && isWinning && (
+                    <button
+                      onClick={() => approveWinner(p.id)}
+                      disabled={approving === p.id}
+                      className="mt-1 w-full py-2 rounded-lg text-xs font-bold transition-opacity hover:opacity-90 disabled:opacity-40"
+                      style={{ background: 'rgba(16,185,129,0.15)', color: '#10b981', border: '1px solid rgba(16,185,129,0.3)' }}
+                    >
+                      {approving === p.id ? 'Approving…' : '✓ Approve as Winner'}
+                    </button>
+                  )}
+
+                  {/* Winner badge + Disburse button */}
+                  {(p as any).status === 'WINNER' && (
+                    <div className="mt-2 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-semibold px-2 py-0.5 rounded-full" style={{ background: 'rgba(16,185,129,0.15)', color: '#10b981' }}>
+                          ✓ Selected Winner
+                        </span>
+                        <span className="text-xs font-bold" style={{ color: '#00e5c4' }}>{fmt(p.quotedAmountMxn)}</span>
+                      </div>
+                      {txDone === p.id ? (
+                        <p className="text-xs text-center py-2" style={{ color: '#10b981' }}>✓ Payment disbursed — recorded in ledger</p>
+                      ) : (
+                        <button
+                          onClick={() => disbursePayment(p.id)}
+                          disabled={disbursing === p.id}
+                          className="w-full py-2 rounded-lg text-xs font-bold transition-opacity hover:opacity-90 disabled:opacity-40"
+                          style={{ background: 'rgba(0,229,196,0.12)', color: '#00e5c4', border: '1px solid rgba(0,229,196,0.25)' }}
+                        >
+                          {disbursing === p.id ? 'Processing…' : `Disburse ${fmt(p.quotedAmountMxn)} to Provider`}
+                        </button>
+                      )}
+                    </div>
                   )}
                 </div>
               );

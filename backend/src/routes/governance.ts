@@ -285,4 +285,78 @@ router.post('/projects/:projectId/transactions', requireAuth, (req: AuthRequest,
   res.status(201).json({ transaction: tx });
 });
 
+// ── POST /api/governance/proposals/:id/approve ───────────────────────────────
+// Mark a proposal as the WINNER (admin action, post-voting).
+
+router.post('/proposals/:id/approve', requireAuth, (req: AuthRequest, res: Response) => {
+  const proposal = getProposal(req.params.id);
+  if (!proposal) return res.status(404).json({ error: 'Proposal not found' });
+  if (proposal.status === 'WINNER') return res.json({ proposal }); // idempotent
+
+  // Mark all other proposals for the same milestone as REJECTED
+  for (const p of SIM_PROPOSALS) {
+    if (p.milestoneId === proposal.milestoneId && p.id !== proposal.id) {
+      updateProposal(p.id, { status: 'REJECTED' });
+    }
+  }
+  updateProposal(proposal.id, { status: 'WINNER' });
+  logger.info('[governance] proposal approved as winner', { proposalId: proposal.id });
+  res.json({ proposal: getProposal(proposal.id) });
+});
+
+// ── POST /api/governance/proposals/:id/disburse ──────────────────────────────
+// Simulate a payment disbursement to the winning provider.
+// Records a transaction in the ledger. Requires proposal to be WINNER.
+// Body: { cfdiUuid: string } — in production this is the CFDI 4.0 XML UUID from the provider.
+
+router.post('/proposals/:id/disburse', requireAuth, async (req: AuthRequest, res: Response) => {
+  const proposal = getProposal(req.params.id);
+  if (!proposal) return res.status(404).json({ error: 'Proposal not found' });
+  if (proposal.status !== 'WINNER') {
+    return res.status(400).json({ error: 'Only WINNER proposals can be disbursed. Approve the proposal first.' });
+  }
+
+  const { cfdiUuid } = req.body;
+  if (!cfdiUuid) return res.status(400).json({ error: 'cfdiUuid is required (simulation: any string)' });
+
+  // Resolve provider info
+  const project = DEMO_PROJECTS.find(p => p.id === proposal.projectId);
+  if (!project) return res.status(404).json({ error: 'Project not found' });
+
+  const milestone = project.milestones.find(m => m.id === proposal.milestoneId);
+  const milestoneTitle = milestone?.title ?? proposal.milestoneId;
+
+  // Use provider registry or self-provider profile
+  let providerName = proposal.providerName;
+  let bankMasked = 'SPEI ****sim0';
+
+  const registryProvider = getProvider(proposal.providerId);
+  if (registryProvider) {
+    providerName = registryProvider.name;
+    const clabe = registryProvider.clabe;
+    const BANK_CODES: Record<string, string> = {
+      '014': 'BBVA', '002': 'BANAMEX', '006': 'BANCOMEXT', '021': 'HSBC',
+      '012': 'BBVA', '044': 'SCOTIABANK', '058': 'BANREGIO', '846': 'STP',
+    };
+    const bankName = BANK_CODES[clabe.slice(0, 3)] ?? `Banco ${clabe.slice(0, 3)}`;
+    bankMasked = `${bankName} ****${clabe.slice(-4)}`;
+  }
+
+  const tx = addTransaction({
+    projectId: proposal.projectId,
+    milestoneId: proposal.milestoneId,
+    milestoneTitle,
+    providerId: proposal.providerId,
+    providerName,
+    bankMasked,
+    cfdiUuid,
+    amountMxn: proposal.quotedAmountMxn,
+    date: new Date(),
+    status: 'COMPLETED',
+  });
+
+  logger.info('[governance] proposal disbursed', { proposalId: proposal.id, txId: tx.id, amountMxn: tx.amountMxn });
+  res.status(201).json({ transaction: tx, proposal: getProposal(proposal.id) });
+});
+
 export default router;

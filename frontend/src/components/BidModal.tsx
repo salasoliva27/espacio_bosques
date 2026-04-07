@@ -248,18 +248,53 @@ export default function BidModal({ projectId, projectTitle, role, milestones, on
 
               {/* Input or submit */}
               {ready ? (
-                <div className="p-5 flex flex-col gap-3" style={{ borderTop: '1px solid #1e2d3d' }}>
-                  <p className="text-xs text-center" style={{ color: '#6b7280' }}>
-                    Proposal ready. Review the chat above and submit your bid.
-                  </p>
+                <div className="p-5 space-y-3" style={{ borderTop: '1px solid #1e2d3d' }}>
+                  <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#00e5c4' }}>Review your bid</p>
+
+                  {/* Editable amount */}
+                  <div>
+                    <label className="block text-xs mb-1" style={{ color: '#6b7280' }}>Quoted Amount (MXN) *</label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm" style={{ color: '#6b7280' }}>$</span>
+                      <input
+                        type="number"
+                        value={readySummary?.quotedAmountMxn || ''}
+                        onChange={e => setReadySummary((s: any) => ({ ...s, quotedAmountMxn: Number(e.target.value) }))}
+                        className="w-full pl-7 pr-3 py-2 rounded-lg text-sm outline-none"
+                        style={{ background: '#111c2a', border: '1px solid rgba(0,229,196,0.3)', color: '#e8f4f0' }}
+                        min={1}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Editable timeline */}
+                  <div>
+                    <label className="block text-xs mb-1" style={{ color: '#6b7280' }}>Timeline (days) *</label>
+                    <input
+                      type="number"
+                      value={readySummary?.timelineDays || ''}
+                      onChange={e => setReadySummary((s: any) => ({ ...s, timelineDays: Number(e.target.value) }))}
+                      className="w-full px-3 py-2 rounded-lg text-sm outline-none"
+                      style={{ background: '#111c2a', border: '1px solid #1e2d3d', color: '#e8f4f0' }}
+                      min={1}
+                    />
+                  </div>
+
+                  {readySummary?.scope && (
+                    <p className="text-xs px-3 py-2 rounded-lg leading-relaxed" style={{ background: '#0a1420', color: '#9ca3af', border: '1px solid #1e2d3d' }}>
+                      <span className="font-semibold" style={{ color: '#e8f4f0' }}>Scope: </span>{readySummary.scope}
+                    </p>
+                  )}
+
                   <button
                     onClick={submitBid}
-                    disabled={submitting}
+                    disabled={submitting || !readySummary?.quotedAmountMxn || !readySummary?.timelineDays}
                     className="w-full py-2.5 rounded-lg text-sm font-semibold transition-opacity hover:opacity-90 disabled:opacity-50"
                     style={{ background: '#00e5c4', color: '#080c10' }}
                   >
-                    {submitting ? 'Submitting…' : 'Submit Bid'}
+                    {submitting ? 'Submitting…' : 'Submit Bid for Approval'}
                   </button>
+                  <p className="text-xs text-center" style={{ color: '#4b5563' }}>Your bid will be reviewed and put to community vote</p>
                 </div>
               ) : (
                 <div className="p-4 flex gap-3" style={{ borderTop: '1px solid #1e2d3d' }}>

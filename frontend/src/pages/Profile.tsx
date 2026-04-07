@@ -704,7 +704,6 @@ export default function Profile() {
                         style={{ background: '#111c2a', border: '1px solid #1e2d3d', color: '#e8f4f0' }}
                         value={companyName}
                         onChange={e => setCompanyName(e.target.value)}
-                        onBlur={() => saveProviderField('companyName', companyName)}
                         placeholder="e.g. Contratos CDMX S.A. de C.V."
                       />
                     </div>
@@ -718,7 +717,6 @@ export default function Profile() {
                         style={{ background: '#111c2a', border: '1px solid #1e2d3d', color: '#e8f4f0' }}
                         value={specialty}
                         onChange={e => setSpecialty(e.target.value)}
-                        onBlur={() => saveProviderField('specialty', specialty)}
                         placeholder="e.g. LED Electrical Installation"
                       />
                     </div>
@@ -732,10 +730,31 @@ export default function Profile() {
                         style={{ background: '#111c2a', border: '1px solid #1e2d3d', color: '#e8f4f0' }}
                         value={rfc}
                         onChange={e => setRfc(e.target.value)}
-                        onBlur={() => saveProviderField('rfc', rfc)}
                         placeholder="XAXX010101000"
                       />
                     </div>
+
+                    <button
+                      onClick={async () => {
+                        setSavingProvider(true);
+                        try {
+                          const res = await fetch('/api/profile/provider', {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                            body: JSON.stringify({ companyName, specialty, rfc }),
+                          });
+                          const data = await res.json();
+                          if (res.ok) setProviderProfile(data.profile);
+                        } finally {
+                          setSavingProvider(false);
+                        }
+                      }}
+                      disabled={savingProvider}
+                      className="w-full py-2.5 rounded-lg text-sm font-semibold transition-opacity hover:opacity-90 disabled:opacity-50"
+                      style={{ background: '#00e5c4', color: '#080c10' }}
+                    >
+                      {savingProvider ? 'Saving…' : 'Save Provider Details'}
+                    </button>
                   </div>
                 )}
 

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { useT } from '../context/LanguageContext';
+import { supabase } from '../lib/auth';
 
 interface Project {
   id: string;
@@ -37,12 +38,133 @@ const CATEGORY_PHOTOS: Record<string, string> = {
   EDUCATION: 'https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=800&q=75',
 };
 
+// ── Deposit Modal ─────────────────────────────────────────────────────────────
+
+function DepositModal({ balance, onClose, onDeposited }: { balance: number; onClose: () => void; onDeposited: (newBalance: number) => void }) {
+  const [amount, setAmount] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const PRESETS = [500, 1000, 5000, 10000];
+
+  async function handleDeposit() {
+    const mxn = Number(amount);
+    if (!mxn || isNaN(mxn) || mxn < 100) { setError('Minimum deposit is $100 MXN'); return; }
+    if (mxn > 50000) { setError('Maximum deposit is $50,000 MXN per transaction'); return; }
+    setLoading(true);
+    setError('');
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await fetch('/api/balance/deposit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session?.access_token}` },
+        body: JSON.stringify({ mxn }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setError(data.error || 'Deposit failed'); setLoading(false); return; }
+      onDeposited(data.balance);
+    } catch (err: any) {
+      setError(err.message);
+    }
+    setLoading(false);
+  }
+
+  const fmt = (n: number) => new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 0 }).format(n);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)' }}>
+      <div className="w-full max-w-sm rounded-2xl p-6" style={{ background: '#0d1520', border: '1px solid #1e2d3d' }}>
+        <h2 className="text-base font-bold mb-1" style={{ color: '#e8f4f0' }}>Deposit Funds</h2>
+        <p className="text-xs mb-4" style={{ color: '#6b7280' }}>
+          Current balance: <span style={{ color: '#00e5c4' }}>{fmt(balance)}</span>
+          <span className="ml-2 text-[10px] px-1.5 py-0.5 rounded" style={{ background: 'rgba(0,229,196,0.08)', color: '#00e5c4' }}>SIM</span>
+        </p>
+
+        {/* Preset amounts */}
+        <div className="grid grid-cols-4 gap-2 mb-4">
+          {PRESETS.map(p => (
+            <button
+              key={p}
+              onClick={() => setAmount(String(p))}
+              className="py-2 rounded-lg text-xs font-semibold transition-all"
+              style={{
+                background: amount === String(p) ? 'rgba(0,229,196,0.15)' : '#1e2d3d',
+                color: amount === String(p) ? '#00e5c4' : '#9ca3af',
+                border: amount === String(p) ? '1px solid rgba(0,229,196,0.3)' : '1px solid transparent',
+              }}
+            >
+              {fmt(p)}
+            </button>
+          ))}
+        </div>
+
+        {/* Custom amount */}
+        <div className="mb-4">
+          <label className="block text-xs font-medium mb-1.5" style={{ color: '#6b7280' }}>Custom amount (MXN)</label>
+          <div className="relative">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm" style={{ color: '#6b7280' }}>$</span>
+            <input
+              type="number"
+              min={100}
+              max={50000}
+              value={amount}
+              onChange={e => setAmount(e.target.value)}
+              placeholder="1,000"
+              className="w-full pl-7 pr-3 py-2.5 rounded-lg text-sm outline-none"
+              style={{ background: '#111c2a', border: '1px solid #1e2d3d', color: '#e8f4f0' }}
+              onKeyDown={e => { if (e.key === 'Enter') handleDeposit(); }}
+            />
+          </div>
+        </div>
+
+        <p className="text-xs mb-4 px-3 py-2 rounded-lg" style={{ background: 'rgba(0,229,196,0.06)', color: '#4b7c74', border: '1px solid rgba(0,229,196,0.1)' }}>
+          Simulation: In production, you'd send SPEI to your Bitso account. Espacio Bosques never holds funds.
+        </p>
+
+        {error && <p className="text-xs mb-3 px-3 py-2 rounded-lg" style={{ background: 'rgba(239,68,68,0.08)', color: '#f87171' }}>{error}</p>}
+
+        <div className="flex gap-2">
+          <button onClick={onClose} className="flex-1 py-2.5 rounded-xl text-sm" style={{ background: '#1e2d3d', color: '#9ca3af', border: '1px solid #2a3f52' }}>
+            Cancel
+          </button>
+          <button
+            onClick={handleDeposit}
+            disabled={loading || !amount}
+            className="flex-1 py-2.5 rounded-xl text-sm font-bold disabled:opacity-50"
+            style={{ background: '#00e5c4', color: '#080c10' }}
+          >
+            {loading ? 'Depositing…' : 'Deposit'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function Dashboard() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
+  const [balance, setBalance] = useState<number | null>(null);
+  const [showDeposit, setShowDeposit] = useState(false);
   const t = useT();
 
-  useEffect(() => { fetchProjects(); }, []);
+  useEffect(() => {
+    fetchProjects();
+    fetchBalance();
+  }, []);
+
+  const fetchBalance = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      const res = await fetch('/api/balance/me', {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setBalance(data.mxn);
+      }
+    } catch {}
+  };
 
   const fetchProjects = async () => {
     try {
@@ -78,18 +200,38 @@ export default function Dashboard() {
     <div className="min-h-screen" style={{ background: '#080c10' }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         {/* Header */}
-        <div className="flex items-end justify-between mb-8">
+        <div className="flex items-start justify-between mb-8 gap-4 flex-wrap">
           <div>
             <h1 className="text-2xl font-bold" style={{ color: '#e8f4f0' }}>{t('dashboard.title')}</h1>
             <p className="mt-1 text-sm" style={{ color: '#6b7280' }}>{t('dashboard.subtitle')}</p>
           </div>
-          <Link
-            to="/create"
-            className="hidden sm:inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-opacity hover:opacity-90"
-            style={{ background: '#00e5c4', color: '#080c10' }}
-          >
-            + {t('nav.create')}
-          </Link>
+          <div className="flex items-center gap-3 flex-wrap">
+            {/* Balance + Deposit */}
+            {balance !== null && (
+              <div className="flex items-center gap-2">
+                <div className="text-right">
+                  <p className="text-xs" style={{ color: '#6b7280' }}>Balance</p>
+                  <p className="text-sm font-bold" style={{ color: '#00e5c4' }}>
+                    {new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 0 }).format(balance)}
+                  </p>
+                </div>
+                <button
+                  onClick={() => setShowDeposit(true)}
+                  className="px-3 py-2 rounded-lg text-xs font-semibold transition-opacity hover:opacity-80"
+                  style={{ background: 'rgba(0,229,196,0.1)', color: '#00e5c4', border: '1px solid rgba(0,229,196,0.2)' }}
+                >
+                  + Deposit
+                </button>
+              </div>
+            )}
+            <Link
+              to="/create"
+              className="hidden sm:inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-opacity hover:opacity-90"
+              style={{ background: '#00e5c4', color: '#080c10' }}
+            >
+              + {t('nav.create')}
+            </Link>
+          </div>
         </div>
 
         {/* Grid */}
@@ -171,6 +313,17 @@ export default function Dashboard() {
           </div>
         )}
       </div>
+
+      {showDeposit && (
+        <DepositModal
+          balance={balance ?? 0}
+          onClose={() => setShowDeposit(false)}
+          onDeposited={(newBalance) => {
+            setBalance(newBalance);
+            setShowDeposit(false);
+          }}
+        />
+      )}
     </div>
   );
 }
