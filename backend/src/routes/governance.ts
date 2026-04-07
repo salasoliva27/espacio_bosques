@@ -29,22 +29,42 @@ import { DEMO_PROJECTS, getProviderUserProfile } from '../data/simStore';
 const router = Router();
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY || '' });
 
+/** Extract the first balanced JSON object from a string (handles nested braces). */
+function extractJsonObject(text: string): any | null {
+  const start = text.indexOf('{');
+  if (start === -1) return null;
+  let depth = 0;
+  for (let i = start; i < text.length; i++) {
+    if (text[i] === '{') depth++;
+    else if (text[i] === '}') {
+      depth--;
+      if (depth === 0) {
+        try { return JSON.parse(text.slice(start, i + 1)); } catch { return null; }
+      }
+    }
+  }
+  return null;
+}
+
 const PROPOSAL_SYSTEM = `You are a project intake assistant for Espacio Bosques — a community funding platform for Bosques de las Lomas, CDMX.
 
-A provider (contractor/vendor) is submitting a bid proposal for a specific community project milestone. Your job is to help them build a complete, structured proposal through conversation.
+A provider (contractor/vendor) is submitting a bid proposal for a specific community project milestone. Your job is to help them build a complete, structured proposal through conversation — and to actively help them price it well using their own registered services.
 
 Collect in order (ask one topic at a time, conversationally):
 1. Their proposed approach and scope of work for the milestone
-2. Their quoted amount in MXN — ask them to break it down (labor, materials, equipment)
-3. Their estimated timeline in days
-4. Relevant experience — similar projects completed, references if any
-5. Any questions or clarifications about the milestone requirements
+2. Their quoted amount in MXN — if provider services are listed below, reference their typical price range to anchor the conversation (e.g. "Based on your [service name], your typical range is X–Y MXN. Does that apply here, or does this scope differ?"). Ask them to confirm or adjust and briefly break down: labor, materials, equipment.
+3. Their estimated timeline in calendar days
+4. Relevant experience — similar projects completed, certifications, references if any
+5. Confirm: any questions or clarifications needed about the milestone?
 
 Rules:
 - Be concise. Ask one clear question at a time.
-- When you have enough information for a complete proposal, say: "I have everything I need. Ready to submit your proposal?"
+- Use the provider's registered services as context — if a service matches the milestone, surface the typical price. Do not invent numbers.
+- When you have complete answers for all 5 points, say: "I have everything I need. Ready to submit your proposal?"
 - Never fabricate information. If they haven't answered something, ask again.
-- When all fields are collected, respond ONLY with JSON: {"ready": true, "summary": {"scope": "...", "quotedAmountMxn": 0, "timelineDays": 0, "approach": "...", "experience": "..."}}`;
+- When all fields are collected, respond ONLY with valid JSON on its own line: {"ready": true, "summary": {"scope": "...", "quotedAmountMxn": 0, "timelineDays": 0, "approach": "...", "experience": "..."}}
+
+IMPORTANT: quotedAmountMxn must be a plain number (no commas, no currency symbol). timelineDays must be a plain number.`
 
 // ── POST /api/governance/proposals ──────────────────────────────────────────
 
@@ -105,6 +125,18 @@ router.post('/proposals/:id/chat', requireAuth, async (req: AuthRequest, res: Re
     ? `\nMilestone: "${milestone.title}" — ${milestone.description} (${milestone.fundingPercentage}% of project budget, ${milestone.durationDays} days planned)`
     : '';
 
+  // Inject provider's registered services so AI can reference typical prices
+  const providerProfile = getProviderUserProfile(req.user!.id);
+  let serviceContext = '';
+  if (providerProfile?.services && providerProfile.services.length > 0) {
+    const finalizedServices = providerProfile.services.filter(s => s.finalized);
+    if (finalizedServices.length > 0) {
+      serviceContext = '\n\nProvider\'s registered services:\n' + finalizedServices.map(s =>
+        `- ${s.name}: ${s.description || '(no description)'} | Typical price: ${s.typicalPriceMxn || 'not specified'} | Deliverables: ${s.deliverables?.join(', ') || 'not listed'}`
+      ).join('\n');
+    }
+  }
+
   const newUserMsg = { role: 'user' as const, content: message };
   const history = [...proposal.chatMessages, newUserMsg];
 
@@ -112,7 +144,7 @@ router.post('/proposals/:id/chat', requireAuth, async (req: AuthRequest, res: Re
     const response = await anthropic.messages.create({
       model: process.env.ANTHROPIC_MODEL || 'claude-sonnet-4-6',
       max_tokens: 1024,
-      system: PROPOSAL_SYSTEM + milestoneContext,
+      system: PROPOSAL_SYSTEM + milestoneContext + serviceContext,
       messages: history.map(m => ({ role: m.role, content: m.content })),
     });
 
@@ -120,16 +152,13 @@ router.post('/proposals/:id/chat', requireAuth, async (req: AuthRequest, res: Re
     const assistantMsg = { role: 'assistant' as const, content: text };
     const updatedMessages = [...history, assistantMsg];
 
-    // Check if AI signals readiness
+    // Check if AI signals readiness — use brace-balanced extractor (regex fails on nested JSON)
     let ready = false;
     let summary: any = null;
-    try {
-      const jsonMatch = text.match(/\{"ready"\s*:\s*true[\s\S]*?\}/);
-      if (jsonMatch) {
-        const parsed = JSON.parse(jsonMatch[0]);
-        if (parsed.ready && parsed.summary) { ready = true; summary = parsed.summary; }
-      }
-    } catch {}
+    if (text.includes('"ready"') && text.includes('true')) {
+      const parsed = extractJsonObject(text);
+      if (parsed?.ready && parsed?.summary) { ready = true; summary = parsed.summary; }
+    }
 
     updateProposal(proposal.id, { chatMessages: updatedMessages });
     logger.info('[governance] proposal chat turn', { proposalId: proposal.id, ready });

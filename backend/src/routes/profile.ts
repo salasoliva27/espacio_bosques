@@ -22,6 +22,23 @@ import {
 const router = Router();
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY || '' });
 
+/** Extract the first balanced JSON object from a string (handles nested braces). */
+function extractJsonObject(text: string): any | null {
+  const start = text.indexOf('{');
+  if (start === -1) return null;
+  let depth = 0;
+  for (let i = start; i < text.length; i++) {
+    if (text[i] === '{') depth++;
+    else if (text[i] === '}') {
+      depth--;
+      if (depth === 0) {
+        try { return JSON.parse(text.slice(start, i + 1)); } catch { return null; }
+      }
+    }
+  }
+  return null;
+}
+
 const SERVICE_SYSTEM = `You are a service definition assistant for Espacio Bosques — a community project platform in Bosques de las Lomas, CDMX.
 
 A provider (contractor or professional) wants to register a service they offer for community projects. Help them articulate it precisely so it can be matched to project requirements and used to create bids.
@@ -124,19 +141,16 @@ router.post('/provider/services/:serviceId/chat', requireAuth, async (req: AuthR
     const assistantMsg = { role: 'assistant' as const, content: text };
     const updatedMessages = [...history, assistantMsg];
 
-    // Check if AI signals readiness
+    // Check if AI signals readiness — use brace-balanced extractor (regex fails on nested JSON)
     let ready = false;
     let serviceData: any = null;
-    try {
-      const jsonMatch = text.match(/\{"ready"\s*:\s*true[\s\S]*?\}/);
-      if (jsonMatch) {
-        const parsed = JSON.parse(jsonMatch[0]);
-        if (parsed.ready && parsed.service) {
-          ready = true;
-          serviceData = parsed.service;
-        }
+    if (text.includes('"ready"') && text.includes('true')) {
+      const parsed = extractJsonObject(text);
+      if (parsed?.ready && parsed?.service) {
+        ready = true;
+        serviceData = parsed.service;
       }
-    } catch {}
+    }
 
     // Save updated chat history
     updateProviderService(userId, serviceId, { chatMessages: updatedMessages });
