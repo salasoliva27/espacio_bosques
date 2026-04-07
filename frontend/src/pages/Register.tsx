@@ -6,7 +6,7 @@ import { useLanguage } from '../context/LanguageContext';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
-type SatStatus = 'idle' | 'checking' | 'found' | 'not_found' | 'service_unavailable';
+type BlacklistStatus = 'idle' | 'checking' | 'clean' | 'presunto' | 'definitivo' | 'service_unavailable';
 
 export default function Register() {
   const { lang, toggle } = useLanguage();
@@ -19,14 +19,12 @@ export default function Register() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [rfcError, setRfcError] = useState('');
-  const [satStatus, setSatStatus] = useState<SatStatus>('idle');
-  const [satMessage, setSatMessage] = useState('');
+  const [blacklistStatus, setBlacklistStatus] = useState<BlacklistStatus>('idle');
   const [birthDate, setBirthDate] = useState<Date | null>(null);
-  const satDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const rfcDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const checkRfcWithSat = async (rfcVal: string) => {
-    setSatStatus('checking');
-    setSatMessage('');
+  const checkRfc = async (rfcVal: string) => {
+    setBlacklistStatus('checking');
     try {
       const res = await fetch(`${API_URL}/api/rfc/validate`, {
         method: 'POST',
@@ -35,40 +33,29 @@ export default function Register() {
       });
       const data = await res.json();
       if (data.birthDate) {
-        const d = new Date(data.birthDate + 'T12:00:00'); // noon to avoid UTC offset issues
-        setBirthDate(d);
+        setBirthDate(new Date(data.birthDate + 'T12:00:00'));
       }
-      if (data.status === 'found') {
-        setSatStatus('found');
-      } else if (data.status === 'not_found') {
-        setSatStatus('not_found');
-        setSatMessage(data.message || 'RFC no encontrado en el padrón del SAT');
-      } else {
-        // service_unavailable — degrade gracefully, don't block
-        setSatStatus('service_unavailable');
-        setSatMessage('');
-      }
+      const bl = data.blacklist?.status ?? 'service_unavailable';
+      setBlacklistStatus(bl as BlacklistStatus);
     } catch {
-      setSatStatus('service_unavailable');
+      setBlacklistStatus('service_unavailable');
     }
   };
 
   const handleRfcChange = (val: string) => {
     const formatted = formatRfc(val);
     setRfc(formatted);
-    setSatStatus('idle');
+    setBlacklistStatus('idle');
     setBirthDate(null);
 
     if (formatted.length >= 13) {
       const result = validateRfc(formatted, fullName);
       setRfcError(result.valid ? '' : (result.error ?? ''));
       if (result.valid) {
-        // Extract birth date immediately (doesn't need SAT call)
         const bd = extractBirthDate(formatted);
         setBirthDate(bd);
-        // Debounce the SAT check
-        if (satDebounceRef.current) clearTimeout(satDebounceRef.current);
-        satDebounceRef.current = setTimeout(() => checkRfcWithSat(formatted), 600);
+        if (rfcDebounceRef.current) clearTimeout(rfcDebounceRef.current);
+        rfcDebounceRef.current = setTimeout(() => checkRfc(formatted), 600);
       }
     } else {
       setRfcError('');
@@ -87,17 +74,17 @@ export default function Register() {
       return;
     }
 
-    // Block if SAT says RFC doesn't exist
-    if (satStatus === 'not_found') {
+    // Block if RFC is on SAT's confirmed fraud list
+    if (blacklistStatus === 'definitivo') {
       setRfcError(lang === 'es'
-        ? 'El RFC no está registrado en el padrón del SAT. Verifica que sea correcto.'
-        : 'This RFC is not registered with SAT. Please verify it is correct.');
+        ? 'Este RFC aparece en el listado definitivo del SAT (Art. 69-B). No es posible registrarse.'
+        : 'This RFC appears on the SAT confirmed fraud list (Art. 69-B). Registration is not allowed.');
       return;
     }
 
-    // If SAT check is still pending, wait for it
-    if (satStatus === 'checking') {
-      setError(lang === 'es' ? 'Verificando RFC con SAT, un momento…' : 'Verifying RFC with SAT, please wait…');
+    // If blacklist check is still in progress, wait
+    if (blacklistStatus === 'checking') {
+      setError(lang === 'es' ? 'Verificando RFC, un momento…' : 'Verifying RFC, please wait…');
       return;
     }
 
@@ -111,8 +98,8 @@ export default function Register() {
       const metadata: Record<string, any> = {
         full_name: fullName.trim(),
         rfc: formatRfc(rfc),
-        rfc_verified: satStatus === 'found',
-        rfc_status: satStatus, // 'found' | 'service_unavailable' (not_found is blocked above)
+        rfc_verified: blacklistStatus === 'clean',
+        rfc_status: blacklistStatus, // 'clean' | 'presunto' | 'service_unavailable'
       };
       // Store extracted birth date if available
       if (birthDate) {
@@ -246,30 +233,37 @@ export default function Register() {
                           : `RFC encodes birth date: ${formatBirthDate(birthDate, 'en')}`}
                       </p>
                     )}
-                    {/* SAT registry check status */}
-                    {satStatus === 'checking' && (
+                    {/* SAT 69-B blacklist check status */}
+                    {blacklistStatus === 'checking' && (
                       <p className="text-xs" style={{ color: '#6b7280' }}>
-                        {es ? '⏳ Verificando con el padrón del SAT…' : '⏳ Checking SAT registry…'}
+                        {es ? '⏳ Verificando lista SAT 69-B…' : '⏳ Checking SAT 69-B list…'}
                       </p>
                     )}
-                    {satStatus === 'found' && (
+                    {blacklistStatus === 'clean' && (
                       <p className="text-xs font-medium" style={{ color: '#00e5c4' }}>
-                        {es ? '✓ RFC registrado y activo en el SAT' : '✓ RFC registered and active with SAT'}
+                        {es ? '✓ RFC verificado — no aparece en listas SAT' : '✓ RFC verified — not on SAT lists'}
                       </p>
                     )}
-                    {satStatus === 'not_found' && (
-                      <p className="text-xs" style={{ color: '#ef4444' }}>
-                        {es ? '✗ RFC no encontrado en el padrón del SAT' : '✗ RFC not found in SAT registry'}
-                      </p>
-                    )}
-                    {satStatus === 'service_unavailable' && (
+                    {blacklistStatus === 'presunto' && (
                       <p className="text-xs" style={{ color: '#f59e0b' }}>
                         {es
-                          ? '⚠ Validación SAT no disponible — validación estructural aplicada'
-                          : '⚠ SAT check unavailable — structural validation applied'}
+                          ? '⚠ Este RFC aparece como presunto en Art. 69-B SAT. Puedes continuar pero será revisado.'
+                          : '⚠ This RFC appears as presumed on SAT Art. 69-B. You may continue but it will be reviewed.'}
                       </p>
                     )}
-                    {satStatus === 'idle' && !rfcError && (
+                    {blacklistStatus === 'definitivo' && (
+                      <p className="text-xs" style={{ color: '#ef4444' }}>
+                        {es ? '✗ RFC en listado definitivo SAT 69-B — registro no permitido' : '✗ RFC on SAT 69-B confirmed list — registration not allowed'}
+                      </p>
+                    )}
+                    {blacklistStatus === 'service_unavailable' && (
+                      <p className="text-xs" style={{ color: '#f59e0b' }}>
+                        {es
+                          ? '⚠ Lista SAT no disponible — validación estructural aplicada'
+                          : '⚠ SAT list unavailable — structural validation applied'}
+                      </p>
+                    )}
+                    {blacklistStatus === 'idle' && !rfcError && (
                       <p className="text-xs" style={{ color: '#00e5c4' }}>
                         {es ? '✓ Formato válido' : '✓ Valid format'}
                       </p>
@@ -294,14 +288,14 @@ export default function Register() {
 
             <button
               type="submit"
-              disabled={loading || !!rfcError || satStatus === 'checking' || satStatus === 'not_found'}
+              disabled={loading || !!rfcError || blacklistStatus === 'checking' || blacklistStatus === 'definitivo'}
               className="w-full py-2.5 rounded-lg text-sm font-semibold transition-opacity hover:opacity-90 disabled:opacity-50 mt-2"
               style={{ background: '#00e5c4', color: '#080c10' }}
             >
               {loading
                 ? (es ? 'Creando cuenta…' : 'Creating account…')
-                : satStatus === 'checking'
-                  ? (es ? 'Verificando RFC…' : 'Verifying RFC…')
+                : blacklistStatus === 'checking'
+                  ? (es ? 'Verificando…' : 'Verifying…')
                   : (es ? 'Crear cuenta' : 'Create account')}
             </button>
           </form>
@@ -317,8 +311,8 @@ export default function Register() {
         <div className="mt-4 rounded-xl p-4" style={{ background: '#0a1520', border: '1px solid #1e2d3d' }}>
           <p className="text-xs leading-relaxed" style={{ color: '#4b5563' }}>
             {es
-              ? 'Tu RFC se valida estructuralmente contra tu nombre. Esto confirma que el RFC pertenece a la persona que se está registrando. Para validación completa contra el SAT, se requiere integración adicional.'
-              : 'Your RFC is structurally validated against your name. This confirms the RFC belongs to the registering person. Full SAT database validation requires additional integration.'}
+              ? 'Tu RFC se valida estructuralmente y se verifica contra la lista pública SAT Art. 69-B (actualizada mensualmente).'
+              : 'Your RFC is structurally validated and checked against the public SAT Art. 69-B list (updated monthly).'}
           </p>
         </div>
       </div>

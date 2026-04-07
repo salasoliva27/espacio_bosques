@@ -21,13 +21,33 @@ import CompleteProfile from './pages/CompleteProfile';
 const queryClient = new QueryClient();
 const SIM = import.meta.env.VITE_SIMULATION_MODE === 'true';
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+
+/** Fire-and-forget: sync user_metadata → eb_profiles after login. */
+async function initUserProfile(accessToken: string) {
+  try {
+    await fetch(`${API_URL}/api/user/profile/init`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+  } catch {
+    // Non-fatal — profile will be retried on next login
+  }
+}
+
 function AppInner() {
   const [session, setSession] = useState<any>(undefined);
   const location = useLocation();
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => setSession(session ?? null));
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, s) => setSession(s ?? null));
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, s) => {
+      setSession(s ?? null);
+      // Sync profile to eb_profiles on every sign-in
+      if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && s?.access_token) {
+        initUserProfile(s.access_token);
+      }
+    });
     return () => subscription.unsubscribe();
   }, []);
 

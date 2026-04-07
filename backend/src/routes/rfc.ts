@@ -1,24 +1,40 @@
 /**
  * POST /api/rfc/validate
  *
- * Validates an RFC against the SAT registry (padron de contribuyentes).
- * Used during registration to confirm the RFC is real and active.
+ * Validates an RFC using two layers:
+ *   1. Structural validation — format regex (always runs, always reliable)
+ *   2. SAT 69-B blacklist   — checks against SAT's public fraud list (cached, updated daily)
+ *
+ * The old SAT SIAT scraper has been removed. That endpoint requires RFC + name + CP
+ * submitted together (it's a verification form, not a lookup), has a CAPTCHA,
+ * and was returning service_unavailable on every request.
+ *
+ * For full identity lookup (name, sex, birth state), integrate Moffin or Nufi
+ * CURP API once credentials are available. See backend/src/services/moffin.ts (stub).
  *
  * Body: { rfc: string }
  * Response:
- *   { registered: true,  status: 'found', birthDate: '1985-03-12' }
- *   { registered: false, status: 'not_found', message: '...' }
- *   { registered: false, status: 'service_unavailable', message: '...' }
+ *   {
+ *     rfc: string,
+ *     valid: boolean,
+ *     birthDate: string | null,    // ISO date extracted from RFC, e.g. "1985-03-12"
+ *     blacklist: {
+ *       status: 'clean' | 'presunto' | 'definitivo' | 'service_unavailable',
+ *       name?: string,             // SAT-registered name if found on list
+ *       situation?: string,        // raw SAT status string
+ *       listUpdatedAt?: string,    // ISO date of last list refresh
+ *     }
+ *   }
  *
- * 'service_unavailable' means the SAT service could not be reached.
- * The frontend should treat this as a degraded state and allow registration
- * through with structural-only validation (not block entirely).
- *
- * 'not_found' means the RFC is not in the SAT registry — block registration.
+ * Frontend behavior:
+ *   clean              → allow registration
+ *   presunto           → warn user, allow through (SAT investigation pending)
+ *   definitivo         → block registration
+ *   service_unavailable → allow through (don't block on list download failure)
  */
 
 import { Router, Request, Response } from 'express';
-import { validateRfcWithSat } from '../services/satRfc';
+import { checkBlacklist } from '../services/satBlacklist';
 import { logger } from '../utils/logger';
 
 const router = Router();
@@ -33,6 +49,7 @@ function extractBirthDateIso(rfc: string): string | null {
   const yy = parseInt(datePart.slice(0, 2), 10);
   const mm = parseInt(datePart.slice(2, 4), 10);
   const dd = parseInt(datePart.slice(4, 6), 10);
+  if (mm < 1 || mm > 12 || dd < 1 || dd > 31) return null;
   const currentYY = new Date().getFullYear() % 100;
   const fullYear = yy > currentYY ? 1900 + yy : 2000 + yy;
   const d = new Date(fullYear, mm - 1, dd);
@@ -54,14 +71,24 @@ router.post('/validate', async (req: Request, res: Response) => {
   }
 
   const birthDate = extractBirthDateIso(upper);
-  logger.info(`[rfc] validating ${upper} with SAT`);
+  logger.info(`[rfc] validating ${upper}`);
 
-  const result = await validateRfcWithSat(upper);
+  const blacklistResult = await checkBlacklist(upper);
 
   return res.json({
-    ...result,
     rfc: upper,
-    birthDate, // ISO date string extracted from RFC, always present if format is valid
+    valid: true,
+    birthDate,
+    blacklist: {
+      status: blacklistResult.status,
+      ...(blacklistResult.entry && {
+        name: blacklistResult.entry.name,
+        situation: blacklistResult.entry.situation,
+      }),
+      ...(blacklistResult.listUpdatedAt && {
+        listUpdatedAt: blacklistResult.listUpdatedAt.toISOString(),
+      }),
+    },
   });
 });
 

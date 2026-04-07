@@ -24,6 +24,8 @@ import feedRoutes from "./routes/feed";
 import profileRoutes from "./routes/profile";
 import statsRoutes from "./routes/stats";
 import rfcRoutes from "./routes/rfc";
+import userProfileRoutes from "./routes/userProfile";
+import { warmBlacklist } from "./services/satBlacklist";
 
 // Initialize environment
 dotenv.config({ path: "../.env" });
@@ -80,6 +82,7 @@ app.use("/api/feed", feedRoutes);
 app.use("/api/profile", profileRoutes);
 app.use("/api/stats", statsRoutes);
 app.use("/api/rfc", rfcRoutes);
+app.use("/api/user/profile", userProfileRoutes);
 
 // Test harness — simulation mode only
 import { SIMULATION_MODE } from "./config/mode";
@@ -99,6 +102,7 @@ app.use(errorHandler);
 // Start server
 const server = app.listen(PORT, () => {
   logger.info(`🚀 Espacio Bosques backend listening on port ${PORT}`);
+  warmBlacklist(); // pre-load SAT 69-B blacklist in background
   logger.info(`📊 Environment: ${process.env.NODE_ENV || "development"}`);
   logger.info(`🌐 CORS enabled for: ${process.env.CORS_ORIGIN || "http://localhost:5173"}`);
 });
