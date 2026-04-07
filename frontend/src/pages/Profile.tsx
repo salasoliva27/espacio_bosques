@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/auth';
 import { useT } from '../context/LanguageContext';
-import { Pencil, Check, X, ArrowLeft, TrendingUp, Layers, ChevronDown, ChevronUp, Send, Loader2 } from 'lucide-react';
+import { Pencil, Check, X, ArrowLeft, TrendingUp, Layers, ChevronDown, ChevronUp, Send, Loader2, Trash2 } from 'lucide-react';
 import type { User } from '@supabase/supabase-js';
 
 interface SimInvestment {
@@ -67,11 +67,17 @@ function ServiceChatPanel({ token, onDone, onCancel }: ServiceChatPanelProps) {
   const [messages, setMessages] = useState<{ role: 'user' | 'assistant'; content: string }[]>([]);
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
-  const [ready, setReady] = useState(false);
+  // readySummary holds the extracted service data once AI signals completion
+  const [readySummary, setReadySummary] = useState<{ name: string; description: string; deliverables: string[]; typicalPriceMxn: string } | null>(null);
+  const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const chatEndRef = useRef<HTMLDivElement>(null);
+  // Guard against React StrictMode double-invocation
+  const startedRef = useRef(false);
 
   useEffect(() => {
+    if (startedRef.current) return;
+    startedRef.current = true;
     startService();
   }, []);
 
@@ -110,14 +116,8 @@ function ServiceChatPanel({ token, onDone, onCancel }: ServiceChatPanelProps) {
       const data = await res.json();
       if (!res.ok) { setError(data.error || 'Chat error'); setSending(false); return; }
       setMessages(prev => [...prev, { role: 'assistant', content: data.message }]);
-      if (data.ready) {
-        // Finalize the service
-        await fetch(`/api/profile/provider/services/${serviceId}`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-          body: JSON.stringify({ finalized: true }),
-        });
-        setReady(true);
+      if (data.ready && data.service) {
+        setReadySummary(data.service);
       }
     } catch (err: any) {
       setError(err.message);
@@ -126,23 +126,25 @@ function ServiceChatPanel({ token, onDone, onCancel }: ServiceChatPanelProps) {
     }
   }
 
-  if (ready) {
-    return (
-      <div className="rounded-xl p-5 mt-3" style={{ background: '#0a1420', border: '1px solid rgba(0,229,196,0.2)' }}>
-        <p className="text-sm font-medium mb-3" style={{ color: '#00e5c4' }}>Service defined and saved.</p>
-        <button
-          onClick={onDone}
-          className="text-sm font-medium px-4 py-2 rounded-lg transition-opacity hover:opacity-80"
-          style={{ background: 'rgba(0,229,196,0.12)', color: '#00e5c4', border: '1px solid rgba(0,229,196,0.2)' }}
-        >
-          View services
-        </button>
-      </div>
-    );
+  async function saveService() {
+    if (!serviceId || !readySummary) return;
+    setSaving(true);
+    try {
+      await fetch(`/api/profile/provider/services/${serviceId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ finalized: true }),
+      });
+      onDone();
+    } catch (err: any) {
+      setError(err.message);
+      setSaving(false);
+    }
   }
 
   return (
     <div className="rounded-xl mt-3" style={{ background: '#0a1420', border: '1px solid #1e2d3d' }}>
+      {/* Chat history */}
       <div className="p-4 space-y-3 max-h-64 overflow-y-auto">
         {messages.map((msg, i) => (
           <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
@@ -173,33 +175,78 @@ function ServiceChatPanel({ token, onDone, onCancel }: ServiceChatPanelProps) {
         )}
         <div ref={chatEndRef} />
       </div>
+
       {error && <p className="px-4 pb-2 text-xs" style={{ color: '#f87171' }}>{error}</p>}
-      <div className="p-3 flex gap-2" style={{ borderTop: '1px solid #1e2d3d' }}>
-        <input
-          className="flex-1 rounded-lg px-3 py-2 text-sm outline-none"
-          style={{ background: '#111c2a', border: '1px solid #1e2d3d', color: '#e8f4f0' }}
-          placeholder="Your response…"
-          value={input}
-          onChange={e => setInput(e.target.value)}
-          onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } }}
-          disabled={sending || !serviceId}
-        />
-        <button
-          onClick={sendMessage}
-          disabled={sending || !input.trim() || !serviceId}
-          className="p-2 rounded-lg transition-opacity hover:opacity-80 disabled:opacity-40"
-          style={{ background: 'rgba(0,229,196,0.1)', color: '#00e5c4', border: '1px solid rgba(0,229,196,0.2)' }}
-        >
-          <Send size={14} />
-        </button>
-        <button
-          onClick={onCancel}
-          className="p-2 rounded-lg transition-opacity hover:opacity-70"
-          style={{ background: '#1e2d3d', color: '#6b7280' }}
-        >
-          <X size={14} />
-        </button>
-      </div>
+
+      {/* Ready — show summary + Save button */}
+      {readySummary ? (
+        <div className="p-4 space-y-3" style={{ borderTop: '1px solid #1e2d3d' }}>
+          <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#00e5c4' }}>Service ready to save</p>
+          <div className="rounded-lg p-3 space-y-1.5" style={{ background: '#0d1520', border: '1px solid rgba(0,229,196,0.15)' }}>
+            <p className="text-sm font-semibold" style={{ color: '#e8f4f0' }}>{readySummary.name}</p>
+            {readySummary.description && (
+              <p className="text-xs leading-relaxed" style={{ color: '#9ca3af' }}>{readySummary.description}</p>
+            )}
+            {readySummary.typicalPriceMxn && (
+              <p className="text-xs font-medium" style={{ color: '#00e5c4' }}>{readySummary.typicalPriceMxn}</p>
+            )}
+            {readySummary.deliverables?.length > 0 && (
+              <ul className="space-y-0.5 pt-1">
+                {readySummary.deliverables.map((d, i) => (
+                  <li key={i} className="flex items-start gap-1.5 text-xs" style={{ color: '#6b7280' }}>
+                    <span style={{ color: '#00e5c4', flexShrink: 0 }}>·</span>{d}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={saveService}
+              disabled={saving}
+              className="flex-1 py-2 rounded-lg text-sm font-semibold disabled:opacity-50"
+              style={{ background: '#00e5c4', color: '#080c10' }}
+            >
+              {saving ? 'Saving…' : 'Save service'}
+            </button>
+            <button
+              onClick={onCancel}
+              className="px-3 py-2 rounded-lg text-sm"
+              style={{ background: '#1e2d3d', color: '#6b7280' }}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      ) : (
+        /* Still chatting */
+        <div className="p-3 flex gap-2" style={{ borderTop: '1px solid #1e2d3d' }}>
+          <input
+            className="flex-1 rounded-lg px-3 py-2 text-sm outline-none"
+            style={{ background: '#111c2a', border: '1px solid #1e2d3d', color: '#e8f4f0' }}
+            placeholder="Your response…"
+            value={input}
+            onChange={e => setInput(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } }}
+            disabled={sending || !serviceId}
+          />
+          <button
+            onClick={sendMessage}
+            disabled={sending || !input.trim() || !serviceId}
+            className="p-2 rounded-lg transition-opacity hover:opacity-80 disabled:opacity-40"
+            style={{ background: 'rgba(0,229,196,0.1)', color: '#00e5c4', border: '1px solid rgba(0,229,196,0.2)' }}
+          >
+            <Send size={14} />
+          </button>
+          <button
+            onClick={onCancel}
+            className="p-2 rounded-lg transition-opacity hover:opacity-70"
+            style={{ background: '#1e2d3d', color: '#6b7280' }}
+          >
+            <X size={14} />
+          </button>
+        </div>
+      )}
     </div>
   );
 }
@@ -230,6 +277,7 @@ export default function Profile() {
   const [rfc, setRfc] = useState('');
   const [showServiceChat, setShowServiceChat] = useState(false);
   const [expandedService, setExpandedService] = useState<string | null>(null);
+  const [deletingService, setDeletingService] = useState<string | null>(null);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -321,6 +369,19 @@ export default function Profile() {
     } finally {
       setSavingProvider(false);
     }
+  }
+
+  async function deleteService(serviceId: string) {
+    setDeletingService(serviceId);
+    try {
+      await fetch(`/api/profile/provider/services/${serviceId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setProviderProfile(p => p ? { ...p, services: p.services.filter(s => s.id !== serviceId) } : p);
+      if (expandedService === serviceId) setExpandedService(null);
+    } catch {}
+    setDeletingService(null);
   }
 
   async function saveProviderField(field: string, value: string) {
@@ -654,29 +715,44 @@ export default function Profile() {
                             style={{ background: '#0a1420', border: '1px solid #1e2d3d' }}
                           >
                             {/* Service header */}
-                            <button
-                              className="w-full flex items-center justify-between p-4 text-left"
-                              onClick={() => setExpandedService(expandedService === svc.id ? null : svc.id)}
-                            >
-                              <div className="flex items-center gap-3 min-w-0">
-                                <p className="text-sm font-semibold truncate" style={{ color: '#e8f4f0' }}>
-                                  {svc.name || 'Unnamed service'}
-                                </p>
-                                <span
-                                  className="shrink-0 text-[10px] font-semibold px-2 py-0.5 rounded-full"
-                                  style={svc.finalized
-                                    ? { background: 'rgba(16,185,129,0.1)', color: '#10b981', border: '1px solid rgba(16,185,129,0.2)' }
-                                    : { background: '#1e2d3d', color: '#6b7280', border: '1px solid #2d3f54' }
-                                  }
-                                >
-                                  {svc.finalized ? t('provider.service_finalized') : t('provider.service_draft')}
-                                </span>
-                              </div>
-                              {expandedService === svc.id
-                                ? <ChevronUp size={14} style={{ color: '#6b7280', flexShrink: 0 }} />
-                                : <ChevronDown size={14} style={{ color: '#6b7280', flexShrink: 0 }} />
-                              }
-                            </button>
+                            <div className="flex items-center">
+                              <button
+                                className="flex-1 flex items-center justify-between p-4 text-left min-w-0"
+                                onClick={() => setExpandedService(expandedService === svc.id ? null : svc.id)}
+                              >
+                                <div className="flex items-center gap-3 min-w-0">
+                                  <p className="text-sm font-semibold truncate" style={{ color: '#e8f4f0' }}>
+                                    {svc.name || 'Unnamed service'}
+                                  </p>
+                                  <span
+                                    className="shrink-0 text-[10px] font-semibold px-2 py-0.5 rounded-full"
+                                    style={svc.finalized
+                                      ? { background: 'rgba(16,185,129,0.1)', color: '#10b981', border: '1px solid rgba(16,185,129,0.2)' }
+                                      : { background: '#1e2d3d', color: '#6b7280', border: '1px solid #2d3f54' }
+                                    }
+                                  >
+                                    {svc.finalized ? t('provider.service_finalized') : t('provider.service_draft')}
+                                  </span>
+                                </div>
+                                {expandedService === svc.id
+                                  ? <ChevronUp size={14} style={{ color: '#6b7280', flexShrink: 0 }} />
+                                  : <ChevronDown size={14} style={{ color: '#6b7280', flexShrink: 0 }} />
+                                }
+                              </button>
+                              {/* Delete button */}
+                              <button
+                                onClick={() => deleteService(svc.id)}
+                                disabled={deletingService === svc.id}
+                                className="p-3 transition-opacity hover:opacity-80 disabled:opacity-40"
+                                title="Delete service"
+                                style={{ color: '#6b7280' }}
+                              >
+                                {deletingService === svc.id
+                                  ? <Loader2 size={14} className="animate-spin" />
+                                  : <Trash2 size={14} />
+                                }
+                              </button>
+                            </div>
 
                             {/* Expanded service details */}
                             {expandedService === svc.id && (

@@ -16,6 +16,7 @@ import {
   upsertProviderUserProfile,
   addProviderService,
   updateProviderService,
+  deleteProviderService,
   ProviderService,
 } from '../data/simStore';
 
@@ -89,9 +90,15 @@ router.post('/provider/services', requireAuth, async (req: AuthRequest, res: Res
     return res.status(403).json({ error: 'Enable your provider profile first' });
   }
 
+  // Dedup: if there is already a non-finalized service, return it instead of creating another
+  const existingDraft = profile.services.find(s => !s.finalized);
+  if (existingDraft) {
+    logger.info('[profile] returning existing draft service', { userId, serviceId: existingDraft.id });
+    return res.json({ service: existingDraft, resumed: true });
+  }
+
   const serviceId = `svc-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 
-  // Start AI chat with an introductory message
   const introMessage = { role: 'assistant' as const, content: "Hi! I'll help you define a service for your provider profile. Let's start — what's the name of the service you'd like to register? A short, professional title works best (e.g., \"LED Electrical Installation\" or \"Landscape Architecture\")." };
 
   const newService: ProviderService = {
@@ -108,7 +115,7 @@ router.post('/provider/services', requireAuth, async (req: AuthRequest, res: Res
   const updatedProfile = addProviderService(userId, newService);
   logger.info('[profile] service created', { userId, serviceId });
 
-  res.status(201).json({ service: newService, profile: updatedProfile });
+  res.status(201).json({ service: newService, resumed: false });
 });
 
 // ── POST /api/profile/provider/services/:serviceId/chat ──────────────
@@ -185,6 +192,19 @@ router.patch('/provider/services/:serviceId', requireAuth, (req: AuthRequest, re
 
   logger.info('[profile] service updated', { userId, serviceId });
   res.json({ service });
+});
+
+// ── DELETE /api/profile/provider/services/:serviceId ─────────────────
+
+router.delete('/provider/services/:serviceId', requireAuth, (req: AuthRequest, res: Response) => {
+  const userId = req.user!.id;
+  const { serviceId } = req.params;
+
+  const ok = deleteProviderService(userId, serviceId);
+  if (!ok) return res.status(404).json({ error: 'Service not found' });
+
+  logger.info('[profile] service deleted', { userId, serviceId });
+  res.json({ ok: true });
 });
 
 export default router;

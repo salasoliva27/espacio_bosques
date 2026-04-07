@@ -374,5 +374,14 @@ export function updateProviderService(userId: string, serviceId: string, data: P
   return profile.services[idx];
 }
 
+export function deleteProviderService(userId: string, serviceId: string): boolean {
+  const profile = providerProfileStore.get(userId);
+  if (!profile) return false;
+  const idx = profile.services.findIndex(s => s.id === serviceId);
+  if (idx === -1) return false;
+  profile.services.splice(idx, 1);
+  return true;
+}
+
 // ── Init ──────────────────────────────────────────────────────────────
 loadPersistedData();
