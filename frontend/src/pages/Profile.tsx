@@ -155,16 +155,35 @@ function ServiceChatPanel({ token, onDone, onCancel }: ServiceChatPanelProps) {
     if (!serviceId || !readySummary) return;
     setSaving(true);
     try {
-      await fetch(`/api/profile/provider/services/${serviceId}`, {
+      const res = await fetch(`/api/profile/provider/services/${serviceId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ finalized: true }),
       });
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        setError(errData.error || 'Failed to save service. Try again.');
+        setSaving(false);
+        return;
+      }
       onDone();
     } catch (err: any) {
       setError(err.message);
       setSaving(false);
     }
+  }
+
+  async function cancelAndCleanup() {
+    // Delete the draft from backend so it doesn't become a ghost
+    if (serviceId) {
+      try {
+        await fetch(`/api/profile/provider/services/${serviceId}`, {
+          method: 'DELETE',
+          headers: { Authorization: `Bearer ${token}` },
+        });
+      } catch {}
+    }
+    onCancel();
   }
 
   return (
@@ -235,7 +254,7 @@ function ServiceChatPanel({ token, onDone, onCancel }: ServiceChatPanelProps) {
               {saving ? 'Saving…' : 'Save service'}
             </button>
             <button
-              onClick={onCancel}
+              onClick={cancelAndCleanup}
               className="px-3 py-2 rounded-lg text-sm"
               style={{ background: '#1e2d3d', color: '#6b7280' }}
             >
@@ -278,7 +297,7 @@ function ServiceChatPanel({ token, onDone, onCancel }: ServiceChatPanelProps) {
               <Send size={14} />
             </button>
             <button
-              onClick={onCancel}
+              onClick={cancelAndCleanup}
               className="p-2 rounded-lg transition-opacity hover:opacity-70"
               style={{ background: '#1e2d3d', color: '#6b7280' }}
             >
@@ -741,7 +760,7 @@ export default function Profile() {
                       <ServiceChatPanel
                         token={token}
                         onDone={() => { setShowServiceChat(false); fetchProviderProfile(); }}
-                        onCancel={() => setShowServiceChat(false)}
+                        onCancel={() => { setShowServiceChat(false); fetchProviderProfile(); }}
                       />
                     )}
 
