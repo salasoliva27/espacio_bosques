@@ -122,7 +122,7 @@ export default function Landing() {
           className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 opacity-40"
           style={{ color: '#e8f4f0' }}
         >
-          <span className="text-xs tracking-widest uppercase">Explorar</span>
+          <span className="text-xs tracking-widest uppercase">{t('landing.scroll_hint')}</span>
           <ChevronDown size={16} className="animate-bounce" />
         </div>
       </section>
@@ -131,14 +131,14 @@ export default function Landing() {
       <div style={{ borderTop: '1px solid #1e2d3d', borderBottom: '1px solid #1e2d3d', background: '#0a0f17' }}>
         <div className="max-w-5xl mx-auto px-4">
           <div className="grid grid-cols-2 sm:grid-cols-4">
-            {STATS.map((s, i) => (
+            {STAT_VALUES.map((value, i) => (
               <div
-                key={s.label}
+                key={STAT_KEYS[i]}
                 className="flex flex-col items-center justify-center py-6 px-4"
                 style={{ borderRight: i < 3 ? '1px solid #1e2d3d' : undefined }}
               >
-                <span className="text-2xl font-extrabold tracking-tight" style={{ color: '#00e5c4' }}>{s.value}</span>
-                <span className="text-xs mt-1" style={{ color: '#6b7280' }}>{s.label}</span>
+                <span className="text-2xl font-extrabold tracking-tight" style={{ color: '#00e5c4' }}>{value}</span>
+                <span className="text-xs mt-1" style={{ color: '#6b7280' }}>{t(STAT_KEYS[i])}</span>
               </div>
             ))}
           </div>
@@ -148,22 +148,22 @@ export default function Landing() {
       {/* ── HOW IT WORKS ──────────────────────────────────────────────── */}
       <section className="max-w-5xl mx-auto px-4 sm:px-6 py-20">
         <div className="mb-12">
-          <p className="text-xs font-semibold tracking-widest uppercase mb-3" style={{ color: '#00e5c4' }}>El proceso</p>
-          <h2 className="text-2xl sm:text-3xl font-bold" style={{ color: '#e8f4f0' }}>¿Cómo funciona?</h2>
+          <p className="text-xs font-semibold tracking-widest uppercase mb-3" style={{ color: '#00e5c4' }}>{t('landing.section_process')}</p>
+          <h2 className="text-2xl sm:text-3xl font-bold" style={{ color: '#e8f4f0' }}>{t('landing.how_title')}</h2>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {STEPS.map((step) => (
-            <div key={step.n} className="relative">
+          {STEP_NUMBERS.map((n, i) => (
+            <div key={n} className="relative">
               {/* Step number */}
               <div
                 className="text-5xl font-black mb-4 leading-none"
                 style={{ color: 'rgba(0,229,196,0.15)', letterSpacing: '-0.04em' }}
               >
-                {step.n}
+                {n}
               </div>
-              <h3 className="text-base font-semibold mb-2" style={{ color: '#e8f4f0' }}>{step.title}</h3>
-              <p className="text-sm leading-relaxed" style={{ color: '#6b7280' }}>{step.desc}</p>
+              <h3 className="text-base font-semibold mb-2" style={{ color: '#e8f4f0' }}>{t(STEP_TITLE_KEYS[i])}</h3>
+              <p className="text-sm leading-relaxed" style={{ color: '#6b7280' }}>{t(STEP_DESC_KEYS[i])}</p>
             </div>
           ))}
         </div>
@@ -172,8 +172,8 @@ export default function Landing() {
       {/* ── FEATURES — photo cards ─────────────────────────────────────── */}
       <section className="max-w-5xl mx-auto px-4 sm:px-6 pb-20">
         <div className="mb-12">
-          <p className="text-xs font-semibold tracking-widest uppercase mb-3" style={{ color: '#00e5c4' }}>Tecnología</p>
-          <h2 className="text-2xl sm:text-3xl font-bold" style={{ color: '#e8f4f0' }}>Construido para rendir cuentas</h2>
+          <p className="text-xs font-semibold tracking-widest uppercase mb-3" style={{ color: '#00e5c4' }}>{t('landing.section_tech')}</p>
+          <h2 className="text-2xl sm:text-3xl font-bold" style={{ color: '#e8f4f0' }}>{t('landing.built_for')}</h2>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
