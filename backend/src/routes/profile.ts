@@ -181,6 +181,74 @@ router.post('/provider/services/:serviceId/chat', requireAuth, async (req: AuthR
   }
 });
 
+// ── POST /api/profile/provider/services/:serviceId/finalize ──────────
+// Called when the user clicks "I'm done" — extracts structured data from
+// chat history with a strict JSON-only prompt (no conversational output).
+
+router.post('/provider/services/:serviceId/finalize', requireAuth, async (req: AuthRequest, res: Response) => {
+  const userId = req.user!.id;
+  const { serviceId } = req.params;
+
+  const profile = getProviderUserProfile(userId);
+  if (!profile) return res.status(404).json({ error: 'Provider profile not found' });
+
+  const service = profile.services.find(s => s.id === serviceId);
+  if (!service) return res.status(404).json({ error: 'Service not found' });
+
+  if (service.chatMessages.length < 2) {
+    return res.status(400).json({ error: 'Not enough conversation to extract a service. Keep chatting.' });
+  }
+
+  try {
+    const extractionResponse = await anthropic.messages.create({
+      model: process.env.ANTHROPIC_MODEL || 'claude-sonnet-4-6',
+      max_tokens: 512,
+      system: `You are a data extractor. Read the conversation and output ONLY a valid JSON object — no other text, no markdown, no explanation.
+
+Required format (all fields required, use empty string or empty array if unknown):
+{"name":"short professional title","description":"what they do and how","deliverables":["deliverable 1","deliverable 2"],"typicalPriceMxn":"price range in MXN"}
+
+Rules:
+- name: short title, max 6 words
+- description: 1-2 sentences, specific
+- deliverables: list of concrete things the client receives
+- typicalPriceMxn: format like "40,000–80,000 MXN" or "2,000 MXN/day"
+- Output ONLY the JSON. No other text.`,
+      messages: service.chatMessages.map(m => ({ role: m.role, content: m.content })),
+    });
+
+    const raw = (extractionResponse.content.find(b => b.type === 'text') as any)?.text ?? '';
+
+    // Strip markdown fences if present
+    const cleaned = raw.replace(/^```[a-z]*\n?/i, '').replace(/\n?```$/i, '').trim();
+
+    let extracted: any;
+    try {
+      extracted = JSON.parse(cleaned);
+    } catch {
+      extracted = extractJsonObject(raw);
+    }
+
+    if (!extracted || !extracted.name) {
+      return res.status(422).json({ error: 'Could not extract service data. Keep describing your service.' });
+    }
+
+    // Persist extracted fields to the service
+    updateProviderService(userId, serviceId, {
+      name: extracted.name,
+      description: extracted.description || '',
+      deliverables: Array.isArray(extracted.deliverables) ? extracted.deliverables : [],
+      typicalPriceMxn: extracted.typicalPriceMxn || '',
+    });
+
+    logger.info('[profile] service finalized', { userId, serviceId });
+    res.json({ service: extracted });
+  } catch (err: any) {
+    logger.error('[profile] service finalize failed', { error: err.message });
+    res.status(500).json({ error: 'AI error', details: err.message });
+  }
+});
+
 // ── PATCH /api/profile/provider/services/:serviceId ──────────────────
 
 router.patch('/provider/services/:serviceId', requireAuth, (req: AuthRequest, res: Response) => {

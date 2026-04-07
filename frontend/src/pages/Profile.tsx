@@ -67,6 +67,7 @@ function ServiceChatPanel({ token, onDone, onCancel }: ServiceChatPanelProps) {
   const [messages, setMessages] = useState<{ role: 'user' | 'assistant'; content: string }[]>([]);
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
+  const [finalizing, setFinalizing] = useState(false);
   // readySummary holds the extracted service data once AI signals completion
   const [readySummary, setReadySummary] = useState<{ name: string; description: string; deliverables: string[]; typicalPriceMxn: string } | null>(null);
   const [saving, setSaving] = useState(false);
@@ -74,6 +75,8 @@ function ServiceChatPanel({ token, onDone, onCancel }: ServiceChatPanelProps) {
   const chatEndRef = useRef<HTMLDivElement>(null);
   // Guard against React StrictMode double-invocation
   const startedRef = useRef(false);
+  // Track message count so we know when enough has been said
+  const [msgCount, setMsgCount] = useState(0);
 
   useEffect(() => {
     if (startedRef.current) return;
@@ -94,7 +97,9 @@ function ServiceChatPanel({ token, onDone, onCancel }: ServiceChatPanelProps) {
       const data = await res.json();
       if (!res.ok) { setError(data.error || 'Failed to start service'); return; }
       setServiceId(data.service.id);
-      setMessages(data.service.chatMessages || []);
+      const msgs = data.service.chatMessages || [];
+      setMessages(msgs);
+      setMsgCount(msgs.length);
     } catch (err: any) {
       setError(err.message);
     }
@@ -115,14 +120,34 @@ function ServiceChatPanel({ token, onDone, onCancel }: ServiceChatPanelProps) {
       });
       const data = await res.json();
       if (!res.ok) { setError(data.error || 'Chat error'); setSending(false); return; }
-      setMessages(prev => [...prev, { role: 'assistant', content: data.message }]);
-      if (data.ready && data.service) {
-        setReadySummary(data.service);
-      }
+      setMessages(prev => {
+        const updated = [...prev, { role: 'assistant' as const, content: data.message }];
+        setMsgCount(updated.length);
+        return updated;
+      });
     } catch (err: any) {
       setError(err.message);
     } finally {
       setSending(false);
+    }
+  }
+
+  async function finalizeService() {
+    if (!serviceId || finalizing) return;
+    setFinalizing(true);
+    setError('');
+    try {
+      const res = await fetch(`/api/profile/provider/services/${serviceId}/finalize`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (!res.ok) { setError(data.error || 'Could not extract service'); setFinalizing(false); return; }
+      setReadySummary(data.service);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setFinalizing(false);
     }
   }
 
@@ -220,31 +245,46 @@ function ServiceChatPanel({ token, onDone, onCancel }: ServiceChatPanelProps) {
         </div>
       ) : (
         /* Still chatting */
-        <div className="p-3 flex gap-2" style={{ borderTop: '1px solid #1e2d3d' }}>
-          <input
-            className="flex-1 rounded-lg px-3 py-2 text-sm outline-none"
-            style={{ background: '#111c2a', border: '1px solid #1e2d3d', color: '#e8f4f0' }}
-            placeholder="Your response…"
-            value={input}
-            onChange={e => setInput(e.target.value)}
-            onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } }}
-            disabled={sending || !serviceId}
-          />
-          <button
-            onClick={sendMessage}
-            disabled={sending || !input.trim() || !serviceId}
-            className="p-2 rounded-lg transition-opacity hover:opacity-80 disabled:opacity-40"
-            style={{ background: 'rgba(0,229,196,0.1)', color: '#00e5c4', border: '1px solid rgba(0,229,196,0.2)' }}
-          >
-            <Send size={14} />
-          </button>
-          <button
-            onClick={onCancel}
-            className="p-2 rounded-lg transition-opacity hover:opacity-70"
-            style={{ background: '#1e2d3d', color: '#6b7280' }}
-          >
-            <X size={14} />
-          </button>
+        <div className="space-y-2 p-3" style={{ borderTop: '1px solid #1e2d3d' }}>
+          {/* "I'm done" button — shown once there are at least 3 user messages */}
+          {msgCount >= 3 && (
+            <button
+              onClick={finalizeService}
+              disabled={finalizing || sending}
+              className="w-full py-2 rounded-lg text-xs font-semibold disabled:opacity-50 transition-opacity hover:opacity-80"
+              style={{ background: 'rgba(0,229,196,0.1)', color: '#00e5c4', border: '1px solid rgba(0,229,196,0.2)' }}
+            >
+              {finalizing
+                ? <><Loader2 size={12} className="animate-spin inline mr-1.5" />Extracting service…</>
+                : 'I\'m done describing my service →'}
+            </button>
+          )}
+          <div className="flex gap-2">
+            <input
+              className="flex-1 rounded-lg px-3 py-2 text-sm outline-none"
+              style={{ background: '#111c2a', border: '1px solid #1e2d3d', color: '#e8f4f0' }}
+              placeholder="Your response…"
+              value={input}
+              onChange={e => setInput(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } }}
+              disabled={sending || !serviceId || finalizing}
+            />
+            <button
+              onClick={sendMessage}
+              disabled={sending || !input.trim() || !serviceId || finalizing}
+              className="p-2 rounded-lg transition-opacity hover:opacity-80 disabled:opacity-40"
+              style={{ background: 'rgba(0,229,196,0.1)', color: '#00e5c4', border: '1px solid rgba(0,229,196,0.2)' }}
+            >
+              <Send size={14} />
+            </button>
+            <button
+              onClick={onCancel}
+              className="p-2 rounded-lg transition-opacity hover:opacity-70"
+              style={{ background: '#1e2d3d', color: '#6b7280' }}
+            >
+              <X size={14} />
+            </button>
+          </div>
         </div>
       )}
     </div>
