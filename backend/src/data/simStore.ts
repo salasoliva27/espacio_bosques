@@ -186,6 +186,13 @@ function loadPersistedData(): void {
         }
       }
     }
+
+    // Restore provider profiles
+    if (data.providerProfiles && typeof data.providerProfiles === 'object') {
+      for (const [userId, profile] of Object.entries(data.providerProfiles as Record<string, ProviderUserProfile>)) {
+        providerProfileStore.set(userId, profile as ProviderUserProfile);
+      }
+    }
   } catch {
     // Ignore load errors — start fresh
   }
@@ -198,7 +205,15 @@ export function persistData(): void {
     commentStore.forEach((comments, projectId) => {
       commentsObj[projectId] = comments;
     });
-    fs.writeFileSync(DATA_FILE, JSON.stringify({ projects: userCreatedProjects, comments: commentsObj }, null, 2), 'utf8');
+    const providerProfilesObj: Record<string, ProviderUserProfile> = {};
+    providerProfileStore.forEach((profile, userId) => {
+      providerProfilesObj[userId] = profile;
+    });
+    fs.writeFileSync(DATA_FILE, JSON.stringify({
+      projects: userCreatedProjects,
+      comments: commentsObj,
+      providerProfiles: providerProfilesObj,
+    }, null, 2), 'utf8');
   } catch {
     // Ignore write errors
   }
@@ -355,6 +370,7 @@ export function upsertProviderUserProfile(userId: string, data: Partial<Omit<Pro
   };
   const updated = { ...existing, ...data, userId };
   providerProfileStore.set(userId, updated);
+  persistData();
   return updated;
 }
 
@@ -362,6 +378,7 @@ export function addProviderService(userId: string, service: ProviderService): Pr
   const profile = upsertProviderUserProfile(userId, {});
   profile.services.push(service);
   providerProfileStore.set(userId, profile);
+  persistData();
   return profile;
 }
 
@@ -371,6 +388,7 @@ export function updateProviderService(userId: string, serviceId: string, data: P
   const idx = profile.services.findIndex(s => s.id === serviceId);
   if (idx === -1) return null;
   profile.services[idx] = { ...profile.services[idx], ...data };
+  persistData();
   return profile.services[idx];
 }
 
@@ -380,6 +398,7 @@ export function deleteProviderService(userId: string, serviceId: string): boolea
   const idx = profile.services.findIndex(s => s.id === serviceId);
   if (idx === -1) return false;
   profile.services.splice(idx, 1);
+  persistData();
   return true;
 }
 

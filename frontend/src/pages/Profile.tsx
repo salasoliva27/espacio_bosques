@@ -414,12 +414,14 @@ export default function Profile() {
   async function deleteService(serviceId: string) {
     setDeletingService(serviceId);
     try {
-      await fetch(`/api/profile/provider/services/${serviceId}`, {
+      const res = await fetch(`/api/profile/provider/services/${serviceId}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       });
-      setProviderProfile(p => p ? { ...p, services: p.services.filter(s => s.id !== serviceId) } : p);
-      if (expandedService === serviceId) setExpandedService(null);
+      if (res.ok) {
+        setProviderProfile(p => p ? { ...p, services: p.services.filter(s => s.id !== serviceId) } : p);
+        if (expandedService === serviceId) setExpandedService(null);
+      }
     } catch {}
     setDeletingService(null);
   }
