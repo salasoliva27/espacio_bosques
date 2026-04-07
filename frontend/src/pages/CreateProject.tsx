@@ -3,7 +3,7 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/auth';
 import { useT } from '../context/LanguageContext';
-import { Sparkles, Send, ChevronRight, CheckCircle2, Clock, Layers } from 'lucide-react';
+import { Sparkles, Send, ChevronRight, CheckCircle2, Clock, Layers, Banknote } from 'lucide-react';
 
 interface Milestone {
   title: string;
@@ -16,6 +16,8 @@ interface Blueprint {
   title: string;
   summary: string;
   category: string;
+  estimatedBudgetMXN?: number;
+  budgetJustification?: string;
   milestones: Milestone[];
   monitoringHints: string[];
 }
@@ -224,6 +226,22 @@ export default function CreateProject() {
                     </div>
                   </div>
 
+                  {/* Budget estimate */}
+                  {blueprint.estimatedBudgetMXN && (
+                    <div className="rounded-lg p-4" style={{ background: 'rgba(0,229,196,0.05)', border: '1px solid rgba(0,229,196,0.2)' }}>
+                      <div className="flex items-center gap-1.5 mb-2">
+                        <Banknote size={13} style={{ color: '#00e5c4' }} />
+                        <span className="text-xs font-semibold tracking-widest uppercase" style={{ color: '#00e5c4' }}>{t('create.label_budget')}</span>
+                      </div>
+                      <span className="text-2xl font-bold" style={{ color: '#e8f4f0' }}>
+                        MXN {blueprint.estimatedBudgetMXN.toLocaleString('es-MX')}
+                      </span>
+                      {blueprint.budgetJustification && (
+                        <p className="text-xs mt-2 leading-relaxed" style={{ color: '#6b7280' }}>{blueprint.budgetJustification}</p>
+                      )}
+                    </div>
+                  )}
+
                   {/* Milestones */}
                   <div>
                     <p className="text-xs font-semibold mb-3 tracking-widest uppercase" style={{ color: '#4b5563' }}>{t('create.field_milestones')}</p>
@@ -237,7 +255,14 @@ export default function CreateProject() {
                           <div className="flex-1 pb-2">
                             <div className="flex items-center justify-between mb-0.5">
                               <span className="text-sm font-semibold" style={{ color: '#e8f4f0' }}>{m.title}</span>
-                              <span className="text-sm font-bold" style={{ color: '#00e5c4' }}>{m.fundingPercentage}%</span>
+                              <div className="flex items-center gap-2">
+                                {blueprint.estimatedBudgetMXN && (
+                                  <span className="text-xs" style={{ color: '#6b7280' }}>
+                                    MXN {Math.round(blueprint.estimatedBudgetMXN * m.fundingPercentage / 100).toLocaleString('es-MX')}
+                                  </span>
+                                )}
+                                <span className="text-sm font-bold" style={{ color: '#00e5c4' }}>{m.fundingPercentage}%</span>
+                              </div>
                             </div>
                             <p className="text-xs" style={{ color: '#6b7280' }}>{m.description}</p>
                             <span className="text-xs mt-1 inline-block" style={{ color: '#4b5563' }}>{m.durationDays} {t('create.days')}</span>

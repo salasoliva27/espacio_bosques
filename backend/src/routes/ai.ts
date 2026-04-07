@@ -162,6 +162,8 @@ Blueprint schema:
   "title": "string (max 100 chars, English)",
   "summary": "string (max 1000 chars, English, specific to Bosques de las Lomas)",
   "category": "one of: infrastructure, environment, community, technology, education",
+  "estimatedBudgetMXN": number (total MXN budget — update whenever scope changes),
+  "budgetJustification": "string (1-2 sentences with comparable references — update when budget changes)",
   "milestones": [{ "title": string, "description": string, "fundingPercentage": number, "durationDays": number }],
   "monitoringHints": ["string"]
 }

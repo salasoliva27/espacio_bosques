@@ -12,6 +12,8 @@ interface AIProjectBlueprint {
   title: string;
   summary: string;
   category: "infrastructure" | "environment" | "community" | "technology" | "education";
+  estimatedBudgetMXN: number;
+  budgetJustification: string;
   milestones: {
     title: string;
     description: string;
@@ -57,6 +59,8 @@ Generate a JSON response following this exact schema:
   "title": "string (max 100 chars, in English)",
   "summary": "string (max 1000 chars, in English, specific to the Bosques de las Lomas neighborhood)",
   "category": "one of: infrastructure, environment, community, technology, education",
+  "estimatedBudgetMXN": number (total project budget in Mexican pesos — realistic for the scope),
+  "budgetJustification": "string (1-2 sentences explaining the budget estimate with comparable references)",
   "milestones": [
     {
       "title": "string",
@@ -73,7 +77,15 @@ Requirements:
 - Milestones must sum to 100% funding
 - Be specific and actionable — name real streets, intersections, or landmarks in Bosques de las Lomas where relevant
 - Consider CDMX municipal permits, local regulations, and community approval steps
-- Never reference forests, wildfires, or natural wilderness`;
+- Never reference forests, wildfires, or natural wilderness
+
+Budget estimation guidelines:
+- infrastructure: MXN 50,000–500,000 (lighting, street repair, security cameras)
+- community: MXN 10,000–150,000 (events, signage, small improvements)
+- environment: MXN 15,000–200,000 (landscaping, tree planting, irrigation)
+- technology: MXN 20,000–300,000 (smart sensors, apps, connectivity)
+- education: MXN 10,000–100,000 (workshops, materials, programs)
+Always justify with a reference: "Similar CCTV installations in CDMX colonias cost ~MXN 8,000–15,000 per camera including cabling."`;
 
   // Inject relevant knowledge from the shared database
   const relevantKnowledge = queryKnowledge(userPrompt);
@@ -186,6 +198,14 @@ function validateBlueprint(blueprint: any): void {
       throw new Error(`Milestone ${i + 1} invalid duration`);
     }
   });
+
+  if (typeof blueprint.estimatedBudgetMXN !== "number" || blueprint.estimatedBudgetMXN <= 0) {
+    throw new Error("Invalid estimatedBudgetMXN");
+  }
+
+  if (!blueprint.budgetJustification || typeof blueprint.budgetJustification !== "string") {
+    throw new Error("Invalid budgetJustification");
+  }
 
   if (!Array.isArray(blueprint.monitoringHints)) {
     throw new Error("Invalid monitoringHints");
