@@ -103,13 +103,14 @@ export interface SimUserInvestment {
 const ETH_MXN_RATE = 65000;
 
 /**
- * Return all sim-user investments across all projects with enriched project info.
+ * Return all investments for a specific user across all projects.
+ * userId should be the Supabase user ID from req.user.id.
  */
-export function getSimUserInvestments(): SimUserInvestment[] {
+export function getSimUserInvestments(userId: string): SimUserInvestment[] {
   const results: SimUserInvestment[] = [];
   for (const project of DEMO_PROJECTS) {
     for (const inv of project.investments) {
-      if (inv.investor.id !== 'sim-user') continue;
+      if (inv.investor.id !== userId) continue;
       const ethAmount = Number(BigInt(inv.amount)) / 1e18;
       const mxnAmount = (inv as any).mxn ?? Math.round(ethAmount * ETH_MXN_RATE);
       results.push({
@@ -131,7 +132,7 @@ export function getSimUserInvestments(): SimUserInvestment[] {
  * Converts ETH float → wei string and adds it to fundingRaised.
  * Returns false if project not found.
  */
-export function addSimInvestment(projectId: string, ethAmount: number, mxnAmount?: number): boolean {
+export function addSimInvestment(projectId: string, ethAmount: number, mxnAmount?: number, userId?: string): boolean {
   const project = DEMO_PROJECTS.find((p) => p.id === projectId);
   if (!project) return false;
 
@@ -143,7 +144,7 @@ export function addSimInvestment(projectId: string, ethAmount: number, mxnAmount
   const inv: any = {
     id: `sim-inv-${Date.now()}`,
     amount: weiAmount.toString(),
-    investor: { id: 'sim-user', walletAddress: '0xsimulated' },
+    investor: { id: userId ?? 'sim-user', walletAddress: '0xsimulated' },
     mxn: mxnAmount ?? Math.round(ethAmount * ETH_MXN_RATE),
     createdAt: new Date(),
   };

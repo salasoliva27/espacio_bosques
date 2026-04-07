@@ -63,7 +63,7 @@ router.post('/buy', requireAuth, async (req: AuthRequest, res: Response) => {
 
     // 3. Update in-memory funding progress (simulation mode)
     if (SIMULATION_MODE()) {
-      addSimInvestment(projectId, order.eth, amount);
+      addSimInvestment(projectId, order.eth, amount, req.user?.id);
     }
 
     logger.info('[invest] investment recorded', {
@@ -97,8 +97,8 @@ router.post('/buy', requireAuth, async (req: AuthRequest, res: Response) => {
  * GET /api/invest/me
  * Auth required — returns the current sim-user's investment history
  */
-router.get('/me', requireAuth, (_req: AuthRequest, res: Response) => {
-  const investments = getSimUserInvestments();
+router.get('/me', requireAuth, (req: AuthRequest, res: Response) => {
+  const investments = getSimUserInvestments(req.user!.id);
   return res.json({ investments });
 });
 
