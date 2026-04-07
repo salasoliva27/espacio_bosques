@@ -6,7 +6,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Send, CheckCircle2, Sparkles } from 'lucide-react';
-import { supabase } from '../lib/auth';
+import { supabase, getSession } from '../lib/auth';
 
 interface ChatMsg { role: 'user' | 'assistant'; content: string; }
 
@@ -33,7 +33,7 @@ export default function ProposalSubmit() {
   }, []);
 
   async function startProposal() {
-    const { data: { session } } = await supabase.auth.getSession();
+    const { data: { session } } = await getSession();
     const headers = { 'Content-Type': 'application/json', Authorization: `Bearer ${session?.access_token ?? 'sim-token'}` };
     const r = await fetch('/api/governance/proposals', {
       method: 'POST', headers,
@@ -51,7 +51,7 @@ export default function ProposalSubmit() {
     setSending(true);
     const updated = [...messages, { role: 'user' as const, content: text }];
     setMessages(updated);
-    const { data: { session } } = await supabase.auth.getSession();
+    const { data: { session } } = await getSession();
     const r = await fetch(`/api/governance/proposals/${proposalId}/chat`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session?.access_token ?? 'sim-token'}` },
@@ -66,7 +66,7 @@ export default function ProposalSubmit() {
   async function submitProposal() {
     if (!summary) return;
     setSubmitting(true);
-    const { data: { session } } = await supabase.auth.getSession();
+    const { data: { session } } = await getSession();
     await fetch(`/api/governance/proposals/${proposalId}/submit`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session?.access_token ?? 'sim-token'}` },

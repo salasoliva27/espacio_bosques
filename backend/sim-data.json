@@ -1,0 +1,125 @@
+{
+  "projects": [
+    {
+      "id": "sim-1775587155925",
+      "title": "LED Lighting Installation for Bosques Central Park Safety Enhancement",
+      "summary": "Install energy-efficient LED lighting system throughout the central park area in Bosques de las Lomas to improve nighttime safety and security for residents. The project includes 12-15 LED light poles with motion sensors, underground electrical connections, and integration with existing CDMX electrical grid. Installation will follow municipal permits and community safety standards, with focus on well-lit pathways, seating areas, and park entrances along Paseo de las Palmas. The system will reduce energy consumption by 60% compared to traditional lighting while providing consistent illumination from dusk to dawn.",
+      "category": "infrastructure",
+      "status": "PENDING",
+      "fundingGoal": "10000000000000000000000",
+      "fundingRaised": "15384620000000000",
+      "createdAt": "2026-04-07T18:39:15.925Z",
+      "updatedAt": "2026-04-07T18:40:22.058Z",
+      "planner": {
+        "id": "sim-user",
+        "walletAddress": "0xsimulated",
+        "role": "PLANNER"
+      },
+      "milestones": [
+        {
+          "id": "sim-m-1775587155925-0",
+          "title": "Municipal Permits and Electrical Design",
+          "description": "Obtain CDMX public works permits, coordinate with CFE for electrical connections, finalize lighting design with certified electrical engineer, and secure 3 competing vendor quotes following SAT validation requirements.",
+          "fundingPercentage": 15,
+          "durationDays": 30,
+          "status": "PENDING"
+        },
+        {
+          "id": "sim-m-1775587155925-1",
+          "title": "Procurement and Site Preparation",
+          "description": "Select vendor based on community evaluation, order LED fixtures and poles, mark underground utilities, prepare installation sites, and coordinate with Bosques security for work scheduling.",
+          "fundingPercentage": 35,
+          "durationDays": 21,
+          "status": "PENDING"
+        },
+        {
+          "id": "sim-m-1775587155925-2",
+          "title": "Electrical Infrastructure Installation",
+          "description": "Install underground electrical conduits, connect to CFE grid connection point, install concrete foundations for light poles, and complete all electrical rough-in work with municipal inspection approval.",
+          "fundingPercentage": 30,
+          "durationDays": 14,
+          "status": "PENDING"
+        },
+        {
+          "id": "sim-m-1775587155925-3",
+          "title": "LED Fixture Installation and Testing",
+          "description": "Mount LED fixtures and poles, configure motion sensors and timers, conduct comprehensive lighting tests, obtain final municipal inspection approval, and provide community demonstration of system operation.",
+          "fundingPercentage": 20,
+          "durationDays": 10,
+          "status": "PENDING"
+        }
+      ],
+      "investments": [
+        {
+          "id": "sim-inv-1775587222058",
+          "amount": "15384620000000000",
+          "investor": {
+            "id": "sim-user",
+            "walletAddress": "0xsimulated"
+          },
+          "mxn": 1000,
+          "createdAt": "2026-04-07T18:40:22.058Z"
+        }
+      ],
+      "telemetry": [],
+      "reports": [],
+      "requiredRoles": [],
+      "_count": {
+        "investments": 1
+      },
+      "aiGenerated": true,
+      "aiBlueprint": {
+        "title": "LED Lighting Installation for Bosques Central Park Safety Enhancement",
+        "summary": "Install energy-efficient LED lighting system throughout the central park area in Bosques de las Lomas to improve nighttime safety and security for residents. The project includes 12-15 LED light poles with motion sensors, underground electrical connections, and integration with existing CDMX electrical grid. Installation will follow municipal permits and community safety standards, with focus on well-lit pathways, seating areas, and park entrances along Paseo de las Palmas. The system will reduce energy consumption by 60% compared to traditional lighting while providing consistent illumination from dusk to dawn.",
+        "category": "infrastructure",
+        "estimatedBudgetMXN": 180000,
+        "budgetJustification": "LED park lighting installations in CDMX colonias typically cost MXN 12,000-15,000 per pole including fixtures, electrical work, and permits. Similar projects in Polanco and Roma Norte averaged MXN 180,000 for 12-pole installations.",
+        "milestones": [
+          {
+            "title": "Municipal Permits and Electrical Design",
+            "description": "Obtain CDMX public works permits, coordinate with CFE for electrical connections, finalize lighting design with certified electrical engineer, and secure 3 competing vendor quotes following SAT validation requirements.",
+            "fundingPercentage": 15,
+            "durationDays": 30
+          },
+          {
+            "title": "Procurement and Site Preparation",
+            "description": "Select vendor based on community evaluation, order LED fixtures and poles, mark underground utilities, prepare installation sites, and coordinate with Bosques security for work scheduling.",
+            "fundingPercentage": 35,
+            "durationDays": 21
+          },
+          {
+            "title": "Electrical Infrastructure Installation",
+            "description": "Install underground electrical conduits, connect to CFE grid connection point, install concrete foundations for light poles, and complete all electrical rough-in work with municipal inspection approval.",
+            "fundingPercentage": 30,
+            "durationDays": 14
+          },
+          {
+            "title": "LED Fixture Installation and Testing",
+            "description": "Mount LED fixtures and poles, configure motion sensors and timers, conduct comprehensive lighting tests, obtain final municipal inspection approval, and provide community demonstration of system operation.",
+            "fundingPercentage": 20,
+            "durationDays": 10
+          }
+        ],
+        "monitoringHints": [
+          "Verify all vendors provide CFDI 4.0 invoices and maintain current SAT registration status",
+          "Document municipal permit approvals and CFE connection authorizations with photo evidence",
+          "Test lighting system functionality during evening community walks before final acceptance",
+          "Measure actual energy consumption vs. baseline to verify 60% efficiency improvement",
+          "Conduct resident safety survey 30 days post-installation to measure security perception improvement"
+        ]
+      }
+    }
+  ],
+  "comments": {},
+  "providerProfiles": {
+    "sim-user": {
+      "userId": "sim-user",
+      "enabled": true,
+      "companyName": "Iluminación LED Demo S.A. de C.V.",
+      "specialty": "Instalación eléctrica LED",
+      "rfc": "ILD260407ABC",
+      "services": [],
+      "createdAt": "2026-04-07T18:43:35.816Z"
+    }
+  }
+}

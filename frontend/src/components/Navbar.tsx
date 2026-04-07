@@ -12,6 +12,10 @@ export default function Navbar() {
   const location = useLocation();
 
   useEffect(() => {
+    if (import.meta.env.VITE_SIMULATION_MODE === 'true') {
+      setUser({ id: 'sim-user', email: 'demo@bosques.mx', user_metadata: { full_name: 'Demo Usuario' } } as any);
+      return;
+    }
     supabase.auth.getSession().then(({ data: { session } }) => setUser(session?.user ?? null));
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, session) => setUser(session?.user ?? null));
     return () => subscription.unsubscribe();

@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '../lib/auth';
+import { supabase, getSession } from '../lib/auth';
 import { useT } from '../context/LanguageContext';
 import { Sparkles, Send, ChevronRight, CheckCircle2, Clock, Layers, Banknote } from 'lucide-react';
 
@@ -116,11 +116,15 @@ export default function CreateProject() {
     if (!blueprint) return;
     setStep('submitting');
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session } } = await getSession();
       const plannerId = session?.user?.id || 'sim-user';
+      // Convert MXN budget to wei: MXN ÷ 65,000 (ETH/MXN rate) × 1e18
+      const ETH_MXN_RATE = 65_000;
+      const budgetEth = blueprint.estimatedBudgetMXN ? blueprint.estimatedBudgetMXN / ETH_MXN_RATE : 10;
+      const fundingGoalWei = BigInt(Math.round(budgetEth * 1e12)) * BigInt(1e6);
       await axios.post('/api/projects', {
         plannerId, title: blueprint.title, summary: blueprint.summary,
-        category: blueprint.category, fundingGoal: '10000000000000000000000',
+        category: blueprint.category, fundingGoal: fundingGoalWei.toString(),
         metadataURI: 'ipfs://generated', aiGenerated: true,
         aiBlueprint: blueprint, milestones: blueprint.milestones,
       });

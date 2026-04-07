@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { useT } from '../context/LanguageContext';
-import { supabase } from '../lib/auth';
+import { supabase, getSession } from '../lib/auth';
 
 interface Project {
   id: string;
@@ -53,7 +53,7 @@ function DepositModal({ balance, onClose, onDeposited }: { balance: number; onCl
     setLoading(true);
     setError('');
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session } } = await getSession();
       const res = await fetch('/api/balance/deposit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session?.access_token}` },
@@ -154,7 +154,7 @@ export default function Dashboard() {
 
   const fetchBalance = async () => {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session } } = await getSession();
       if (!session) return;
       const res = await fetch('/api/balance/me', {
         headers: { Authorization: `Bearer ${session.access_token}` },

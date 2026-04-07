@@ -11,7 +11,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { ShieldCheck, Clock, XCircle, Upload, Plus, ChevronDown, ChevronRight, FileText, AlertTriangle } from 'lucide-react';
 import { useT } from '../context/LanguageContext';
-import { supabase } from '../lib/auth';
+import { supabase, getSession } from '../lib/auth';
 
 // Use relative path — Vite proxy forwards /api/* to the backend (see vite.config.ts)
 const API = '';
@@ -59,7 +59,7 @@ interface Provider {
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
 async function getAuthHeaders() {
-  const { data: { session } } = await supabase.auth.getSession();
+  const { data: { session } } = await getSession();
   return { Authorization: `Bearer ${session?.access_token ?? 'sim-token'}` };
 }
 

@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
-import { supabase } from '../lib/auth';
+import { supabase, getSession } from '../lib/auth';
 import { useT } from '../context/LanguageContext';
 import { Heart, MessageCircle, ArrowRight, Users, Flag, TrendingUp } from 'lucide-react';
 
@@ -308,7 +308,7 @@ export default function Feed() {
   const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    getSession().then(({ data: { session } }) => {
       setUserId(session?.user?.id ?? null);
     });
   }, []);

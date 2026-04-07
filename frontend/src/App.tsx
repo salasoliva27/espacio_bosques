@@ -24,6 +24,11 @@ function AppInner() {
   const [session, setSession] = useState<any>(undefined);
 
   useEffect(() => {
+    if (import.meta.env.VITE_SIMULATION_MODE === 'true') {
+      setSession({ user: { id: 'sim-user', email: 'demo@bosques.mx', role: 'authenticated' } });
+      return;
+    }
+
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
     });

@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '../lib/auth';
+import { supabase, getSession } from '../lib/auth';
 import { useT } from '../context/LanguageContext';
 import { Pencil, Check, X, ArrowLeft, TrendingUp, Layers, ChevronDown, ChevronUp, Send, Loader2, Trash2 } from 'lucide-react';
 import type { User } from '@supabase/supabase-js';
@@ -339,7 +339,7 @@ export default function Profile() {
   const [deletingService, setDeletingService] = useState<string | null>(null);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    getSession().then(({ data: { session } }) => {
       if (!session) { navigate('/'); return; }
       setUser(session.user);
       setToken(session.access_token);
@@ -396,7 +396,7 @@ export default function Profile() {
     if (error) {
       setSaveError(t('profile.save_error'));
     } else {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session } } = await getSession();
       if (session) setUser(session.user);
       setEditing(false);
     }
