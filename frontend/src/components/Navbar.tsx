@@ -2,7 +2,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { supabase, signOut } from '../lib/auth';
 import { useLanguage, useT } from '../context/LanguageContext';
-import { LayoutGrid, Plus, LogOut, Globe, UserCircle, Briefcase } from 'lucide-react';
+import { LayoutGrid, Plus, LogOut, Globe, UserCircle, Briefcase, Rss } from 'lucide-react';
 import type { User } from '@supabase/supabase-js';
 
 export default function Navbar() {
@@ -49,6 +49,13 @@ export default function Navbar() {
                 style={{ color: isActive('/providers') ? '#00e5c4' : '#9ca3af', background: isActive('/providers') ? 'rgba(0,229,196,0.08)' : 'transparent' }}
               >
                 <Briefcase size={13} />Providers
+              </Link>
+              <Link
+                to="/feed"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors"
+                style={{ color: isActive('/feed') ? '#00e5c4' : '#9ca3af', background: isActive('/feed') ? 'rgba(0,229,196,0.08)' : 'transparent' }}
+              >
+                <Rss size={13} />{t('nav.feed')}
               </Link>
             </div>
           </div>

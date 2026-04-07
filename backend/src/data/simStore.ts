@@ -208,6 +208,26 @@ export function addProjectComment(comment: SimComment): void {
   persistData();
 }
 
+// ── Likes ─────────────────────────────────────────────────────────────
+// projectId → Set of userIds who liked it
+const likesStore = new Map<string, Set<string>>();
+
+export function toggleLike(projectId: string, userId: string): { liked: boolean; count: number } {
+  const likers = likesStore.get(projectId) ?? new Set<string>();
+  if (likers.has(userId)) {
+    likers.delete(userId);
+  } else {
+    likers.add(userId);
+  }
+  likesStore.set(projectId, likers);
+  return { liked: likers.has(userId), count: likers.size };
+}
+
+export function getLikes(projectId: string, userId?: string): { count: number; liked: boolean } {
+  const likers = likesStore.get(projectId) ?? new Set<string>();
+  return { count: likers.size, liked: userId ? likers.has(userId) : false };
+}
+
 // ── Balances ──────────────────────────────────────────────────────────
 
 export interface SimUserInvestment {

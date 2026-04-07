@@ -14,6 +14,7 @@ import Reports from './pages/Reports';
 import Profile from './pages/Profile';
 import Providers from './pages/Providers';
 import ProposalSubmit from './pages/ProposalSubmit';
+import Feed from './pages/Feed';
 
 const queryClient = new QueryClient();
 
@@ -71,6 +72,7 @@ function AppInner() {
             <Route path="/profile" element={<Profile />} />
             <Route path="/providers" element={<Providers />} />
             <Route path="/projects/:projectId/milestones/:milestoneId/propose" element={<ProposalSubmit />} />
+            <Route path="/feed" element={<Feed />} />
             <Route path="/auth/callback" element={<Dashboard />} />
           </Routes>
         </div>

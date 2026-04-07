@@ -1,6 +1,7 @@
-import { Suspense, lazy, Component, type ReactNode } from 'react';
-import { Link } from 'react-router-dom';
-import { Sparkles, ShieldCheck, BarChart3, ArrowRight, MapPin, ChevronDown } from 'lucide-react';
+import { Suspense, lazy, Component, type ReactNode, useState, useRef, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import { Sparkles, ShieldCheck, BarChart3, ArrowRight, MapPin, ChevronDown, Search, X } from 'lucide-react';
 import { useT } from '../context/LanguageContext';
 
 // ── Spline scenes ─────────────────────────────────────────────────────────────
@@ -62,6 +63,142 @@ function SplineScene({ url, className = '', style }: { url: string; className?: 
         <Spline scene={url} className={className} style={{ width: '100%', height: '100%', ...style }} />
       </Suspense>
     </SplineBoundary>
+  );
+}
+
+// ── Search Bar ────────────────────────────────────────────────────────
+interface SearchResult { projects: any[]; providers: any[]; query: string }
+
+function SearchBar() {
+  const t = useT();
+  const navigate = useNavigate();
+  const [query, setQuery] = useState('');
+  const [results, setResults] = useState<SearchResult | null>(null);
+  const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  const search = (q: string) => {
+    if (q.trim().length < 2) { setResults(null); setOpen(false); return; }
+    setLoading(true);
+    axios.get(`/api/feed/search?q=${encodeURIComponent(q)}`)
+      .then(({ data }) => { setResults(data); setOpen(true); })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const v = e.target.value;
+    setQuery(v);
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => search(v), 280);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Escape') { setOpen(false); setQuery(''); }
+    if (e.key === 'Enter' && query.trim()) { navigate(`/dashboard`); setOpen(false); }
+  };
+
+  const total = results ? results.projects.length + results.providers.length : 0;
+
+  return (
+    <div ref={containerRef} className="relative w-full max-w-xl mx-auto">
+      {/* Input */}
+      <div
+        className="flex items-center gap-2 px-4 py-3 rounded-2xl"
+        style={{ background: '#0d1520', border: `1px solid ${open ? 'rgba(0,229,196,0.4)' : '#1e2d3d'}`, transition: 'border-color 0.2s' }}
+      >
+        <Search size={16} style={{ color: '#4b5563', flexShrink: 0 }} />
+        <input
+          value={query}
+          onChange={handleChange}
+          onKeyDown={handleKeyDown}
+          onFocus={() => { if (results && total > 0) setOpen(true); }}
+          placeholder={t('search.placeholder')}
+          className="flex-1 bg-transparent text-sm outline-none"
+          style={{ color: '#e8f4f0' }}
+        />
+        {loading && (
+          <div className="w-4 h-4 rounded-full border-2 animate-spin flex-shrink-0"
+            style={{ borderColor: 'rgba(0,229,196,0.3)', borderTopColor: '#00e5c4' }} />
+        )}
+        {query && !loading && (
+          <button onClick={() => { setQuery(''); setResults(null); setOpen(false); }}>
+            <X size={14} style={{ color: '#4b5563' }} />
+          </button>
+        )}
+      </div>
+
+      {/* Dropdown */}
+      {open && results && (
+        <div
+          className="absolute top-full left-0 right-0 mt-1.5 rounded-xl overflow-hidden z-50"
+          style={{ background: '#0d1520', border: '1px solid #1e2d3d', boxShadow: '0 20px 40px rgba(0,0,0,0.5)' }}
+        >
+          {total === 0 ? (
+            <div className="px-4 py-3 text-sm" style={{ color: '#4b5563' }}>
+              {t('search.no_results', { q: results.query })}
+            </div>
+          ) : (
+            <>
+              {results.projects.length > 0 && (
+                <div>
+                  <div className="px-4 pt-3 pb-1 text-xs font-semibold tracking-wide uppercase" style={{ color: '#4b5563' }}>
+                    {t('search.projects')}
+                  </div>
+                  {results.projects.map((p: any) => (
+                    <Link
+                      key={p.id}
+                      to={`/projects/${p.id}`}
+                      onClick={() => setOpen(false)}
+                      className="flex items-center justify-between px-4 py-2.5 transition-colors hover:bg-white/5"
+                    >
+                      <div>
+                        <p className="text-sm font-medium" style={{ color: '#e8f4f0' }}>{p.title}</p>
+                        <p className="text-xs mt-0.5" style={{ color: '#4b5563' }}>{p.category} · {p.fundingPct}% funded</p>
+                      </div>
+                      <ArrowRight size={13} style={{ color: '#00e5c4' }} />
+                    </Link>
+                  ))}
+                </div>
+              )}
+              {results.providers.length > 0 && (
+                <div style={{ borderTop: results.projects.length > 0 ? '1px solid #1e2d3d' : undefined }}>
+                  <div className="px-4 pt-3 pb-1 text-xs font-semibold tracking-wide uppercase" style={{ color: '#4b5563' }}>
+                    {t('search.providers')}
+                  </div>
+                  {results.providers.map((p: any) => (
+                    <Link
+                      key={p.id}
+                      to="/providers"
+                      onClick={() => setOpen(false)}
+                      className="flex items-center justify-between px-4 py-2.5 transition-colors hover:bg-white/5"
+                    >
+                      <div>
+                        <p className="text-sm font-medium" style={{ color: '#e8f4f0' }}>{p.name}</p>
+                        <p className="text-xs mt-0.5" style={{ color: '#4b5563' }}>{p.specialty} · {p.status}</p>
+                      </div>
+                      <ArrowRight size={13} style={{ color: '#00e5c4' }} />
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -197,6 +334,16 @@ export default function Landing() {
           </div>
         </div>
       </div>
+
+      {/* ── SEARCH BAR ────────────────────────────────────────────────── */}
+      <section className="py-10 px-4" style={{ background: '#080c10' }}>
+        <div className="max-w-xl mx-auto">
+          <p className="text-xs font-semibold tracking-widest uppercase text-center mb-4" style={{ color: '#4b5563' }}>
+            {t('search.placeholder')}
+          </p>
+          <SearchBar />
+        </div>
+      </section>
 
       {/* ── SPLINE ACCENT BAND — only rendered when scene is configured ── */}
       {hasAccentScene && (
