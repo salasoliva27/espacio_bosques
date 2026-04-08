@@ -7,6 +7,8 @@ import MilestoneCalendar from '../components/MilestoneCalendar';
 import VotingSection from '../components/VotingSection';
 import TransactionLedger from '../components/TransactionLedger';
 import BidModal from '../components/BidModal';
+import MoneyFlowDiagram from '../components/MoneyFlowDiagram';
+import MilestoneCompletion from '../components/MilestoneCompletion';
 import { getSession } from '../lib/auth';
 import { Send } from 'lucide-react';
 
@@ -43,6 +45,9 @@ export default function ProjectDetail() {
   const [editCategory, setEditCategory] = useState('');
   const [editMilestones, setEditMilestones] = useState<any[]>([]);
   const [editSlots, setEditSlots] = useState<any[]>([]);
+
+  // Milestone completion modal
+  const [completingMilestone, setCompletingMilestone] = useState<any>(null);
 
   // AI chat state for edit panel
   const [editChatMsgs, setEditChatMsgs] = useState<EditChatMsg[]>([]);
@@ -555,9 +560,23 @@ export default function ProjectDetail() {
                           <span className="text-xs px-2 py-0.5 rounded-full font-medium" style={{ background: s.bg, color: s.color }}>{m.status}</span>
                         </div>
                         <p className="text-xs mb-2" style={{ color: '#6b7280' }}>{m.description}</p>
-                        <div className="flex gap-4 text-xs" style={{ color: '#6b7280' }}>
-                          <span>{m.fundingPercentage}% of funding</span>
-                          <span>{m.durationDays} days</span>
+                        <div className="flex items-center justify-between mt-2">
+                          <div className="flex gap-4 text-xs" style={{ color: '#6b7280' }}>
+                            <span>{m.fundingPercentage}% of funding</span>
+                            <span>{m.durationDays} days</span>
+                          </div>
+                          {isCreator && m.status !== 'COMPLETED' && (
+                            <button
+                              onClick={() => setCompletingMilestone(m)}
+                              className="text-xs px-2.5 py-1 rounded-lg transition-opacity hover:opacity-80"
+                              style={{ background: 'rgba(245,158,11,0.1)', color: '#f59e0b', border: '1px solid rgba(245,158,11,0.2)' }}
+                            >
+                              Complete →
+                            </button>
+                          )}
+                          {m.status === 'COMPLETED' && (
+                            <span className="text-xs px-2 py-0.5 rounded" style={{ background: 'rgba(16,185,129,0.1)', color: '#10b981' }}>✓ Completed</span>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -672,8 +691,9 @@ export default function ProjectDetail() {
         </div>
       </div>
 
-      {/* Voting + Transaction ledger */}
+      {/* Money flow + Voting + Transaction ledger */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-10 space-y-6">
+        <MoneyFlowDiagram projectId={project.id} />
         <VotingSection projectId={project.id} milestones={project.milestones} />
         <TransactionLedger projectId={project.id} />
       </div>
@@ -694,6 +714,15 @@ export default function ProjectDetail() {
           milestones={project.milestones}
           onClose={() => setBidRole(null)}
           onSubmitted={() => { setBidRole(null); }}
+        />
+      )}
+
+      {completingMilestone && (
+        <MilestoneCompletion
+          projectId={project.id}
+          milestone={completingMilestone}
+          onClose={() => setCompletingMilestone(null)}
+          onCompleted={() => { setCompletingMilestone(null); fetchProject(); }}
         />
       )}
     </div>

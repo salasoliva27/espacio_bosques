@@ -14,7 +14,7 @@ import { DEMO_PROJECTS, addSimInvestment, addSimProject, getSimUserInvestments, 
          getProviderUserProfile, upsertProviderUserProfile, addProviderService, updateProviderService, deleteProviderService,
          ProviderService, resetSimFull } from '../data/simStore';
 import { SIM_PROVIDERS, updateProviderStatus } from '../data/providers';
-import { SIM_PROPOSALS, SIM_VOTES, SIM_TRANSACTIONS, addProposal, updateProposal, castVote, setVotingWindow, resetGovernance } from '../data/governance';
+import { SIM_PROPOSALS, SIM_VOTES, SIM_TRANSACTIONS, addProposal, updateProposal, castVote, setVotingWindow, resetGovernance, addInvestmentEvent } from '../data/governance';
 import { getQuote } from '../services/bitso';
 
 const router = Router();
@@ -446,6 +446,50 @@ router.post('/reset', (_req: Request, res: Response) => {
     project.updatedAt = new Date();
   }
   res.json({ ok: true, removed });
+});
+
+/* ── POST /api/test/seed-funding ───────────────────────────────── */
+// Seeds 1000 MXN split across 4 demo investors on a project.
+router.post('/seed-funding', (req: Request, res: Response) => {
+  const projectId = (req.body.projectId as string) || DEMO_PROJECTS[0]?.id;
+  const project = DEMO_PROJECTS.find(p => p.id === projectId);
+  if (!project) return res.status(404).json({ error: 'Project not found' });
+
+  const ETH_MXN = 65000;
+  const contributors = [
+    { id: 'investor-001', name: 'Ana Martínez', mxn: 350 },
+    { id: 'investor-002', name: 'Carlos Ruiz',  mxn: 275 },
+    { id: 'investor-003', name: 'Sofia Torres', mxn: 225 },
+    { id: 'investor-004', name: 'Luis García',  mxn: 150 },
+  ];
+
+  const results = [];
+  for (const c of contributors) {
+    addSimBalance(c.id, c.mxn);
+    const eth = c.mxn / ETH_MXN;
+    const ok = addSimInvestment(projectId, eth, c.mxn, c.id);
+    // Patch investor name onto the investment record
+    const inv = project.investments[project.investments.length - 1] as any;
+    if (inv) inv.investor.name = c.name;
+    // Log investment event
+    const weiAmt = BigInt(Math.round(eth * 1e12)) * BigInt(1e6);
+    addInvestmentEvent({
+      type: 'INVEST',
+      projectId,
+      actorId: c.id,
+      actorName: c.name,
+      mxnAmount: c.mxn,
+      ethAmount: eth,
+      weiAmount: weiAmt.toString(),
+      bitsoOrderId: `SIM-SEED-${c.id}-${Date.now()}`,
+      note: 'Seeded demo investment',
+      createdAt: new Date(),
+    });
+    results.push({ ...c, eth: parseFloat(eth.toFixed(6)), ok });
+  }
+
+  const totalMxn = contributors.reduce((s, c) => s + c.mxn, 0);
+  res.json({ ok: true, projectId, totalMxn, contributors: results });
 });
 
 /* ── POST /api/test/reset/full ─────────────────────────────────── */

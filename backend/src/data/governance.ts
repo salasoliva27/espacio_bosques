@@ -139,11 +139,99 @@ export function setVotingWindow(milestoneId: string, days: number): Date {
   return deadline;
 }
 
+// ── Milestone cost items (provider expense logging) ──────────────────────────
+
+export interface CostItem {
+  id: string;
+  milestoneId: string;
+  projectId: string;
+  providerId: string;
+  providerName: string;
+  description: string;
+  amountMxn: number;
+  category: 'labor' | 'materials' | 'equipment' | 'services' | 'other';
+  date: Date;
+}
+
+export const SIM_COST_ITEMS: CostItem[] = [];
+
+export function addCostItem(data: Omit<CostItem, 'id'>): CostItem {
+  const item: CostItem = { ...data, id: `cost-${Date.now()}-${Math.random().toString(36).slice(2,6)}` };
+  SIM_COST_ITEMS.push(item);
+  return item;
+}
+
+export function getCostItemsForMilestone(milestoneId: string): CostItem[] {
+  return SIM_COST_ITEMS.filter(c => c.milestoneId === milestoneId);
+}
+
+// ── Milestone evidence documents ──────────────────────────────────────────────
+
+export interface EvidenceDoc {
+  id: string;
+  milestoneId: string;
+  projectId: string;
+  uploadedBy: string;        // userId
+  filename: string;
+  mimeType: string;          // application/pdf | text/xml
+  sizeBytes: number;
+  // In sim: store small base64 or just metadata
+  dataBase64?: string;
+  uploadedAt: Date;
+  validated: boolean;        // planner/admin marked as valid
+}
+
+export const SIM_EVIDENCE_DOCS: EvidenceDoc[] = [];
+
+export function addEvidenceDoc(data: Omit<EvidenceDoc, 'id'>): EvidenceDoc {
+  const doc: EvidenceDoc = { ...data, id: `doc-${Date.now()}-${Math.random().toString(36).slice(2,6)}` };
+  SIM_EVIDENCE_DOCS.push(doc);
+  return doc;
+}
+
+export function getEvidenceForMilestone(milestoneId: string): EvidenceDoc[] {
+  return SIM_EVIDENCE_DOCS.filter(d => d.milestoneId === milestoneId);
+}
+
+// ── Investment event log (full audit trail) ───────────────────────────────────
+
+export interface InvestmentEvent {
+  id: string;
+  type: 'INVEST' | 'DISBURSE' | 'REFUND';
+  projectId: string;
+  milestoneId?: string;
+  milestoneTitle?: string;
+  actorId: string;           // userId (investor or planner)
+  actorName?: string;
+  mxnAmount: number;
+  ethAmount: number;
+  weiAmount: string;
+  bitsoOrderId?: string;
+  note?: string;
+  createdAt: Date;
+}
+
+export const INVESTMENT_EVENTS: InvestmentEvent[] = [];
+
+export function addInvestmentEvent(data: Omit<InvestmentEvent, 'id'>): InvestmentEvent {
+  const ev: InvestmentEvent = { ...data, id: `ev-${Date.now()}-${Math.random().toString(36).slice(2,6)}` };
+  INVESTMENT_EVENTS.push(ev);
+  return ev;
+}
+
+export function getEventsForProject(projectId: string): InvestmentEvent[] {
+  return INVESTMENT_EVENTS.filter(e => e.projectId === projectId)
+    .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+}
+
 /** Full governance reset — clears all proposals, votes, transactions, and voting windows. */
 export function resetGovernance(): void {
   SIM_PROPOSALS.splice(0);
   SIM_VOTES.splice(0);
   SIM_TRANSACTIONS.splice(0);
+  SIM_COST_ITEMS.splice(0);
+  SIM_EVIDENCE_DOCS.splice(0);
+  INVESTMENT_EVENTS.splice(0);
   for (const key of Object.keys(MILESTONE_VOTING_WINDOWS)) {
     delete MILESTONE_VOTING_WINDOWS[key];
   }

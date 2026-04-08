@@ -7,9 +7,9 @@
       "category": "technology",
       "status": "PENDING",
       "fundingGoal": "4923076923077000000",
-      "fundingRaised": "0",
+      "fundingRaised": "15384615386000000",
       "createdAt": "2026-04-08T02:46:52.117Z",
-      "updatedAt": "2026-04-08T02:46:52.117Z",
+      "updatedAt": "2026-04-08T03:19:26.719Z",
       "planner": {
         "id": "7c456240-6dad-48e7-b3b3-96fade322a28",
         "walletAddress": "0xsimulated",
@@ -49,7 +49,51 @@
           "status": "PENDING"
         }
       ],
-      "investments": [],
+      "investments": [
+        {
+          "id": "sim-inv-1775618366716",
+          "amount": "5384615385000000",
+          "investor": {
+            "id": "investor-001",
+            "walletAddress": "0xsimulated",
+            "name": "Ana Martínez"
+          },
+          "mxn": 350,
+          "createdAt": "2026-04-08T03:19:26.716Z"
+        },
+        {
+          "id": "sim-inv-1775618366717",
+          "amount": "4230769231000000",
+          "investor": {
+            "id": "investor-002",
+            "walletAddress": "0xsimulated",
+            "name": "Carlos Ruiz"
+          },
+          "mxn": 275,
+          "createdAt": "2026-04-08T03:19:26.717Z"
+        },
+        {
+          "id": "sim-inv-1775618366718",
+          "amount": "3461538462000000",
+          "investor": {
+            "id": "investor-003",
+            "walletAddress": "0xsimulated",
+            "name": "Sofia Torres"
+          },
+          "mxn": 225,
+          "createdAt": "2026-04-08T03:19:26.718Z"
+        },
+        {
+          "id": "sim-inv-1775618366719",
+          "amount": "2307692308000000",
+          "investor": {
+            "id": "investor-004",
+            "walletAddress": "0xsimulated"
+          },
+          "mxn": 150,
+          "createdAt": "2026-04-08T03:19:26.719Z"
+        }
+      ],
       "telemetry": [],
       "reports": [],
       "requiredRoles": [
@@ -91,7 +135,7 @@
         }
       ],
       "_count": {
-        "investments": 0
+        "investments": 4
       },
       "aiGenerated": true,
       "aiBlueprint": {
@@ -339,6 +383,10 @@
     }
   },
   "balances": {
-    "7c456240-6dad-48e7-b3b3-96fade322a28": 0
+    "7c456240-6dad-48e7-b3b3-96fade322a28": 0,
+    "investor-001": 350,
+    "investor-002": 275,
+    "investor-003": 225,
+    "investor-004": 150
   }
 }
