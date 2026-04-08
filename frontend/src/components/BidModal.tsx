@@ -69,11 +69,18 @@ export default function BidModal({ projectId, projectTitle, role, milestones, on
       }
       setProviderEnabled(true);
 
-      // Start proposal
+      // Start proposal — pass role context so the AI knows what slot is being bid on
       const propRes = await fetch('/api/governance/proposals', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ milestoneId, projectId, providerId: 'self' }),
+        body: JSON.stringify({
+          milestoneId,
+          projectId,
+          providerId: 'self',
+          roleId: role.id,
+          roleTitle: role.role,
+          roleDescription: role.description,
+        }),
       });
       const propData = await propRes.json();
       if (!propRes.ok) {
@@ -98,7 +105,7 @@ export default function BidModal({ projectId, projectTitle, role, milestones, on
 
         const welcomeMsg: ChatMessage = {
           role: 'assistant',
-          content: `Hi! I'll help you put together a bid for the **${role.role}** role on **${projectTitle}**.\n\nRole: ${role.description}\nMilestone: ${milestoneTitle}${serviceContext}\n\nLet's build your proposal. What's your approach for this scope of work?`,
+          content: `Hi! I'll help you put together a bid for the **${role.role}** position on **${projectTitle}**.\n\n**What you'd be doing:** ${role.description}\n**Part of milestone:** ${milestoneTitle}${serviceContext}\n\nLet's build your proposal. What's your approach for this scope of work?`,
         };
         setMessages([welcomeMsg]);
       }

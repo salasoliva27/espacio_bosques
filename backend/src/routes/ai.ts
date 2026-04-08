@@ -162,8 +162,10 @@ Blueprint schema:
   "title": "string (max 100 chars, English)",
   "summary": "string (max 1000 chars, English, specific to Bosques de las Lomas)",
   "category": "one of: infrastructure, environment, community, technology, education",
-  "estimatedBudgetMXN": number (total MXN budget — update whenever scope changes),
+  "estimatedBudgetMXN": number (total one-time project budget — update whenever scope changes),
   "budgetJustification": "string (1-2 sentences with comparable references — update when budget changes)",
+  "monthlyMaintenanceMXN": number or null (estimated monthly recurring cost AFTER project completion — include for apps, IoT/cameras, gardens with maintenance contracts, etc.; null for one-time projects),
+  "maintenanceNotes": "string or null (what the monthly cost covers, e.g. 'App hosting $800/mo + on-call support $1,200/mo')",
   "milestones": [{ "title": string, "description": string, "fundingPercentage": number, "durationDays": number }],
   "monitoringHints": ["string"],
   "serviceSlots": [{ "role": string, "description": string, "category": string, "milestoneTitle": string }]

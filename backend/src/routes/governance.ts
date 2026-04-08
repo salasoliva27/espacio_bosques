@@ -48,18 +48,21 @@ function extractJsonObject(text: string): any | null {
 
 const PROPOSAL_SYSTEM = `You are a project intake assistant for Espacio Bosques — a community funding platform for Bosques de las Lomas, CDMX.
 
-A provider (contractor/vendor) is submitting a bid proposal for a specific community project milestone. Your job is to help them build a complete, structured proposal through conversation — and to actively help them price it well using their own registered services.
+A provider is submitting a bid for a specific role slot on a community project. Your job is to help them build a complete, structured proposal through conversation — and to actively help them price it well using their own registered services.
+
+The role they are bidding for and the milestone it belongs to are shown below. Make it clear you understand the specific role, not just the milestone.
 
 Collect in order (ask one topic at a time, conversationally):
-1. Their proposed approach and scope of work for the milestone
-2. Their quoted amount in MXN — if provider services are listed below, reference their typical price range to anchor the conversation (e.g. "Based on your [service name], your typical range is X–Y MXN. Does that apply here, or does this scope differ?"). Ask them to confirm or adjust and briefly break down: labor, materials, equipment.
+1. Their proposed approach and scope for this specific role
+2. Their quoted amount in MXN — if provider services are listed below, reference their typical price range to anchor the conversation. Ask them to confirm or adjust with a brief breakdown: labor, materials, equipment.
 3. Their estimated timeline in calendar days
-4. Relevant experience — similar projects completed, certifications, references if any
-5. Confirm: any questions or clarifications needed about the milestone?
+4. Relevant experience — similar projects, certifications, or references
+5. Confirm: any questions or clarifications about the role scope?
 
 Rules:
 - Be concise. Ask one clear question at a time.
-- Use the provider's registered services as context — if a service matches the milestone, surface the typical price. Do not invent numbers.
+- ALWAYS refer to the role title (e.g. "App Developer", "Legal Counsel") — never just "the milestone".
+- Use the provider's registered services as context — if a service matches the role, surface the typical price.
 - When you have complete answers for all 5 points, say: "I have everything I need. Ready to submit your proposal?"
 - Never fabricate information. If they haven't answered something, ask again.
 - When all fields are collected, respond ONLY with valid JSON on its own line: {"ready": true, "summary": {"scope": "...", "quotedAmountMxn": 0, "timelineDays": 0, "approach": "...", "experience": "..."}}
@@ -69,7 +72,7 @@ IMPORTANT: quotedAmountMxn must be a plain number (no commas, no currency symbol
 // ── POST /api/governance/proposals ──────────────────────────────────────────
 
 router.post('/proposals', requireAuth, (req: AuthRequest, res: Response) => {
-  const { milestoneId, projectId, providerId } = req.body;
+  const { milestoneId, projectId, providerId, roleId, roleTitle, roleDescription } = req.body;
   if (!milestoneId || !projectId || !providerId) {
     return res.status(400).json({ error: 'Missing: milestoneId, projectId, providerId' });
   }
@@ -100,6 +103,9 @@ router.post('/proposals', requireAuth, (req: AuthRequest, res: Response) => {
   const proposal = addProposal({
     milestoneId, projectId, providerId: resolvedProviderId,
     providerName: resolvedProviderName,
+    roleId: roleId || undefined,
+    roleTitle: roleTitle || undefined,
+    roleDescription: roleDescription || undefined,
     quotedAmountMxn: 0, timelineDays: 0,
     scope: '', approach: '', experience: '',
     chatMessages: [], documents: [], status: 'DRAFT',
@@ -118,11 +124,14 @@ router.post('/proposals/:id/chat', requireAuth, async (req: AuthRequest, res: Re
   const { message } = req.body;
   if (!message) return res.status(400).json({ error: 'Missing message' });
 
-  // Find milestone info for context
+  // Find milestone and role info for context
   const project = DEMO_PROJECTS.find(p => p.id === proposal.projectId);
   const milestone = project?.milestones.find(m => m.id === proposal.milestoneId);
   const milestoneContext = milestone
-    ? `\nMilestone: "${milestone.title}" — ${milestone.description} (${milestone.fundingPercentage}% of project budget, ${milestone.durationDays} days planned)`
+    ? `\nMilestone this role belongs to: "${milestone.title}" — ${milestone.description} (${milestone.fundingPercentage}% of project budget, ${milestone.durationDays} days planned)`
+    : '';
+  const roleContext = proposal.roleTitle
+    ? `\n\nRole being bid on: **${proposal.roleTitle}**\nRole scope: ${proposal.roleDescription || '(see milestone above)'}\n\nThe provider is bidding specifically for this role — keep your questions focused on how they will fulfill the ${proposal.roleTitle} responsibilities.`
     : '';
 
   // Inject provider's registered services so AI can reference typical prices
@@ -144,7 +153,7 @@ router.post('/proposals/:id/chat', requireAuth, async (req: AuthRequest, res: Re
     const response = await anthropic.messages.create({
       model: process.env.ANTHROPIC_MODEL || 'claude-sonnet-4-6',
       max_tokens: 1024,
-      system: PROPOSAL_SYSTEM + milestoneContext + serviceContext,
+      system: PROPOSAL_SYSTEM + roleContext + milestoneContext + serviceContext,
       messages: history.map(m => ({ role: m.role, content: m.content })),
     });
 

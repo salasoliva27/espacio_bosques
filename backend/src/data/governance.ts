@@ -18,6 +18,9 @@ export interface SimProposal {
   projectId: string;
   providerId: string;
   providerName: string;      // real legal name from RFC
+  roleId?: string;           // the requiredRole slot id
+  roleTitle?: string;        // e.g. "App Developer"
+  roleDescription?: string;  // scope description from the slot
   quotedAmountMxn: number;
   timelineDays: number;
   scope: string;

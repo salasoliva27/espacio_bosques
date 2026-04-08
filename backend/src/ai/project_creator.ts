@@ -14,6 +14,8 @@ interface AIProjectBlueprint {
   category: "infrastructure" | "environment" | "community" | "technology" | "education";
   estimatedBudgetMXN: number;
   budgetJustification: string;
+  monthlyMaintenanceMXN?: number;
+  maintenanceNotes?: string;
   milestones: {
     title: string;
     description: string;
@@ -65,8 +67,10 @@ Generate a JSON response following this exact schema:
   "title": "string (max 100 chars, in English)",
   "summary": "string (max 1000 chars, in English, specific to the Bosques de las Lomas neighborhood)",
   "category": "one of: infrastructure, environment, community, technology, education",
-  "estimatedBudgetMXN": number (total project budget in Mexican pesos — realistic for the scope),
+  "estimatedBudgetMXN": number (total one-time project budget in Mexican pesos — realistic for the scope),
   "budgetJustification": "string (1-2 sentences explaining the budget estimate with comparable references)",
+  "monthlyMaintenanceMXN": number or null (estimated monthly recurring cost AFTER project completion — include for projects that require ongoing provider work, hosting, subscriptions, or maintenance contracts; omit/null for one-time projects like a single event or a one-time installation with no upkeep),
+  "maintenanceNotes": "string or null (what the monthly cost covers: e.g. 'Includes app hosting $800/mo, monthly security audit $3,000/mo, and on-call support $1,200/mo')",
   "milestones": [
     {
       "title": "string",
@@ -107,7 +111,16 @@ Budget estimation guidelines:
 - environment: MXN 15,000–200,000 (landscaping, tree planting, irrigation)
 - technology: MXN 20,000–300,000 (smart sensors, apps, connectivity)
 - education: MXN 10,000–100,000 (workshops, materials, programs)
-Always justify with a reference: "Similar CCTV installations in CDMX colonias cost ~MXN 8,000–15,000 per camera including cabling."`;
+Always justify with a reference: "Similar CCTV installations in CDMX colonias cost ~MXN 8,000–15,000 per camera including cabling."
+
+Monthly maintenance guidelines (when to include):
+- Apps / platforms: always — hosting, security patches, on-call support
+- Security cameras / IoT sensors: always — monitoring service, hardware replacement reserve
+- Gardens / irrigation systems: usually — watering, fertilizing, pruning contracts
+- Street lighting: sometimes — bulb replacement reserve, annual inspection
+- Events / one-time installations: never
+- Signage / murals: rarely — only if cleaning or restoration contracts apply
+Be conservative and specific: break down what the monthly cost covers.`;
 
   // Inject relevant knowledge from the shared database
   const relevantKnowledge = queryKnowledge(userPrompt);
@@ -227,6 +240,13 @@ function validateBlueprint(blueprint: any): void {
 
   if (!blueprint.budgetJustification || typeof blueprint.budgetJustification !== "string") {
     throw new Error("Invalid budgetJustification");
+  }
+
+  // monthlyMaintenanceMXN is optional; if present must be a non-negative number
+  if (blueprint.monthlyMaintenanceMXN !== undefined && blueprint.monthlyMaintenanceMXN !== null) {
+    if (typeof blueprint.monthlyMaintenanceMXN !== "number" || blueprint.monthlyMaintenanceMXN < 0) {
+      blueprint.monthlyMaintenanceMXN = undefined; // soft-fail: just strip it
+    }
   }
 
   if (!Array.isArray(blueprint.monitoringHints)) {

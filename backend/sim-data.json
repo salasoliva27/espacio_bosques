@@ -1,6 +1,179 @@
 {
   "projects": [
     {
+      "id": "sim-1775616412117",
+      "title": "On-Demand Drone Security Patrol System for Bosques de las Lomas",
+      "summary": "Deploy a community-managed autonomous drone security system allowing residents to request aerial patrols via mobile app. Professional-grade GPS-guided drones with terrain mapping capabilities will provide rapid response security surveillance across Bosques de las Lomas streets and common areas, maintaining proper flight altitudes automatically. The system includes AFAC-compliant autonomous flight operations, secure data storage in Mexico, and integration with existing neighborhood security infrastructure. Residents can request drone dispatch to their location or follow suspicious activity, with all footage stored according to INAI privacy regulations and accessible to authorized community security coordinators.",
+      "category": "technology",
+      "status": "PENDING",
+      "fundingGoal": "4923076923077000000",
+      "fundingRaised": "0",
+      "createdAt": "2026-04-08T02:46:52.117Z",
+      "updatedAt": "2026-04-08T02:46:52.117Z",
+      "planner": {
+        "id": "7c456240-6dad-48e7-b3b3-96fade322a28",
+        "walletAddress": "0xsimulated",
+        "role": "PLANNER"
+      },
+      "milestones": [
+        {
+          "id": "sim-m-1775616412117-0",
+          "title": "Regulatory Compliance and Permits",
+          "description": "Obtain AFAC autonomous drone operation permits, liability insurance, and SEDUVI approvals for GPS-guided drone operations over Bosques de las Lomas residential areas",
+          "fundingPercentage": 18,
+          "durationDays": 60,
+          "status": "PENDING"
+        },
+        {
+          "id": "sim-m-1775616412117-1",
+          "title": "Hardware and Mapping Infrastructure",
+          "description": "Purchase GPS-guided autonomous drones with HD cameras and terrain mapping capabilities. Configure flight control systems with Bosques de las Lomas geographical data and establish charging stations",
+          "fundingPercentage": 40,
+          "durationDays": 45,
+          "status": "PENDING"
+        },
+        {
+          "id": "sim-m-1775616412117-2",
+          "title": "App Development and Data Infrastructure",
+          "description": "Build resident-facing mobile app with integrated orientation tutorial for drone requests and secure Mexican data center infrastructure for INAI-compliant video storage and access controls",
+          "fundingPercentage": 25,
+          "durationDays": 75,
+          "status": "PENDING"
+        },
+        {
+          "id": "sim-m-1775616412117-3",
+          "title": "Community Integration and Launch",
+          "description": "Train community security coordinators, install privacy signage throughout the colonia, and launch autonomous pilot operations with community testing",
+          "fundingPercentage": 17,
+          "durationDays": 30,
+          "status": "PENDING"
+        }
+      ],
+      "investments": [],
+      "telemetry": [],
+      "reports": [],
+      "requiredRoles": [
+        {
+          "id": "sim-slot-1775616412117-0",
+          "role": "AFAC Autonomous Flight Compliance Specialist",
+          "description": "Navigate autonomous drone registration and flight permits with Mexican aviation authorities for GPS-guided operations",
+          "milestoneId": null
+        },
+        {
+          "id": "sim-slot-1775616412117-1",
+          "role": "Autonomous Drone Systems Contractor",
+          "description": "Procure and configure GPS-guided drones with terrain mapping, autonomous flight controls, and security camera systems for residential surveillance",
+          "milestoneId": null
+        },
+        {
+          "id": "sim-slot-1775616412117-2",
+          "role": "Mobile App Developer with Tutorial Integration",
+          "description": "Build iOS/Android app with built-in orientation tutorial for drone dispatch requests, live video feeds, and resident authentication with bilingual interface",
+          "milestoneId": null
+        },
+        {
+          "id": "sim-slot-1775616412117-3",
+          "role": "Data Privacy Legal Counsel",
+          "description": "Ensure INAI compliance for video recording, establish data retention policies, and draft resident privacy agreements for autonomous drone surveillance",
+          "milestoneId": null
+        },
+        {
+          "id": "sim-slot-1775616412117-4",
+          "role": "Community Security Coordinator",
+          "description": "Train residents and security personnel on autonomous drone operations, establish dispatch protocols, and manage integration with existing neighborhood security systems",
+          "milestoneId": null
+        },
+        {
+          "id": "sim-slot-1775616412117-5",
+          "role": "Financial Auditor",
+          "description": "Oversee procurement compliance including 3-quote vendor selection, verify SAT status of contractors, and manage milestone-based payment disbursements",
+          "milestoneId": null
+        }
+      ],
+      "_count": {
+        "investments": 0
+      },
+      "aiGenerated": true,
+      "aiBlueprint": {
+        "title": "On-Demand Drone Security Patrol System for Bosques de las Lomas",
+        "summary": "Deploy a community-managed autonomous drone security system allowing residents to request aerial patrols via mobile app. Professional-grade GPS-guided drones with terrain mapping capabilities will provide rapid response security surveillance across Bosques de las Lomas streets and common areas, maintaining proper flight altitudes automatically. The system includes AFAC-compliant autonomous flight operations, secure data storage in Mexico, and integration with existing neighborhood security infrastructure. Residents can request drone dispatch to their location or follow suspicious activity, with all footage stored according to INAI privacy regulations and accessible to authorized community security coordinators.",
+        "category": "technology",
+        "estimatedBudgetMXN": 320000,
+        "budgetJustification": "Autonomous GPS-guided drone systems with terrain mapping cost significantly more than manual systems (~MXN 100,000-140,000 per unit). Advanced flight control software and mapping infrastructure add ~MXN 60,000. AFAC autonomous operation permits and insurance run ~MXN 40,000.",
+        "milestones": [
+          {
+            "title": "Regulatory Compliance and Permits",
+            "description": "Obtain AFAC autonomous drone operation permits, liability insurance, and SEDUVI approvals for GPS-guided drone operations over Bosques de las Lomas residential areas",
+            "fundingPercentage": 18,
+            "durationDays": 60
+          },
+          {
+            "title": "Hardware and Mapping Infrastructure",
+            "description": "Purchase GPS-guided autonomous drones with HD cameras and terrain mapping capabilities. Configure flight control systems with Bosques de las Lomas geographical data and establish charging stations",
+            "fundingPercentage": 40,
+            "durationDays": 45
+          },
+          {
+            "title": "App Development and Data Infrastructure",
+            "description": "Build resident-facing mobile app with integrated orientation tutorial for drone requests and secure Mexican data center infrastructure for INAI-compliant video storage and access controls",
+            "fundingPercentage": 25,
+            "durationDays": 75
+          },
+          {
+            "title": "Community Integration and Launch",
+            "description": "Train community security coordinators, install privacy signage throughout the colonia, and launch autonomous pilot operations with community testing",
+            "fundingPercentage": 17,
+            "durationDays": 30
+          }
+        ],
+        "monitoringHints": [
+          "Verify AFAC autonomous flight permit compliance through quarterly flight log reviews",
+          "Track GPS accuracy and terrain mapping effectiveness through flight path analysis",
+          "Monitor response times and resident satisfaction through app analytics and monthly community feedback",
+          "Audit data storage practices to ensure INAI compliance and Mexican data sovereignty",
+          "Review drone maintenance logs and autonomous system reliability to ensure operational readiness"
+        ],
+        "serviceSlots": [
+          {
+            "role": "AFAC Autonomous Flight Compliance Specialist",
+            "description": "Navigate autonomous drone registration and flight permits with Mexican aviation authorities for GPS-guided operations",
+            "category": "legal",
+            "milestoneTitle": "Regulatory Compliance and Permits"
+          },
+          {
+            "role": "Autonomous Drone Systems Contractor",
+            "description": "Procure and configure GPS-guided drones with terrain mapping, autonomous flight controls, and security camera systems for residential surveillance",
+            "category": "technical",
+            "milestoneTitle": "Hardware and Mapping Infrastructure"
+          },
+          {
+            "role": "Mobile App Developer with Tutorial Integration",
+            "description": "Build iOS/Android app with built-in orientation tutorial for drone dispatch requests, live video feeds, and resident authentication with bilingual interface",
+            "category": "technical",
+            "milestoneTitle": "App Development and Data Infrastructure"
+          },
+          {
+            "role": "Data Privacy Legal Counsel",
+            "description": "Ensure INAI compliance for video recording, establish data retention policies, and draft resident privacy agreements for autonomous drone surveillance",
+            "category": "legal",
+            "milestoneTitle": "App Development and Data Infrastructure"
+          },
+          {
+            "role": "Community Security Coordinator",
+            "description": "Train residents and security personnel on autonomous drone operations, establish dispatch protocols, and manage integration with existing neighborhood security systems",
+            "category": "community",
+            "milestoneTitle": "Community Integration and Launch"
+          },
+          {
+            "role": "Financial Auditor",
+            "description": "Oversee procurement compliance including 3-quote vendor selection, verify SAT status of contractors, and manage milestone-based payment disbursements",
+            "category": "financial",
+            "milestoneTitle": "Hardware and Mapping Infrastructure"
+          }
+        ]
+      }
+    },
+    {
       "id": "sim-1775614613769",
       "title": "Paseo de las Palmas Lighting Upgrade",
       "summary": "Replace 40 sodium streetlights with LED fixtures along Paseo de las Palmas.",
@@ -98,7 +271,7 @@
           "chatMessages": [
             {
               "role": "assistant",
-              "content": "Hi! I'll help you define a service for your provider profile. Let's start \u2014 what's the name of the service you'd like to register? A short, professional title works best (e.g., \"LED Electrical Installation\" or \"Landscape Architecture\")."
+              "content": "Hi! I'll help you define a service for your provider profile. Let's start — what's the name of the service you'd like to register? A short, professional title works best (e.g., \"LED Electrical Installation\" or \"Landscape Architecture\")."
             },
             {
               "role": "user",
@@ -106,7 +279,7 @@
             },
             {
               "role": "assistant",
-              "content": "Great! Let's refine this. For the service name, would you call it \"Custom Software Development\" or something more specific like \"Data Science & Software Development\"?\n\nAnd when you say \"any type of project\" \u2014 what are the main types you typically work on? Web applications, mobile apps, data analysis systems, or something else?"
+              "content": "Great! Let's refine this. For the service name, would you call it \"Custom Software Development\" or something more specific like \"Data Science & Software Development\"?\n\nAnd when you say \"any type of project\" — what are the main types you typically work on? Web applications, mobile apps, data analysis systems, or something else?"
             },
             {
               "role": "user",
@@ -130,7 +303,7 @@
             },
             {
               "role": "assistant",
-              "content": "Excellent! Now about pricing \u2014 you mentioned 90,000 MXN per month. Is that for full-time project work, or do you also offer per-project rates for smaller jobs?"
+              "content": "Excellent! Now about pricing — you mentioned 90,000 MXN per month. Is that for full-time project work, or do you also offer per-project rates for smaller jobs?"
             },
             {
               "role": "user",
@@ -154,7 +327,18 @@
         }
       ],
       "createdAt": "2026-04-08T01:33:17.274Z"
+    },
+    "sim-user": {
+      "userId": "sim-user",
+      "enabled": true,
+      "companyName": "Test Co",
+      "specialty": "Tech",
+      "rfc": "1234567890",
+      "services": [],
+      "createdAt": "2026-04-08T02:56:27.159Z"
     }
   },
-  "balances": {}
+  "balances": {
+    "7c456240-6dad-48e7-b3b3-96fade322a28": 0
+  }
 }

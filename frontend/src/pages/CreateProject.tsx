@@ -25,6 +25,8 @@ interface Blueprint {
   category: string;
   estimatedBudgetMXN?: number;
   budgetJustification?: string;
+  monthlyMaintenanceMXN?: number;
+  maintenanceNotes?: string;
   milestones: Milestone[];
   monitoringHints: string[];
   serviceSlots?: ServiceSlot[];
@@ -268,6 +270,22 @@ export default function CreateProject() {
                       </span>
                       {blueprint.budgetJustification && (
                         <p className="text-xs mt-2 leading-relaxed" style={{ color: '#6b7280' }}>{blueprint.budgetJustification}</p>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Monthly maintenance estimate */}
+                  {blueprint.monthlyMaintenanceMXN != null && blueprint.monthlyMaintenanceMXN > 0 && (
+                    <div className="rounded-lg p-4" style={{ background: 'rgba(251,191,36,0.05)', border: '1px solid rgba(251,191,36,0.2)' }}>
+                      <div className="flex items-center gap-1.5 mb-2">
+                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded" style={{ background: 'rgba(251,191,36,0.15)', color: '#fbbf24' }}>~/mo</span>
+                        <span className="text-xs font-semibold tracking-widest uppercase" style={{ color: '#fbbf24' }}>Monthly maintenance</span>
+                      </div>
+                      <span className="text-xl font-bold" style={{ color: '#e8f4f0' }}>
+                        MXN {blueprint.monthlyMaintenanceMXN.toLocaleString('es-MX')} / month
+                      </span>
+                      {blueprint.maintenanceNotes && (
+                        <p className="text-xs mt-2 leading-relaxed" style={{ color: '#6b7280' }}>{blueprint.maintenanceNotes}</p>
                       )}
                     </div>
                   )}
