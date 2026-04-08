@@ -4,6 +4,7 @@ import { supabase, signOut } from '../lib/auth';
 import { useLanguage, useT } from '../context/LanguageContext';
 import { LayoutGrid, Plus, LogOut, Globe, UserCircle, Briefcase, Rss } from 'lucide-react';
 import type { User } from '@supabase/supabase-js';
+import NotificationBell from './NotificationBell';
 
 export default function Navbar() {
   const [user, setUser] = useState<User | null>(null);
@@ -65,6 +66,7 @@ export default function Navbar() {
             <button onClick={toggle} className="flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-md" style={{ background: '#1e2d3d', color: '#9ca3af', border: '1px solid #2a3f52' }}>
               <Globe size={11} />{lang === 'es' ? 'EN' : 'ES'}
             </button>
+            {user && <NotificationBell />}
             {user ? (
               <>
                 <Link

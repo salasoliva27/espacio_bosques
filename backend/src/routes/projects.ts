@@ -3,6 +3,8 @@ import { prisma } from "../index";
 import { logger } from "../utils/logger";
 import { SIMULATION_MODE } from "../config/mode";
 import { DEMO_PROJECTS, persistData, addSimProject } from "../data/simStore";
+import { createNotification, SIM_NOTIFICATIONS } from "../data/governance";
+import { SIM_PROVIDERS } from "../data/providers";
 import { requireAuth, AuthRequest } from "../middleware/auth";
 
 const router = Router();
@@ -185,6 +187,29 @@ router.post("/", async (req: Request, res: Response) => {
     // Inject into in-memory demo list and persist so it survives restarts
     addSimProject(mockProject as any);
     logger.info("Simulation mode — mock project created", { title });
+
+    // Notify providers whose services match any required role
+    if (resolvedRoles?.length > 0) {
+      for (const provider of SIM_PROVIDERS) {
+        const providerServices = (provider as any).services ?? [];
+        const matchedRole = resolvedRoles.find((role: any) =>
+          providerServices.some((svc: any) =>
+            svc.name?.toLowerCase().includes(role.role?.toLowerCase().split(' ')[0]) ||
+            role.role?.toLowerCase().includes(svc.category?.toLowerCase())
+          )
+        );
+        if (matchedRole && (provider as any).userId) {
+          createNotification({
+            userId: (provider as any).userId,
+            type: 'JOB_MATCH',
+            title: `New job match: ${matchedRole.role}`,
+            body: `"${title}" needs a ${matchedRole.role}. ${matchedRole.description?.slice(0, 80)}`,
+            projectId: mockProject.id,
+          });
+        }
+      }
+    }
+
     return res.status(201).json({ project: mockProject });
   }
 

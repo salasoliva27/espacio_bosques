@@ -14,7 +14,9 @@ import { DEMO_PROJECTS, addSimInvestment, addSimProject, getSimUserInvestments, 
          getProviderUserProfile, upsertProviderUserProfile, addProviderService, updateProviderService, deleteProviderService,
          ProviderService, resetSimFull } from '../data/simStore';
 import { SIM_PROVIDERS, updateProviderStatus } from '../data/providers';
-import { SIM_PROPOSALS, SIM_VOTES, SIM_TRANSACTIONS, addProposal, updateProposal, castVote, setVotingWindow, resetGovernance, addInvestmentEvent } from '../data/governance';
+import { SIM_PROPOSALS, SIM_VOTES, SIM_TRANSACTIONS, addProposal, updateProposal, castVote, setVotingWindow, resetGovernance, addInvestmentEvent,
+  addCostItem, addEvidenceDoc, addCompletionRequest, castEvidenceVote, getCompletionRequestsForProject, createNotification,
+  SIM_NOTIFICATIONS } from '../data/governance';
 import { getQuote } from '../services/bitso';
 
 const router = Router();
@@ -490,6 +492,188 @@ router.post('/seed-funding', (req: Request, res: Response) => {
 
   const totalMxn = contributors.reduce((s, c) => s + c.mxn, 0);
   res.json({ ok: true, projectId, totalMxn, contributors: results });
+});
+
+/* ── POST /api/test/simulate-completion ────────────────────────── */
+// Seeds a realistic completion request on the first milestone of a project.
+// Creates cost items + a fake CFDI XML doc + CompletionRequest ready for voting.
+router.post('/simulate-completion', (req: Request, res: Response) => {
+  const projectId = (req.body.projectId as string) || DEMO_PROJECTS[0]?.id;
+  const project = DEMO_PROJECTS.find(p => p.id === projectId);
+  if (!project) return res.status(404).json({ error: 'Project not found' });
+
+  const milestoneIdx = (req.body.milestoneIndex as number) ?? 0;
+  const milestone = project.milestones[milestoneIdx] as any;
+  if (!milestone) return res.status(404).json({ error: 'Milestone not found' });
+  if (milestone.status === 'COMPLETED') {
+    return res.status(400).json({ error: 'Milestone already completed — use a different index' });
+  }
+
+  const providerId = req.body.providerId || 'test-provider-001';
+  const providerName = req.body.providerName || 'TechWorks SAPI de CV';
+
+  // Log cost items
+  const costs = [
+    { description: 'Technical consultation and regulatory research', amountMxn: 4500, category: 'services' as const },
+    { description: 'Legal filing fees — drone operator certification', amountMxn: 2800, category: 'services' as const },
+    { description: 'Engineer labor (5 days)', amountMxn: 8750, category: 'labor' as const },
+  ];
+  const costItems = costs.map(c => addCostItem({
+    milestoneId: milestone.id, projectId,
+    providerId, providerName,
+    ...c, date: new Date(),
+  }));
+  const totalCostMxn = costs.reduce((s, c) => s + c.amountMxn, 0);
+
+  // Create a fake CFDI XML as base64
+  const cfdiXml = `<?xml version="1.0" encoding="UTF-8"?>
+<cfdi:Comprobante xmlns:cfdi="http://www.sat.gob.mx/cfd/4"
+  Version="4.0"
+  Fecha="${new Date().toISOString().slice(0, 19)}"
+  SubTotal="${totalCostMxn}"
+  Total="${(totalCostMxn * 1.16).toFixed(2)}"
+  Moneda="MXN"
+  TipoDeComprobante="I">
+  <cfdi:Emisor Rfc="TEWS820401HDF" Nombre="${providerName}" RegimenFiscal="601"/>
+  <cfdi:Receptor Rfc="XAXX010101000" Nombre="Comunidad Espacio Bosques" UsoCFDI="G03"/>
+  <cfdi:Conceptos>
+    ${costs.map(c => `<cfdi:Concepto ClaveProdServ="81101500" Cantidad="1" Descripcion="${c.description}" ValorUnitario="${c.amountMxn}" Importe="${c.amountMxn}"/>`).join('\n    ')}
+  </cfdi:Conceptos>
+</cfdi:Comprobante>`;
+  const cfdiBase64 = Buffer.from(cfdiXml).toString('base64');
+
+  const doc = addEvidenceDoc({
+    milestoneId: milestone.id, projectId,
+    uploadedBy: providerId,
+    filename: `CFDI_${milestone.title.replace(/\s+/g, '_')}_${Date.now()}.xml`,
+    mimeType: 'text/xml',
+    sizeBytes: cfdiXml.length,
+    dataBase64: cfdiBase64,
+    uploadedAt: new Date(),
+    validated: false,
+  });
+
+  // Run AI analysis inline for the test (synchronous is fine for test endpoint)
+  const { validateDocument } = require('../ai/document_validator');
+  validateDocument(doc.filename, doc.mimeType, cfdiBase64, costItems)
+    .then((analysis: any) => { doc.aiAnalysis = analysis; });
+
+  // Count eligible voters
+  const ids = new Set<string>();
+  for (const inv of (project.investments ?? []) as any[]) {
+    if (inv.investor?.id) ids.add(inv.investor.id);
+  }
+  const eligibleVoters = ids.size;
+  const status = eligibleVoters < 5 ? 'OWNER_REVIEW' : 'PENDING_VOTES';
+
+  const completionReq = addCompletionRequest({
+    projectId, milestoneId: milestone.id, milestoneTitle: milestone.title,
+    submittedBy: providerId, submitterName: providerName,
+    totalCostMxn, status, submittedAt: new Date(),
+  });
+
+  milestone.status = 'EVIDENCE_REVIEW';
+
+  // Notify investors
+  for (const id of ids) {
+    createNotification({
+      userId: id,
+      type: 'COMPLETION_SUBMITTED',
+      title: `Review needed: ${milestone.title}`,
+      body: `${providerName} submitted completion evidence for "${milestone.title}". Your vote is needed.`,
+      projectId, milestoneId: milestone.id, requestId: completionReq.id,
+    });
+  }
+
+  res.json({
+    ok: true,
+    completionRequest: completionReq,
+    costItems,
+    doc: { ...doc, dataBase64: '[base64 omitted]' },
+    eligibleVoters,
+    status,
+    message: `Completion request created. ${eligibleVoters >= 5 ? `Community vote open (${eligibleVoters >= 10 ? '75%' : '66.7%'} threshold).` : 'Owner review required (fewer than 5 investors).'}`,
+    voteEndpoint: `POST /api/moneyflow/${projectId}/completion-requests/${completionReq.id}/vote`,
+    ownerDecisionEndpoint: `POST /api/moneyflow/${projectId}/completion-requests/${completionReq.id}/owner-decide`,
+  });
+});
+
+/* ── POST /api/test/cast-completion-vote ───────────────────────── */
+// Casts APPROVE or REJECT votes on a completion request from sim investor IDs.
+router.post('/cast-completion-vote', (req: Request, res: Response) => {
+  const { requestId, projectId, votes } = req.body;
+  // votes: [{ voterId, voterName, vote: 'APPROVE'|'REJECT', reason? }]
+  if (!requestId || !votes?.length) {
+    return res.status(400).json({ error: 'requestId and votes[] required' });
+  }
+
+  const pid = projectId || DEMO_PROJECTS[0]?.id;
+  const results = [];
+  for (const v of votes) {
+    const result = castEvidenceVote({
+      requestId, projectId: pid,
+      milestoneId: req.body.milestoneId || '',
+      voterId: v.voterId, voterName: v.voterName || v.voterId,
+      vote: v.vote, reason: v.reason, createdAt: new Date(),
+    });
+    results.push({ voterId: v.voterId, vote: v.vote, ok: result.ok, error: result.error });
+  }
+  res.json({ ok: true, results });
+});
+
+/* ── POST /api/test/owner-decide ────────────────────────────────── */
+// Test-harness: simulate owner approving/rejecting a completion request.
+// Bypasses auth — only active in simulation mode.
+router.post('/owner-decide', (req: Request, res: Response) => {
+  const { projectId, requestId, decision, note } = req.body;
+  if (!requestId || !decision) return res.status(400).json({ error: 'requestId and decision required' });
+  const { getCompletionRequest: getReq, SIM_COMPLETION_REQUESTS: CREQS, addInvestmentEvent: aie, createNotification: cn,
+    getEvidenceVotesForRequest: getVotes } = require('../data/governance');
+  const pid = projectId || DEMO_PROJECTS[0]?.id;
+  const project = DEMO_PROJECTS.find(p => p.id === pid);
+  if (!project) return res.status(404).json({ error: 'Project not found' });
+  const request = CREQS.find((r: any) => r.id === requestId);
+  if (!request) return res.status(404).json({ error: 'Request not found' });
+  if (request.status !== 'OWNER_REVIEW' && request.status !== 'PENDING_VOTES') {
+    return res.status(400).json({ error: `Already resolved: ${request.status}` });
+  }
+  const milestone = project.milestones.find((m: any) => m.id === request.milestoneId) as any;
+  const ETH_MXN = 65000;
+  request.status = decision;
+  request.resolvedAt = new Date();
+  request.resolutionNote = note ?? `Test harness owner decision: ${decision}`;
+  if (decision === 'APPROVE') {
+    milestone.status = 'COMPLETED';
+    const mxn = request.totalCostMxn;
+    const ethAmt = mxn / ETH_MXN;
+    aie({
+      type: 'DISBURSE', projectId: pid, milestoneId: milestone.id, milestoneTitle: milestone.title,
+      actorId: request.submittedBy, actorName: request.submitterName,
+      mxnAmount: mxn, ethAmount: ethAmt,
+      weiAmount: (BigInt(Math.round(ethAmt * 1e12)) * BigInt(1e6)).toString(),
+      bitsoOrderId: `DISBURSE-TEST-${Date.now()}`,
+      note: `Approved by owner — "${milestone.title}"`,
+      createdAt: new Date(),
+    });
+    cn({ userId: request.submittedBy, type: 'MILESTONE_APPROVED',
+      title: 'Milestone approved — payment released',
+      body: `"${milestone.title}" approved. $${mxn.toLocaleString()} MXN disbursed.`,
+      projectId: pid, milestoneId: milestone.id, requestId: request.id });
+  } else {
+    milestone.status = 'IN_PROGRESS';
+    cn({ userId: request.submittedBy, type: 'MILESTONE_REJECTED',
+      title: 'Milestone completion rejected',
+      body: `"${milestone.title}" was not approved. ${request.resolutionNote}`,
+      projectId: pid, milestoneId: milestone.id, requestId: request.id });
+  }
+  res.json({ ok: true, request, milestone: { id: milestone.id, title: milestone.title, status: milestone.status },
+    message: decision === 'APPROVE' ? 'Milestone approved. DISBURSE event logged.' : 'Milestone rejected.' });
+});
+
+/* ── GET /api/test/notifications ───────────────────────────────── */
+// List all notifications in the system (for debugging)
+router.get('/notifications', (_req: Request, res: Response) => {
+  res.json({ notifications: SIM_NOTIFICATIONS.slice(0, 100), total: SIM_NOTIFICATIONS.length });
 });
 
 /* ── POST /api/test/reset/full ─────────────────────────────────── */

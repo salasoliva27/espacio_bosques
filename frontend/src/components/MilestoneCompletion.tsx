@@ -202,10 +202,10 @@ export default function MilestoneCompletion({ projectId, milestone, onClose, onC
           <button onClick={completeMilestone} disabled={completing || alreadyCompleted || docs.length === 0}
             className="w-full py-3 rounded-xl text-sm font-semibold disabled:opacity-40 transition-opacity hover:opacity-90"
             style={{ background: docs.length > 0 ? '#00e5c4' : '#1e2d3d', color: docs.length > 0 ? '#080c10' : '#4b5563' }}>
-            {completing ? 'Completing…' : alreadyCompleted ? 'Already completed' : docs.length === 0 ? 'Upload at least 1 document to complete' : `Mark "${milestone.title}" as Complete`}
+            {completing ? 'Submitting…' : alreadyCompleted ? 'Already completed' : docs.length === 0 ? 'Upload at least 1 document to submit' : `Submit Evidence for Community Review`}
           </button>
           {docs.length === 0 && !alreadyCompleted && (
-            <p className="text-[10px] text-center mt-2" style={{ color: '#4b5563' }}>Evidence documents required for audit trail</p>
+            <p className="text-[10px] text-center mt-2" style={{ color: '#4b5563' }}>Evidence documents required — community will vote before payment is released</p>
           )}
         </div>
       </div>

@@ -167,6 +167,17 @@ export function getCostItemsForMilestone(milestoneId: string): CostItem[] {
 
 // ── Milestone evidence documents ──────────────────────────────────────────────
 
+export interface AiDocAnalysis {
+  valid: boolean;
+  docType: string;           // 'CFDI_XML' | 'PDF_INVOICE' | 'IMAGE' | 'UNKNOWN'
+  extractedAmountMxn?: number;
+  extractedDescription?: string;
+  matchesCostItems: boolean;
+  matchScore: number;        // 0-100
+  notes: string;
+  analyzedAt: Date;
+}
+
 export interface EvidenceDoc {
   id: string;
   milestoneId: string;
@@ -175,10 +186,10 @@ export interface EvidenceDoc {
   filename: string;
   mimeType: string;          // application/pdf | text/xml
   sizeBytes: number;
-  // In sim: store small base64 or just metadata
   dataBase64?: string;
   uploadedAt: Date;
-  validated: boolean;        // planner/admin marked as valid
+  validated: boolean;        // community-approved via voting
+  aiAnalysis?: AiDocAnalysis;
 }
 
 export const SIM_EVIDENCE_DOCS: EvidenceDoc[] = [];
@@ -224,6 +235,130 @@ export function getEventsForProject(projectId: string): InvestmentEvent[] {
     .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
 }
 
+// ── Completion requests (provider submits → community reviews) ────────────────
+
+export interface CompletionRequest {
+  id: string;
+  projectId: string;
+  milestoneId: string;
+  milestoneTitle: string;
+  submittedBy: string;       // provider userId
+  submitterName: string;
+  totalCostMxn: number;
+  status: 'PENDING_VOTES' | 'OWNER_REVIEW' | 'APPROVED' | 'REJECTED';
+  submittedAt: Date;
+  resolvedAt?: Date;
+  resolutionNote?: string;
+}
+
+export const SIM_COMPLETION_REQUESTS: CompletionRequest[] = [];
+
+export function addCompletionRequest(data: Omit<CompletionRequest, 'id'>): CompletionRequest {
+  const req: CompletionRequest = { ...data, id: `creq-${Date.now()}-${Math.random().toString(36).slice(2,6)}` };
+  SIM_COMPLETION_REQUESTS.push(req);
+  return req;
+}
+
+export function getCompletionRequestsForProject(projectId: string): CompletionRequest[] {
+  return SIM_COMPLETION_REQUESTS.filter(r => r.projectId === projectId);
+}
+
+export function getCompletionRequest(id: string): CompletionRequest | undefined {
+  return SIM_COMPLETION_REQUESTS.find(r => r.id === id);
+}
+
+// ── Evidence votes (community APPROVE/REJECT on completion evidence) ──────────
+
+export interface EvidenceVote {
+  id: string;
+  requestId: string;
+  projectId: string;
+  milestoneId: string;
+  voterId: string;
+  voterName: string;
+  vote: 'APPROVE' | 'REJECT';
+  reason?: string;
+  createdAt: Date;
+}
+
+export const SIM_EVIDENCE_VOTES: EvidenceVote[] = [];
+
+export function castEvidenceVote(data: Omit<EvidenceVote, 'id'>): { ok: boolean; error?: string; vote?: EvidenceVote } {
+  const existing = SIM_EVIDENCE_VOTES.find(v => v.requestId === data.requestId && v.voterId === data.voterId);
+  if (existing) return { ok: false, error: 'You have already voted on this request' };
+  const vote: EvidenceVote = { ...data, id: `evote-${Date.now()}-${Math.random().toString(36).slice(2,6)}` };
+  SIM_EVIDENCE_VOTES.push(vote);
+  return { ok: true, vote };
+}
+
+export function getEvidenceVotesForRequest(requestId: string): EvidenceVote[] {
+  return SIM_EVIDENCE_VOTES.filter(v => v.requestId === requestId);
+}
+
+/** Compute approval outcome. Returns null if not yet resolved. */
+export function resolveCompletionVoting(requestId: string, eligibleVoterCount: number): {
+  status: 'PENDING_VOTES' | 'OWNER_REVIEW' | 'APPROVED' | 'REJECTED';
+  approveCount: number;
+  rejectCount: number;
+  totalVotes: number;
+  threshold: number;
+  met: boolean;
+} {
+  const votes = getEvidenceVotesForRequest(requestId);
+  const approveCount = votes.filter(v => v.vote === 'APPROVE').length;
+  const rejectCount = votes.filter(v => v.vote === 'REJECT').length;
+  const totalVotes = approveCount + rejectCount;
+
+  // Not enough votes for community threshold → owner review
+  if (eligibleVoterCount < 5) {
+    return { status: 'OWNER_REVIEW', approveCount, rejectCount, totalVotes, threshold: 100, met: false };
+  }
+
+  // Need all eligible voters to have voted or a clear majority
+  const threshold = eligibleVoterCount >= 10 ? 75 : 66.7;
+  const approvePct = totalVotes > 0 ? (approveCount / totalVotes) * 100 : 0;
+  const rejectPct = totalVotes > 0 ? (rejectCount / totalVotes) * 100 : 0;
+
+  if (totalVotes >= Math.min(eligibleVoterCount, 5)) {
+    if (approvePct >= threshold) return { status: 'APPROVED', approveCount, rejectCount, totalVotes, threshold, met: true };
+    if (rejectPct > (100 - threshold)) return { status: 'REJECTED', approveCount, rejectCount, totalVotes, threshold, met: false };
+  }
+
+  return { status: 'PENDING_VOTES', approveCount, rejectCount, totalVotes, threshold, met: false };
+}
+
+// ── Notifications ─────────────────────────────────────────────────────────────
+
+export type NotificationType = 'JOB_MATCH' | 'PROJECT_UPDATE' | 'EVIDENCE_REVIEW' |
+  'VOTE_RESULT' | 'MILESTONE_APPROVED' | 'MILESTONE_REJECTED' | 'COMPLETION_SUBMITTED' | 'NEW_INVESTMENT';
+
+export interface SimNotification {
+  id: string;
+  userId: string;
+  type: NotificationType;
+  title: string;
+  body: string;
+  projectId?: string;
+  milestoneId?: string;
+  requestId?: string;
+  read: boolean;
+  createdAt: Date;
+}
+
+export const SIM_NOTIFICATIONS: SimNotification[] = [];
+
+export function createNotification(data: Omit<SimNotification, 'id' | 'read' | 'createdAt'>): SimNotification {
+  const n: SimNotification = { ...data, id: `notif-${Date.now()}-${Math.random().toString(36).slice(2,6)}`, read: false, createdAt: new Date() };
+  SIM_NOTIFICATIONS.push(n);
+  return n;
+}
+
+export function getNotificationsForUser(userId: string): SimNotification[] {
+  return SIM_NOTIFICATIONS.filter(n => n.userId === userId)
+    .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+    .slice(0, 50);
+}
+
 /** Full governance reset — clears all proposals, votes, transactions, and voting windows. */
 export function resetGovernance(): void {
   SIM_PROPOSALS.splice(0);
@@ -232,6 +367,9 @@ export function resetGovernance(): void {
   SIM_COST_ITEMS.splice(0);
   SIM_EVIDENCE_DOCS.splice(0);
   INVESTMENT_EVENTS.splice(0);
+  SIM_COMPLETION_REQUESTS.splice(0);
+  SIM_EVIDENCE_VOTES.splice(0);
+  SIM_NOTIFICATIONS.splice(0);
   for (const key of Object.keys(MILESTONE_VOTING_WINDOWS)) {
     delete MILESTONE_VOTING_WINDOWS[key];
   }

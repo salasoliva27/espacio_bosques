@@ -9,6 +9,7 @@ import TransactionLedger from '../components/TransactionLedger';
 import BidModal from '../components/BidModal';
 import MoneyFlowDiagram from '../components/MoneyFlowDiagram';
 import MilestoneCompletion from '../components/MilestoneCompletion';
+import EvidenceReview from '../components/EvidenceReview';
 import { getSession } from '../lib/auth';
 import { Send } from 'lucide-react';
 
@@ -16,10 +17,11 @@ interface EditChatMsg { role: 'user' | 'assistant'; text: string; }
 interface RawMsg { role: 'user' | 'assistant'; content: string; }
 
 const STATUS_STYLES: Record<string, { color: string; bg: string }> = {
-  COMPLETED:  { color: '#10b981', bg: 'rgba(16,185,129,0.12)' },
-  IN_PROGRESS:{ color: '#00e5c4', bg: 'rgba(0,229,196,0.12)' },
-  SUBMITTED:  { color: '#3b82f6', bg: 'rgba(59,130,246,0.12)' },
-  PENDING:    { color: '#6b7280', bg: 'rgba(107,114,128,0.12)' },
+  COMPLETED:       { color: '#10b981', bg: 'rgba(16,185,129,0.12)' },
+  IN_PROGRESS:     { color: '#00e5c4', bg: 'rgba(0,229,196,0.12)' },
+  SUBMITTED:       { color: '#3b82f6', bg: 'rgba(59,130,246,0.12)' },
+  EVIDENCE_REVIEW: { color: '#f59e0b', bg: 'rgba(245,158,11,0.12)' },
+  PENDING:         { color: '#6b7280', bg: 'rgba(107,114,128,0.12)' },
 };
 
 const CATEGORIES = ['infrastructure', 'environment', 'community', 'technology', 'education'];
@@ -565,7 +567,7 @@ export default function ProjectDetail() {
                             <span>{m.fundingPercentage}% of funding</span>
                             <span>{m.durationDays} days</span>
                           </div>
-                          {isCreator && m.status !== 'COMPLETED' && (
+                          {isCreator && m.status !== 'COMPLETED' && m.status !== 'EVIDENCE_REVIEW' && (
                             <button
                               onClick={() => setCompletingMilestone(m)}
                               className="text-xs px-2.5 py-1 rounded-lg transition-opacity hover:opacity-80"
@@ -573,6 +575,9 @@ export default function ProjectDetail() {
                             >
                               Complete →
                             </button>
+                          )}
+                          {m.status === 'EVIDENCE_REVIEW' && (
+                            <span className="text-xs px-2 py-0.5 rounded" style={{ background: 'rgba(245,158,11,0.1)', color: '#f59e0b' }}>⏳ Under review</span>
                           )}
                           {m.status === 'COMPLETED' && (
                             <span className="text-xs px-2 py-0.5 rounded" style={{ background: 'rgba(16,185,129,0.1)', color: '#10b981' }}>✓ Completed</span>
@@ -691,8 +696,14 @@ export default function ProjectDetail() {
         </div>
       </div>
 
-      {/* Money flow + Voting + Transaction ledger */}
+      {/* Evidence Review + Money Flow + Voting + Ledger */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-10 space-y-6">
+        <EvidenceReview
+          projectId={project.id}
+          isOwner={isCreator}
+          currentUserId={currentUserId}
+          onResolved={fetchProject}
+        />
         <MoneyFlowDiagram projectId={project.id} />
         <VotingSection projectId={project.id} milestones={project.milestones} />
         <TransactionLedger projectId={project.id} />
