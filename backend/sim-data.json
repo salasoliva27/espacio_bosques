@@ -7,9 +7,9 @@
       "category": "technology",
       "status": "PENDING",
       "fundingGoal": "4923076923077000000",
-      "fundingRaised": "15384615386000000",
+      "fundingRaised": "92307692316000000",
       "createdAt": "2026-04-08T02:46:52.117Z",
-      "updatedAt": "2026-04-08T03:19:26.719Z",
+      "updatedAt": "2026-04-08T04:37:54.659Z",
       "planner": {
         "id": "7c456240-6dad-48e7-b3b3-96fade322a28",
         "walletAddress": "0xsimulated",
@@ -22,7 +22,7 @@
           "description": "Obtain AFAC autonomous drone operation permits, liability insurance, and SEDUVI approvals for GPS-guided drone operations over Bosques de las Lomas residential areas",
           "fundingPercentage": 18,
           "durationDays": 60,
-          "status": "PENDING"
+          "status": "EVIDENCE_REVIEW"
         },
         {
           "id": "sim-m-1775616412117-1",
@@ -92,6 +92,223 @@
           },
           "mxn": 150,
           "createdAt": "2026-04-08T03:19:26.719Z"
+        },
+        {
+          "id": "sim-inv-1775619663662",
+          "amount": "5384615385000000",
+          "investor": {
+            "id": "investor-001",
+            "walletAddress": "0xsimulated",
+            "name": "Ana Martínez"
+          },
+          "mxn": 350,
+          "createdAt": "2026-04-08T03:41:03.662Z"
+        },
+        {
+          "id": "sim-inv-1775619663663",
+          "amount": "4230769231000000",
+          "investor": {
+            "id": "investor-002",
+            "walletAddress": "0xsimulated",
+            "name": "Carlos Ruiz"
+          },
+          "mxn": 275,
+          "createdAt": "2026-04-08T03:41:03.663Z"
+        },
+        {
+          "id": "sim-inv-1775619663663",
+          "amount": "3461538462000000",
+          "investor": {
+            "id": "investor-003",
+            "walletAddress": "0xsimulated",
+            "name": "Sofia Torres"
+          },
+          "mxn": 225,
+          "createdAt": "2026-04-08T03:41:03.663Z"
+        },
+        {
+          "id": "sim-inv-1775619663664",
+          "amount": "2307692308000000",
+          "investor": {
+            "id": "investor-004",
+            "walletAddress": "0xsimulated"
+          },
+          "mxn": 150,
+          "createdAt": "2026-04-08T03:41:03.664Z"
+        },
+        {
+          "id": "sim-inv-1775619778381",
+          "amount": "5384615385000000",
+          "investor": {
+            "id": "investor-001",
+            "walletAddress": "0xsimulated",
+            "name": "Ana Martínez"
+          },
+          "mxn": 350,
+          "createdAt": "2026-04-08T03:42:58.381Z"
+        },
+        {
+          "id": "sim-inv-1775619778382",
+          "amount": "4230769231000000",
+          "investor": {
+            "id": "investor-002",
+            "walletAddress": "0xsimulated",
+            "name": "Carlos Ruiz"
+          },
+          "mxn": 275,
+          "createdAt": "2026-04-08T03:42:58.382Z"
+        },
+        {
+          "id": "sim-inv-1775619778384",
+          "amount": "3461538462000000",
+          "investor": {
+            "id": "investor-003",
+            "walletAddress": "0xsimulated",
+            "name": "Sofia Torres"
+          },
+          "mxn": 225,
+          "createdAt": "2026-04-08T03:42:58.384Z"
+        },
+        {
+          "id": "sim-inv-1775619778385",
+          "amount": "2307692308000000",
+          "investor": {
+            "id": "investor-004",
+            "walletAddress": "0xsimulated"
+          },
+          "mxn": 150,
+          "createdAt": "2026-04-08T03:42:58.385Z"
+        },
+        {
+          "id": "sim-inv-1775621600071",
+          "amount": "5384615385000000",
+          "investor": {
+            "id": "investor-001",
+            "walletAddress": "0xsimulated",
+            "name": "Ana Martínez"
+          },
+          "mxn": 350,
+          "createdAt": "2026-04-08T04:13:20.071Z"
+        },
+        {
+          "id": "sim-inv-1775621600072",
+          "amount": "4230769231000000",
+          "investor": {
+            "id": "investor-002",
+            "walletAddress": "0xsimulated",
+            "name": "Carlos Ruiz"
+          },
+          "mxn": 275,
+          "createdAt": "2026-04-08T04:13:20.072Z"
+        },
+        {
+          "id": "sim-inv-1775621600073",
+          "amount": "3461538462000000",
+          "investor": {
+            "id": "investor-003",
+            "walletAddress": "0xsimulated",
+            "name": "Sofia Torres"
+          },
+          "mxn": 225,
+          "createdAt": "2026-04-08T04:13:20.073Z"
+        },
+        {
+          "id": "sim-inv-1775621600073",
+          "amount": "2307692308000000",
+          "investor": {
+            "id": "investor-004",
+            "walletAddress": "0xsimulated",
+            "name": "Luis García"
+          },
+          "mxn": 150,
+          "createdAt": "2026-04-08T04:13:20.073Z"
+        },
+        {
+          "id": "sim-inv-1775622647701",
+          "amount": "5384615385000000",
+          "investor": {
+            "id": "investor-001",
+            "walletAddress": "0xsimulated",
+            "name": "Ana Martínez"
+          },
+          "mxn": 350,
+          "createdAt": "2026-04-08T04:30:47.701Z"
+        },
+        {
+          "id": "sim-inv-1775622647714",
+          "amount": "4230769231000000",
+          "investor": {
+            "id": "investor-002",
+            "walletAddress": "0xsimulated",
+            "name": "Carlos Ruiz"
+          },
+          "mxn": 275,
+          "createdAt": "2026-04-08T04:30:47.714Z"
+        },
+        {
+          "id": "sim-inv-1775622647717",
+          "amount": "3461538462000000",
+          "investor": {
+            "id": "investor-003",
+            "walletAddress": "0xsimulated",
+            "name": "Sofia Torres"
+          },
+          "mxn": 225,
+          "createdAt": "2026-04-08T04:30:47.717Z"
+        },
+        {
+          "id": "sim-inv-1775622647762",
+          "amount": "2307692308000000",
+          "investor": {
+            "id": "investor-004",
+            "walletAddress": "0xsimulated",
+            "name": "Luis García"
+          },
+          "mxn": 150,
+          "createdAt": "2026-04-08T04:30:47.762Z"
+        },
+        {
+          "id": "sim-inv-1775623074641",
+          "amount": "5384615385000000",
+          "investor": {
+            "id": "investor-001",
+            "walletAddress": "0xsimulated",
+            "name": "Ana Martínez"
+          },
+          "mxn": 350,
+          "createdAt": "2026-04-08T04:37:54.641Z"
+        },
+        {
+          "id": "sim-inv-1775623074652",
+          "amount": "4230769231000000",
+          "investor": {
+            "id": "investor-002",
+            "walletAddress": "0xsimulated",
+            "name": "Carlos Ruiz"
+          },
+          "mxn": 275,
+          "createdAt": "2026-04-08T04:37:54.652Z"
+        },
+        {
+          "id": "sim-inv-1775623074655",
+          "amount": "3461538462000000",
+          "investor": {
+            "id": "investor-003",
+            "walletAddress": "0xsimulated",
+            "name": "Sofia Torres"
+          },
+          "mxn": 225,
+          "createdAt": "2026-04-08T04:37:54.655Z"
+        },
+        {
+          "id": "sim-inv-1775623074659",
+          "amount": "2307692308000000",
+          "investor": {
+            "id": "investor-004",
+            "walletAddress": "0xsimulated"
+          },
+          "mxn": 150,
+          "createdAt": "2026-04-08T04:37:54.659Z"
         }
       ],
       "telemetry": [],
@@ -135,7 +352,7 @@
         }
       ],
       "_count": {
-        "investments": 4
+        "investments": 24
       },
       "aiGenerated": true,
       "aiBlueprint": {
@@ -384,9 +601,10 @@
   },
   "balances": {
     "7c456240-6dad-48e7-b3b3-96fade322a28": 0,
-    "investor-001": 350,
-    "investor-002": 275,
-    "investor-003": 225,
-    "investor-004": 150
+    "investor-001": 2100,
+    "investor-002": 1650,
+    "investor-003": 1350,
+    "investor-004": 900,
+    "662c730d-ec75-4a47-b62d-2b6f3efd708f": 0
   }
 }
