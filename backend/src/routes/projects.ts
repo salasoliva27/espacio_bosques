@@ -133,12 +133,32 @@ router.post("/", async (req: Request, res: Response) => {
     aiGenerated,
     aiBlueprint,
     milestones,
+    serviceSlots,
   } = req.body;
 
   // Simulation mode — skip DB entirely, return mock project
   if (SIMULATION_MODE()) {
+    const ts = Date.now();
+    const createdMilestones = (milestones || []).map((m: any, i: number) => ({
+      id: `sim-m-${ts}-${i}`,
+      title: m.title,
+      description: m.description,
+      fundingPercentage: m.fundingPercentage,
+      durationDays: m.durationDays,
+      status: "PENDING",
+    }));
+    // serviceSlots.milestoneId is the milestone title from the frontend select
+    const resolvedRoles = (serviceSlots || []).map((s: any, i: number) => {
+      const linked = createdMilestones.find((m: any) => m.title === s.milestoneId);
+      return {
+        id: `sim-slot-${ts}-${i}`,
+        role: s.role,
+        description: s.description || '',
+        milestoneId: linked?.id ?? null,
+      };
+    });
     const mockProject = {
-      id: `sim-${Date.now()}`,
+      id: `sim-${ts}`,
       title,
       summary,
       category: category || "community",
@@ -148,18 +168,11 @@ router.post("/", async (req: Request, res: Response) => {
       createdAt: new Date(),
       updatedAt: new Date(),
       planner: { id: plannerId || "sim-user", walletAddress: "0xsimulated", role: "PLANNER" },
-      milestones: (milestones || []).map((m: any, i: number) => ({
-        id: `sim-m-${Date.now()}-${i}`,
-        title: m.title,
-        description: m.description,
-        fundingPercentage: m.fundingPercentage,
-        durationDays: m.durationDays,
-        status: "PENDING",
-      })),
+      milestones: createdMilestones,
       investments: [],
       telemetry: [],
       reports: [],
-      requiredRoles: [],
+      requiredRoles: resolvedRoles,
       _count: { investments: 0 },
       aiGenerated: aiGenerated || false,
       aiBlueprint: aiBlueprint || null,

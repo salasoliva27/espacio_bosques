@@ -338,6 +338,12 @@ export default function Profile() {
   const [expandedService, setExpandedService] = useState<string | null>(null);
   const [deletingService, setDeletingService] = useState<string | null>(null);
 
+  // Personal info state (neighborhood is editable; RFC + birth_date are read-only from user_metadata)
+  const [neighborhood, setNeighborhood] = useState('');
+  const [editingNeighborhood, setEditingNeighborhood] = useState(false);
+  const [neighborhoodInput, setNeighborhoodInput] = useState('');
+  const [savingNeighborhood, setSavingNeighborhood] = useState(false);
+
   useEffect(() => {
     getSession().then(({ data: { session } }) => {
       if (!session) { navigate('/'); return; }
@@ -345,6 +351,7 @@ export default function Profile() {
       setToken(session.access_token);
       setNameInput(session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || '');
       fetchInvestments(session.access_token);
+      fetchUserProfile(session.access_token);
     });
   }, [navigate]);
 
@@ -407,6 +414,35 @@ export default function Profile() {
     setNameInput(user?.user_metadata?.full_name || user?.email?.split('@')[0] || '');
     setSaveError('');
     setEditing(false);
+  }
+
+  async function fetchUserProfile(tok: string) {
+    try {
+      const res = await fetch('/api/user/profile', { headers: { Authorization: `Bearer ${tok}` } });
+      if (res.ok) {
+        const data = await res.json();
+        const nb = data.profile?.neighborhood ?? '';
+        setNeighborhood(nb);
+        setNeighborhoodInput(nb);
+      }
+    } catch { /* non-critical */ }
+  }
+
+  async function saveNeighborhood() {
+    setSavingNeighborhood(true);
+    try {
+      const res = await fetch('/api/user/profile', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ neighborhood: neighborhoodInput.trim() }),
+      });
+      if (res.ok) {
+        setNeighborhood(neighborhoodInput.trim());
+        setEditingNeighborhood(false);
+      }
+    } finally {
+      setSavingNeighborhood(false);
+    }
   }
 
   const [providerEnableError, setProviderEnableError] = useState('');
@@ -607,6 +643,75 @@ export default function Profile() {
               </div>
             </div>
 
+            {/* Personal Information */}
+            <div className="rounded-xl mb-6" style={{ background: '#0d1520', border: '1px solid #1e2d3d' }}>
+              <div className="px-5 py-4" style={{ borderBottom: '1px solid #1e2d3d' }}>
+                <h2 className="text-sm font-semibold" style={{ color: '#e5e7eb' }}>Personal Information</h2>
+              </div>
+              <div className="px-5 py-4 space-y-4">
+                {/* RFC */}
+                <div>
+                  <p className="text-xs mb-1" style={{ color: '#6b7280' }}>RFC</p>
+                  <p className="text-sm font-mono" style={{ color: user?.user_metadata?.rfc ? '#e5e7eb' : '#4b5563' }}>
+                    {user?.user_metadata?.rfc ?? '—'}
+                  </p>
+                </div>
+                {/* Birth date */}
+                <div>
+                  <p className="text-xs mb-1" style={{ color: '#6b7280' }}>Birth date</p>
+                  <p className="text-sm" style={{ color: user?.user_metadata?.birth_date ? '#e5e7eb' : '#4b5563' }}>
+                    {user?.user_metadata?.birth_date
+                      ? new Date(user.user_metadata.birth_date + 'T00:00:00').toLocaleDateString('en-MX', { year: 'numeric', month: 'long', day: 'numeric' })
+                      : '—'}
+                  </p>
+                </div>
+                {/* Neighborhood */}
+                <div>
+                  <p className="text-xs mb-1" style={{ color: '#6b7280' }}>Neighborhood</p>
+                  {editingNeighborhood ? (
+                    <div className="flex items-center gap-2">
+                      <input
+                        className="flex-1 text-sm px-3 py-1.5 rounded-lg outline-none"
+                        style={{ background: '#1e2d3d', color: '#e5e7eb', border: '1px solid #2d3f54' }}
+                        value={neighborhoodInput}
+                        onChange={e => setNeighborhoodInput(e.target.value)}
+                        placeholder="e.g. Polanco, Roma Norte…"
+                        autoFocus
+                      />
+                      <button
+                        onClick={saveNeighborhood}
+                        disabled={savingNeighborhood}
+                        className="p-1.5 rounded-lg transition-opacity hover:opacity-80 disabled:opacity-40"
+                        style={{ background: 'rgba(0,229,196,0.12)', color: '#00e5c4' }}
+                      >
+                        <Check size={14} />
+                      </button>
+                      <button
+                        onClick={() => { setNeighborhoodInput(neighborhood); setEditingNeighborhood(false); }}
+                        className="p-1.5 rounded-lg transition-opacity hover:opacity-80"
+                        style={{ background: '#1e2d3d', color: '#6b7280' }}
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm" style={{ color: neighborhood ? '#e5e7eb' : '#4b5563' }}>
+                        {neighborhood || '—'}
+                      </p>
+                      <button
+                        onClick={() => setEditingNeighborhood(true)}
+                        className="p-1 rounded-lg transition-opacity hover:opacity-80"
+                        style={{ background: '#1e2d3d', color: '#6b7280' }}
+                      >
+                        <Pencil size={11} />
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
             {/* Investment history */}
             <div className="rounded-xl" style={{ background: '#0d1520', border: '1px solid #1e2d3d' }}>
               <div className="px-5 py-4" style={{ borderBottom: '1px solid #1e2d3d' }}>
@@ -773,7 +878,7 @@ export default function Profile() {
                 )}
 
                 {/* Services */}
-                {providerProfile?.enabled && (
+                {providerProfile && (
                   <div className="rounded-xl p-5" style={{ background: '#0d1520', border: '1px solid #1e2d3d' }}>
                     <div className="flex items-center justify-between mb-4">
                       <h3 className="text-sm font-semibold" style={{ color: '#e5e7eb' }}>{t('provider.services_title')}</h3>

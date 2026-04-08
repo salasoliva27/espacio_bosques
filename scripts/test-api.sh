@@ -11,7 +11,7 @@
 #   ./scripts/test-api.sh --state            # dump current state only
 #   ./scripts/test-api.sh --reset            # reset sim investments
 #
-# Demo credentials: demo@bosques.mx / bosques123
+# Demo credentials: jano@bosques.mx / Test1234!
 # ─────────────────────────────────────────────────────────────────────────────
 
 set -euo pipefail
@@ -19,8 +19,8 @@ set -euo pipefail
 BACKEND="http://localhost:3001"
 SUPABASE_URL="https://rycybujjedtofghigyxm.supabase.co"
 ANON_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5Y3lidWpqZWR0b2ZnaGlneXhtIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3Mzg3Mzk5MiwiZXhwIjoyMDg5NDQ5OTkyfQ.XJ65vlBcHijtVPJS81Bv4_qg61TpkvrwtpbhXOyAako"
-DEMO_EMAIL="demo@bosques.mx"
-DEMO_PASS="bosques123"
+DEMO_EMAIL="jano@bosques.mx"
+DEMO_PASS="Test1234!"
 PROJECT_ID="demo-project-001"
 MIN_MXN=100
 
@@ -53,6 +53,9 @@ reset_investments() {
 
 # ── sim (no auth) ─────────────────────────────────────────────────────────────
 sim_invest() {
+  hdr "Seed demo-project-001"
+  curl -sf -X POST "$BACKEND/api/test/project/seed" | jq '{seeded, project}'
+
   hdr "Simulated invest (no auth) — ${MIN_MXN} MXN → ${PROJECT_ID}"
   local result
   result=$(curl -sf -X POST "$BACKEND/api/test/invest" \
@@ -67,6 +70,10 @@ sim_invest() {
 
 # ── full authenticated flow ───────────────────────────────────────────────────
 authenticated_flow() {
+  # 0. Seed demo project
+  hdr "Seed demo-project-001"
+  curl -sf -X POST "$BACKEND/api/test/project/seed" | jq '{seeded, project}'
+
   # 1. Sign in
   hdr "Supabase sign-in (${DEMO_EMAIL})"
   local auth_resp

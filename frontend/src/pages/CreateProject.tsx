@@ -3,13 +3,20 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { supabase, getSession } from '../lib/auth';
 import { useT } from '../context/LanguageContext';
-import { Sparkles, Send, ChevronRight, CheckCircle2, Clock, Layers, Banknote } from 'lucide-react';
+import { Sparkles, Send, ChevronRight, CheckCircle2, Clock, Layers, Banknote, Plus, Trash2 } from 'lucide-react';
 
 interface Milestone {
   title: string;
   description: string;
   fundingPercentage: number;
   durationDays: number;
+}
+
+interface ServiceSlot {
+  id: string;
+  role: string;
+  description: string;
+  milestoneId: string;
 }
 
 interface Blueprint {
@@ -20,6 +27,7 @@ interface Blueprint {
   budgetJustification?: string;
   milestones: Milestone[];
   monitoringHints: string[];
+  serviceSlots?: ServiceSlot[];
 }
 
 interface ChatMessage {
@@ -50,6 +58,13 @@ export default function CreateProject() {
   const [sending, setSending] = useState(false);
   const chatBottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+
+  // Service slots state
+  const [serviceSlots, setServiceSlots] = useState<ServiceSlot[]>([]);
+  const [showAddSlot, setShowAddSlot] = useState(false);
+  const [slotRole, setSlotRole] = useState('');
+  const [slotDesc, setSlotDesc] = useState('');
+  const [slotMilestone, setSlotMilestone] = useState('');
   const navigate = useNavigate();
   const t = useT();
 
@@ -64,8 +79,13 @@ export default function CreateProject() {
       const res = await axios.post('/api/ai/create-project', { prompt: aiPrompt });
       const bp: Blueprint = res.data.blueprint;
       setBlueprint(bp);
+      // Sync AI-generated service slots into state
+      if (bp.serviceSlots && bp.serviceSlots.length > 0) {
+        setServiceSlots(bp.serviceSlots.map(s => ({ ...s, id: `slot-${Date.now()}-${Math.random()}` })));
+      }
       const totalDays = bp.milestones.reduce((a, m) => a + m.durationDays, 0);
-      const aiIntro = `I've built your blueprint: **${bp.title}**\n\n${bp.milestones.length} milestones across ${totalDays} days: ${bp.milestones.map(m => `${m.title} (${m.fundingPercentage}%)`).join(' → ')}.\n\nWhat do you want to change? Budget split, timeline, milestones, summary — anything.`;
+      const slotNames = bp.serviceSlots?.map(s => s.role).join(', ') || 'none yet';
+      const aiIntro = `I've built your blueprint: **${bp.title}**\n\n${bp.milestones.length} milestones across ${totalDays} days: ${bp.milestones.map(m => `${m.title} (${m.fundingPercentage}%)`).join(' → ')}.\n\nService slots identified: ${slotNames}.\n\nWhat do you want to change? Budget, timeline, milestones, service slots — anything.`;
       setChatMessages([{ role: 'assistant', text: aiIntro }]);
       setRawHistory([]); // starts empty — first user message will be index 0
       setStep('refine');
@@ -99,7 +119,12 @@ export default function CreateProject() {
         conversationHistory: rawHistory, // send history BEFORE this message; backend appends the user msg
       });
 
-      setBlueprint(res.data.blueprint);
+      const refined: Blueprint = res.data.blueprint;
+      setBlueprint(refined);
+      // Keep service slots in sync with AI refinements
+      if (refined.serviceSlots && refined.serviceSlots.length > 0) {
+        setServiceSlots(refined.serviceSlots.map(s => ({ ...s, id: `slot-${Date.now()}-${Math.random()}` })));
+      }
       setChatMessages([...updatedChat, { role: 'assistant', text: res.data.message }]);
       // Store the full exchange in history
       setRawHistory([...historyToSend, { role: 'assistant', content: res.data.message }]);
@@ -127,6 +152,7 @@ export default function CreateProject() {
         category: blueprint.category, fundingGoal: fundingGoalWei.toString(),
         metadataURI: 'ipfs://generated', aiGenerated: true,
         aiBlueprint: blueprint, milestones: blueprint.milestones,
+        serviceSlots,
       });
       navigate('/dashboard');
     } catch {
@@ -290,6 +316,89 @@ export default function CreateProject() {
                       </ul>
                     </div>
                   )}
+
+                  {/* Service Slots */}
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-xs font-semibold tracking-widest uppercase" style={{ color: '#4b5563' }}>Service Slots</p>
+                      <button
+                        onClick={() => { setShowAddSlot(v => !v); setSlotRole(''); setSlotDesc(''); setSlotMilestone(blueprint.milestones[0]?.title ?? ''); }}
+                        className="flex items-center gap-1 text-[10px] font-semibold px-2 py-1 rounded-lg"
+                        style={{ background: 'rgba(0,229,196,0.1)', color: '#00e5c4', border: '1px solid rgba(0,229,196,0.2)' }}
+                      >
+                        <Plus size={10} /> Add slot
+                      </button>
+                    </div>
+
+                    {/* Add slot form */}
+                    {showAddSlot && (
+                      <div className="rounded-lg p-3 mb-2 space-y-2" style={{ background: '#080c10', border: '1px solid rgba(0,229,196,0.2)' }}>
+                        <input
+                          className="w-full text-xs px-2.5 py-1.5 rounded-lg outline-none"
+                          style={{ background: '#0d1520', color: '#e8f4f0', border: '1px solid #1e2d3d' }}
+                          placeholder="Role (e.g. Civil Engineer)"
+                          value={slotRole}
+                          onChange={e => setSlotRole(e.target.value)}
+                        />
+                        <input
+                          className="w-full text-xs px-2.5 py-1.5 rounded-lg outline-none"
+                          style={{ background: '#0d1520', color: '#e8f4f0', border: '1px solid #1e2d3d' }}
+                          placeholder="Description (scope of work)"
+                          value={slotDesc}
+                          onChange={e => setSlotDesc(e.target.value)}
+                        />
+                        <select
+                          className="w-full text-xs px-2.5 py-1.5 rounded-lg outline-none"
+                          style={{ background: '#0d1520', color: '#e8f4f0', border: '1px solid #1e2d3d' }}
+                          value={slotMilestone}
+                          onChange={e => setSlotMilestone(e.target.value)}
+                        >
+                          {blueprint.milestones.map((m, i) => (
+                            <option key={i} value={m.title}>{m.title}</option>
+                          ))}
+                        </select>
+                        <button
+                          onClick={() => {
+                            if (!slotRole.trim()) return;
+                            setServiceSlots(prev => [...prev, {
+                              id: `slot-${Date.now()}`,
+                              role: slotRole.trim(),
+                              description: slotDesc.trim(),
+                              milestoneId: slotMilestone,
+                            }]);
+                            setShowAddSlot(false);
+                          }}
+                          className="w-full text-xs py-1.5 rounded-lg font-semibold"
+                          style={{ background: '#00e5c4', color: '#080c10' }}
+                        >
+                          Add
+                        </button>
+                      </div>
+                    )}
+
+                    {serviceSlots.length === 0 ? (
+                      <p className="text-xs" style={{ color: '#4b5563' }}>No slots yet — providers can't apply without them.</p>
+                    ) : (
+                      <div className="space-y-1.5">
+                        {serviceSlots.map(slot => (
+                          <div key={slot.id} className="flex items-start justify-between gap-2 rounded-lg px-3 py-2" style={{ background: '#080c10', border: '1px solid #1e2d3d' }}>
+                            <div className="min-w-0">
+                              <p className="text-xs font-semibold" style={{ color: '#e8f4f0' }}>{slot.role}</p>
+                              {slot.description && <p className="text-[10px] mt-0.5" style={{ color: '#6b7280' }}>{slot.description}</p>}
+                              <span className="text-[10px] mt-0.5 inline-block" style={{ color: '#00e5c4' }}>{slot.milestoneId}</span>
+                            </div>
+                            <button
+                              onClick={() => setServiceSlots(prev => prev.filter(s => s.id !== slot.id))}
+                              className="flex-shrink-0 p-1 rounded transition-opacity hover:opacity-70"
+                              style={{ color: '#6b7280' }}
+                            >
+                              <Trash2 size={11} />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>

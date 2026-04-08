@@ -10,7 +10,7 @@
  *   POST /api/test/reset        → wipe all sim investments (keeps seed funding)
  */
 import { Router, Request, Response } from 'express';
-import { DEMO_PROJECTS, addSimInvestment, getSimUserInvestments, addSimBalance, getSimBalance,
+import { DEMO_PROJECTS, addSimInvestment, addSimProject, getSimUserInvestments, addSimBalance, getSimBalance,
          getProviderUserProfile, upsertProviderUserProfile, addProviderService, updateProviderService, deleteProviderService,
          ProviderService, resetSimFull } from '../data/simStore';
 import { SIM_PROVIDERS, updateProviderStatus } from '../data/providers';
@@ -373,6 +373,47 @@ router.post('/profile/reset', (_req: Request, res: Response) => {
   const count = profile.services.length;
   upsertProviderUserProfile('sim-user', { services: [] });
   res.json({ ok: true, cleared: count });
+});
+
+/* ── POST /api/test/project/seed ──────────────────────────────── */
+// Ensures demo-project-001 exists in the store. Idempotent — safe to call multiple times.
+router.post('/project/seed', (_req: Request, res: Response) => {
+  const existing = DEMO_PROJECTS.find(p => p.id === 'demo-project-001');
+  if (existing) return res.json({ ok: true, project: { id: existing.id, title: existing.title }, seeded: false });
+
+  const ts = Date.now();
+  addSimProject({
+    id: 'demo-project-001',
+    title: 'Paseo de las Palmas Security Camera Network',
+    summary: 'Install 24 IP cameras at 8 key intersections along Paseo de las Palmas and Explanada de las Palmas. Live feeds monitored by colonia security team.',
+    category: 'infrastructure',
+    status: 'ACTIVE',
+    fundingGoal: '1500000000000000000000', // ~97.5 ETH @ 65k MXN/ETH ≈ 120k MXN
+    fundingRaised: '0',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date(),
+    planner: { id: 'demo-planner', walletAddress: '0xdemo', role: 'PLANNER' },
+    milestones: [
+      { id: 'm1', title: 'Permits & Legal Review', description: 'Obtain CDMX municipal permits and INAI data-privacy registration.', fundingPercentage: 15, durationDays: 21, status: 'PENDING' },
+      { id: 'm2', title: 'Infrastructure & Installation', description: 'Lay conduit, mount 24 PoE cameras, connect to colonia server room.', fundingPercentage: 65, durationDays: 45, status: 'PENDING' },
+      { id: 'm3', title: 'Testing & Handoff', description: 'Commissioning, team training, and 30-day monitoring trial.', fundingPercentage: 20, durationDays: 30, status: 'PENDING' },
+    ],
+    requiredRoles: [
+      { id: `slot-${ts}-0`, role: 'Legal Counsel', description: 'Handle CDMX permits, INAI data-privacy registration, and vendor contracts.', milestoneId: 'm1' },
+      { id: `slot-${ts}-1`, role: 'Civil/Network Engineer', description: 'Design conduit layout, oversee camera installation and network topology.', milestoneId: 'm2' },
+      { id: `slot-${ts}-2`, role: 'Security Systems Contractor', description: 'Supply and install 24 IP cameras, NVR server, and monitoring software.', milestoneId: 'm2' },
+      { id: `slot-${ts}-3`, role: 'Community Coordinator', description: 'Manage resident communications, signage, and approval meetings.', milestoneId: 'm1' },
+    ],
+    investments: [],
+    telemetry: [],
+    reports: [],
+    _count: { investments: 0 },
+    aiGenerated: false,
+    aiBlueprint: null,
+  });
+
+  const p = DEMO_PROJECTS.find(p => p.id === 'demo-project-001')!;
+  res.json({ ok: true, project: { id: p.id, title: p.title }, seeded: true });
 });
 
 /* ── POST /api/test/reset ──────────────────────────────────────── */

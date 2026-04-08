@@ -21,6 +21,12 @@ interface AIProjectBlueprint {
     durationDays: number;
   }[];
   monitoringHints: string[];
+  serviceSlots: {
+    role: string;
+    description: string;
+    category: string;
+    milestoneTitle: string;
+  }[];
 }
 
 /**
@@ -69,8 +75,24 @@ Generate a JSON response following this exact schema:
       "durationDays": number (7-180)
     }
   ],
-  "monitoringHints": ["string array with monitoring/verification suggestions relevant to urban infrastructure in CDMX"]
+  "monitoringHints": ["string array with monitoring/verification suggestions relevant to urban infrastructure in CDMX"],
+  "serviceSlots": [
+    {
+      "role": "string (role title, e.g. 'Civil Engineer', 'Legal Counsel', 'Financial Auditor')",
+      "description": "string (specific scope of work this person does on this project)",
+      "category": "one of: legal | financial | technical | construction | community | inspection | management | design",
+      "milestoneTitle": "string (must exactly match one of the milestone titles above)"
+    }
+  ]
 }
+
+SERVICE SLOTS REQUIREMENTS:
+- Generate 3–7 slots covering ALL expertise needed to complete this project
+- Every major milestone must have at least one slot
+- ALWAYS include legal when permits, contracts, or data privacy are involved
+- ALWAYS include financial when budgets exceed MXN 50,000 or escrow disbursements occur
+- Be role-specific: 'Security Systems Contractor' not 'Contractor', 'CDMX Urban Landscaper' not 'Worker'
+- milestoneTitle must exactly match one of the milestone titles you generate
 
 Requirements:
 - Create 2-5 milestones that logically break down the project
@@ -209,6 +231,18 @@ function validateBlueprint(blueprint: any): void {
 
   if (!Array.isArray(blueprint.monitoringHints)) {
     throw new Error("Invalid monitoringHints");
+  }
+
+  // serviceSlots — optional but validated if present
+  if (blueprint.serviceSlots !== undefined) {
+    if (!Array.isArray(blueprint.serviceSlots)) throw new Error("Invalid serviceSlots");
+    blueprint.serviceSlots.forEach((s: any, i: number) => {
+      if (!s.role || !s.description || !s.milestoneTitle) {
+        throw new Error(`serviceSlot ${i + 1} missing required fields`);
+      }
+    });
+  } else {
+    blueprint.serviceSlots = [];
   }
 }
 
