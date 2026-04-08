@@ -375,6 +375,24 @@ router.post('/profile/reset', (_req: Request, res: Response) => {
   res.json({ ok: true, cleared: count });
 });
 
+/* ── POST /api/test/profile/seed ──────────────────────────────── */
+// Seeds a provider profile for a given userId. Idempotent — preserves existing services.
+// Body: { userId, companyName?, specialty?, rfc?, enabled? }
+router.post('/profile/seed', (req: Request, res: Response) => {
+  const { userId, companyName, specialty, rfc, enabled } = req.body ?? {};
+  if (!userId) return res.status(400).json({ error: 'userId is required' });
+
+  const existing = getProviderUserProfile(userId);
+  const profile = upsertProviderUserProfile(userId, {
+    companyName: companyName ?? existing?.companyName ?? '',
+    specialty: specialty ?? existing?.specialty ?? '',
+    rfc: rfc ?? existing?.rfc ?? '',
+    enabled: enabled !== undefined ? enabled : (existing?.enabled ?? true),
+    services: existing?.services ?? [],
+  });
+  res.json({ ok: true, seeded: !existing, profile });
+});
+
 /* ── POST /api/test/project/seed ──────────────────────────────── */
 // Ensures demo-project-001 exists in the store. Idempotent — safe to call multiple times.
 router.post('/project/seed', (_req: Request, res: Response) => {

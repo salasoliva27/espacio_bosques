@@ -223,6 +223,26 @@ router.post('/provider/services/:serviceId/finalize', requireAuth, async (req: A
   }
 
   try {
+    // Fast path: if the chat AI already produced {"ready":true,"service":{...}}, use it directly
+    for (let i = service.chatMessages.length - 1; i >= 0; i--) {
+      const msg = service.chatMessages[i];
+      if (msg.role === 'assistant') {
+        const obj = extractJsonObject(msg.content);
+        if (obj?.ready === true && obj?.service && obj.service.name) {
+          const svc = obj.service;
+          updateProviderService(userId, serviceId, {
+            name: svc.name,
+            description: svc.description || '',
+            deliverables: Array.isArray(svc.deliverables) ? svc.deliverables : [],
+            typicalPriceMxn: svc.typicalPriceMxn || '',
+          });
+          logger.info('[profile] service finalized via fast path', { userId, serviceId });
+          return res.json({ service: svc });
+        }
+        break; // only check the last assistant message
+      }
+    }
+
     // Anthropic requires messages to start with 'user' — strip leading assistant intro if present
     const rawMessages = service.chatMessages.map(m => ({ role: m.role, content: m.content }));
     const messagesForExtraction = rawMessages[0]?.role === 'assistant' ? rawMessages.slice(1) : rawMessages;
@@ -249,6 +269,7 @@ Rules:
     });
 
     const raw = (extractionResponse.content.find(b => b.type === 'text') as any)?.text ?? '';
+    logger.info('[profile] extraction AI raw response', { raw: raw.slice(0, 300) });
 
     // Strip markdown fences if present
     const cleaned = raw.replace(/^```[a-z]*\n?/i, '').replace(/\n?```$/i, '').trim();
@@ -260,6 +281,11 @@ Rules:
       extracted = extractJsonObject(raw);
     }
 
+    // Unwrap nested format: {"ready": true, "service": {...}} → {...}
+    if (extracted && extracted.service && typeof extracted.service === 'object') {
+      extracted = extracted.service;
+    }
+
     // Fallback: if name is missing or empty, derive it from description or use a generic title
     if (extracted && !extracted.name) {
       extracted.name = extracted.description
@@ -268,6 +294,7 @@ Rules:
     }
 
     if (!extracted || !extracted.name) {
+      logger.warn('[profile] extraction failed — no name after all fallbacks', { raw: raw.slice(0, 500) });
       return res.status(422).json({ error: 'Could not extract service data. Keep describing your service.' });
     }
 

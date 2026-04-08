@@ -2,7 +2,8 @@ import { Router, Request, Response } from "express";
 import { prisma } from "../index";
 import { logger } from "../utils/logger";
 import { SIMULATION_MODE } from "../config/mode";
-import { DEMO_PROJECTS } from "../data/simStore";
+import { DEMO_PROJECTS, persistData, addSimProject } from "../data/simStore";
+import { requireAuth, AuthRequest } from "../middleware/auth";
 
 const router = Router();
 
@@ -11,8 +12,8 @@ const router = Router();
  * Get all projects with optional filters
  */
 router.get("/", async (req: Request, res: Response) => {
+  const { status, category, planner } = req.query;
   try {
-    const { status, category, planner } = req.query;
 
     const where: any = {};
     if (status) where.status = status;
@@ -52,7 +53,11 @@ router.get("/", async (req: Request, res: Response) => {
   } catch (error: any) {
     if (SIMULATION_MODE()) {
       logger.warn("DB unavailable — returning demo projects (simulation mode)");
-      return res.json({ projects: DEMO_PROJECTS });
+      let filtered = DEMO_PROJECTS as any[];
+      if (planner) filtered = filtered.filter(p => p.planner?.id === planner);
+      if (status) filtered = filtered.filter(p => p.status === status);
+      if (category) filtered = filtered.filter(p => p.category === category);
+      return res.json({ projects: filtered });
     }
     logger.error("Failed to fetch projects", { error: error.message });
     res.status(500).json({ error: "Failed to fetch projects" });
@@ -177,8 +182,8 @@ router.post("/", async (req: Request, res: Response) => {
       aiGenerated: aiGenerated || false,
       aiBlueprint: aiBlueprint || null,
     };
-    // Inject into in-memory demo list so dashboard shows it immediately
-    DEMO_PROJECTS.unshift(mockProject as any);
+    // Inject into in-memory demo list and persist so it survives restarts
+    addSimProject(mockProject as any);
     logger.info("Simulation mode — mock project created", { title });
     return res.status(201).json({ project: mockProject });
   }
@@ -241,6 +246,77 @@ router.post("/", async (req: Request, res: Response) => {
   } catch (error: any) {
     logger.error("Failed to create project", { error: error.message });
     res.status(500).json({ error: "Failed to create project" });
+  }
+});
+
+/**
+ * PATCH /api/projects/:id
+ * Edit a project — only the creator (planner) may do this.
+ * Accepts: title, summary, category, milestones (full replace), requiredRoles (full replace)
+ */
+router.patch("/:id", requireAuth, async (req: AuthRequest, res: Response) => {
+  const { id } = req.params;
+  const userId = req.user!.id;
+  const { title, summary, category, milestones, requiredRoles } = req.body;
+
+  if (SIMULATION_MODE()) {
+    const project = DEMO_PROJECTS.find(p => p.id === id);
+    if (!project) return res.status(404).json({ error: "Project not found" });
+    if (project.planner.id !== userId) return res.status(403).json({ error: "Only the project creator can edit this project" });
+
+    if (title !== undefined) project.title = title;
+    if (summary !== undefined) project.summary = summary;
+    if (category !== undefined) project.category = category;
+    project.updatedAt = new Date();
+
+    if (Array.isArray(milestones)) {
+      const ts = Date.now();
+      project.milestones = milestones.map((m: any, i: number) => ({
+        id: m.id || `sim-m-${ts}-${i}`,
+        title: m.title,
+        description: m.description,
+        fundingPercentage: m.fundingPercentage,
+        durationDays: m.durationDays,
+        status: m.status || "PENDING",
+      }));
+    }
+
+    if (Array.isArray(requiredRoles)) {
+      const ts = Date.now();
+      project.requiredRoles = requiredRoles.map((r: any, i: number) => {
+        // milestoneId may be a title (from frontend select) or already an id — resolve either
+        const linked = project.milestones.find((m: any) => m.title === r.milestoneId || m.id === r.milestoneId);
+        return {
+          id: r.id || `sim-slot-${ts}-${i}`,
+          role: r.role,
+          description: r.description || '',
+          milestoneId: linked?.id ?? r.milestoneId ?? null,
+        };
+      });
+    }
+
+    persistData();
+    logger.info("Simulation mode — project updated", { id, title: project.title });
+    return res.json({ project });
+  }
+
+  try {
+    const project = await prisma.project.findUnique({ where: { id } });
+    if (!project) return res.status(404).json({ error: "Project not found" });
+    if (project.plannerId !== userId) return res.status(403).json({ error: "Only the project creator can edit this project" });
+
+    const updated = await prisma.project.update({
+      where: { id },
+      data: {
+        ...(title !== undefined && { title }),
+        ...(summary !== undefined && { summary }),
+        ...(category !== undefined && { category }),
+      },
+    });
+    res.json({ project: updated });
+  } catch (error: any) {
+    logger.error("Failed to update project", { error: error.message });
+    res.status(500).json({ error: "Failed to update project" });
   }
 });
 

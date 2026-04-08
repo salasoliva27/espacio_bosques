@@ -321,6 +321,10 @@ export default function Profile() {
   const [loadingInv, setLoadingInv] = useState(true);
   const [activeTab, setActiveTab] = useState<'member' | 'provider'>('member');
 
+  // Projects created
+  const [createdProjects, setCreatedProjects] = useState<any[]>([]);
+  const [loadingCreated, setLoadingCreated] = useState(true);
+
   // Edit name state
   const [editing, setEditing] = useState(false);
   const [nameInput, setNameInput] = useState('');
@@ -352,6 +356,7 @@ export default function Profile() {
       setNameInput(session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || '');
       fetchInvestments(session.access_token);
       fetchUserProfile(session.access_token);
+      fetchCreatedProjects(session.user.id);
     });
   }, [navigate]);
 
@@ -372,6 +377,18 @@ export default function Profile() {
       }
     } finally {
       setLoadingInv(false);
+    }
+  }
+
+  async function fetchCreatedProjects(userId: string) {
+    try {
+      const res = await fetch(`/api/projects?planner=${userId}`);
+      if (res.ok) {
+        const data = await res.json();
+        setCreatedProjects(data.projects ?? []);
+      }
+    } finally {
+      setLoadingCreated(false);
     }
   }
 
@@ -760,6 +777,75 @@ export default function Profile() {
                       </div>
                     </li>
                   ))}
+                </ul>
+              )}
+            </div>
+
+            {/* Projects created */}
+            <div className="rounded-xl mt-4" style={{ background: '#0d1520', border: '1px solid #1e2d3d' }}>
+              <div className="px-5 py-4 flex items-center justify-between" style={{ borderBottom: '1px solid #1e2d3d' }}>
+                <h2 className="text-sm font-semibold" style={{ color: '#e5e7eb' }}>Projects created</h2>
+                <button
+                  onClick={() => navigate('/create')}
+                  className="text-xs font-medium px-3 py-1.5 rounded-lg transition-opacity hover:opacity-80"
+                  style={{ background: 'rgba(0,229,196,0.1)', color: '#00e5c4', border: '1px solid rgba(0,229,196,0.2)' }}
+                >
+                  + New project
+                </button>
+              </div>
+              {loadingCreated ? (
+                <div className="px-5 py-8 text-center">
+                  <p className="text-sm" style={{ color: '#6b7280' }}>Loading...</p>
+                </div>
+              ) : createdProjects.length === 0 ? (
+                <div className="px-5 py-10 text-center">
+                  <p className="text-sm mb-3" style={{ color: '#6b7280' }}>You haven't created any projects yet.</p>
+                  <button
+                    onClick={() => navigate('/create')}
+                    className="text-sm font-medium px-4 py-2 rounded-lg transition-opacity hover:opacity-80"
+                    style={{ background: 'rgba(0,229,196,0.12)', color: '#00e5c4', border: '1px solid rgba(0,229,196,0.2)' }}
+                  >
+                    Pitch an idea
+                  </button>
+                </div>
+              ) : (
+                <ul>
+                  {createdProjects.map((p, i) => {
+                    const raised = Number(BigInt(p.fundingRaised || '0'));
+                    const goal = Number(BigInt(p.fundingGoal || '1'));
+                    const pct = goal > 0 ? Math.min(Math.round((raised / goal) * 100), 100) : 0;
+                    return (
+                      <li
+                        key={p.id}
+                        className="px-5 py-4 cursor-pointer transition-colors hover:bg-white/[0.02]"
+                        style={{ borderTop: i > 0 ? '1px solid #1e2d3d' : undefined }}
+                        onClick={() => navigate(`/projects/${p.id}`)}
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-medium truncate mb-1" style={{ color: '#e5e7eb' }}>{p.title}</p>
+                            <div className="flex items-center gap-2">
+                              <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded uppercase tracking-wide" style={{ background: 'rgba(0,229,196,0.1)', color: '#00e5c4' }}>
+                                {p.category}
+                              </span>
+                              <span className="text-[10px] px-1.5 py-0.5 rounded uppercase font-medium" style={{
+                                background: p.status === 'ACTIVE' ? 'rgba(16,185,129,0.1)' : 'rgba(107,114,128,0.1)',
+                                color: p.status === 'ACTIVE' ? '#10b981' : '#6b7280',
+                              }}>
+                                {p.status}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="text-right shrink-0">
+                            <p className="text-xs font-semibold mb-1" style={{ color: '#00e5c4' }}>{pct}% funded</p>
+                            <div className="w-20 rounded-full h-1" style={{ background: '#1e2d3d' }}>
+                              <div className="h-1 rounded-full" style={{ width: `${pct}%`, background: '#00e5c4' }} />
+                            </div>
+                          </div>
+                        </div>
+                      </li>
+                    );
+                  })}
                 </ul>
               )}
             </div>

@@ -1,6 +1,160 @@
 {
-  "projects": [],
+  "projects": [
+    {
+      "id": "sim-1775614613769",
+      "title": "Paseo de las Palmas Lighting Upgrade",
+      "summary": "Replace 40 sodium streetlights with LED fixtures along Paseo de las Palmas.",
+      "category": "infrastructure",
+      "status": "PENDING",
+      "fundingGoal": "1500000000000000000000",
+      "fundingRaised": "0",
+      "createdAt": "2026-04-08T02:16:53.770Z",
+      "updatedAt": "2026-04-08T02:16:53.770Z",
+      "planner": {
+        "id": "662c730d-ec75-4a47-b62d-2b6f3efd708f",
+        "walletAddress": "0xsimulated",
+        "role": "PLANNER"
+      },
+      "milestones": [
+        {
+          "id": "sim-m-1775614613769-0",
+          "title": "Permits & Design",
+          "description": "Obtain municipal permits and finalize LED specs.",
+          "fundingPercentage": 20,
+          "durationDays": 21,
+          "status": "PENDING"
+        },
+        {
+          "id": "sim-m-1775614613769-1",
+          "title": "Installation",
+          "description": "Install 40 LED fixtures.",
+          "fundingPercentage": 70,
+          "durationDays": 45,
+          "status": "PENDING"
+        },
+        {
+          "id": "sim-m-1775614613769-2",
+          "title": "Testing & Handoff",
+          "description": "Commission and hand off to colonia.",
+          "fundingPercentage": 10,
+          "durationDays": 14,
+          "status": "PENDING"
+        }
+      ],
+      "investments": [],
+      "telemetry": [],
+      "reports": [],
+      "requiredRoles": [
+        {
+          "id": "sim-slot-1775614613769-0",
+          "role": "Legal Counsel",
+          "description": "Permit management",
+          "milestoneId": "sim-m-1775614613769-0"
+        },
+        {
+          "id": "sim-slot-1775614613769-1",
+          "role": "Electrical Engineer",
+          "description": "LED design & installation",
+          "milestoneId": "sim-m-1775614613769-1"
+        }
+      ],
+      "_count": {
+        "investments": 0
+      },
+      "aiGenerated": false,
+      "aiBlueprint": null
+    }
+  ],
   "comments": {},
-  "providerProfiles": {},
+  "providerProfiles": {
+    "662c730d-ec75-4a47-b62d-2b6f3efd708f": {
+      "userId": "662c730d-ec75-4a47-b62d-2b6f3efd708f",
+      "enabled": true,
+      "companyName": "Alejandro Salas Oliva",
+      "specialty": "Legal & Financial Advisory",
+      "rfc": "SAOA850312H45",
+      "services": [],
+      "createdAt": "2026-04-08T01:28:48.735Z"
+    },
+    "7c456240-6dad-48e7-b3b3-96fade322a28": {
+      "userId": "7c456240-6dad-48e7-b3b3-96fade322a28",
+      "enabled": true,
+      "companyName": "Jano",
+      "specialty": "AI Engineer",
+      "rfc": "5529845788",
+      "services": [
+        {
+          "id": "svc-1775612013966-t4b95",
+          "name": "Custom Software Development",
+          "description": "Full-stack software development covering web applications, mobile apps, data analysis systems, and AI solutions. Handles complete project lifecycle from consultation and planning through development, testing, and deployment.",
+          "deliverables": [
+            "Working software",
+            "Source code",
+            "Documentation",
+            "Training",
+            "Ongoing support"
+          ],
+          "typicalPriceMxn": "$50 USD per hour (~950 MXN/hr), flexible project-based pricing",
+          "chatMessages": [
+            {
+              "role": "assistant",
+              "content": "Hi! I'll help you define a service for your provider profile. Let's start \u2014 what's the name of the service you'd like to register? A short, professional title works best (e.g., \"LED Electrical Installation\" or \"Landscape Architecture\")."
+            },
+            {
+              "role": "user",
+              "content": "i can program any type of project in every coding language. i have 5 years of experience as a data scienist and i charge 90,000 mexican pesos a month"
+            },
+            {
+              "role": "assistant",
+              "content": "Great! Let's refine this. For the service name, would you call it \"Custom Software Development\" or something more specific like \"Data Science & Software Development\"?\n\nAnd when you say \"any type of project\" \u2014 what are the main types you typically work on? Web applications, mobile apps, data analysis systems, or something else?"
+            },
+            {
+              "role": "user",
+              "content": "i do all of it"
+            },
+            {
+              "role": "assistant",
+              "content": "Perfect! So \"Custom Software Development\" covers it all. \n\nNow, what does your typical process look like? Do you handle everything from initial consultation and planning through to final deployment, or do you focus on specific phases like development and testing?"
+            },
+            {
+              "role": "user",
+              "content": "yes, everything"
+            },
+            {
+              "role": "assistant",
+              "content": "Got it! So what exactly does a client receive when you complete a project? For example: working software, source code, documentation, training, ongoing support?"
+            },
+            {
+              "role": "user",
+              "content": "all of that"
+            },
+            {
+              "role": "assistant",
+              "content": "Excellent! Now about pricing \u2014 you mentioned 90,000 MXN per month. Is that for full-time project work, or do you also offer per-project rates for smaller jobs?"
+            },
+            {
+              "role": "user",
+              "content": "no, i want to charge 50 usd pero hour, and flexible to projects which involve an undefined ammount of time"
+            },
+            {
+              "role": "assistant",
+              "content": "Perfect! And finally, besides your 5 years as a data scientist, do you have any specific certifications, notable projects, or technologies you specialize in that you'd want to highlight?"
+            },
+            {
+              "role": "user",
+              "content": "i specialize in AI, I use all its tools with proefficiency as well as developing my own agents to help me work"
+            },
+            {
+              "role": "assistant",
+              "content": "Perfecto, I have everything I need. Ready to save this service?\n\n{\"ready\": true, \"service\": {\"name\": \"Custom Software Development\", \"description\": \"Full-stack software development covering web applications, mobile apps, data analysis systems, and AI solutions. Handles complete project lifecycle from consultation and planning through development, testing, and deployment.\", \"deliverables\": [\"Working software\", \"Source code\", \"Documentation\", \"Training\", \"Ongoing support\"], \"typicalPriceMxn\": \"$50 USD per hour (~950 MXN/hr), flexible project-based pricing\", \"highlights\": \"5 years data science experience, AI specialization with proficiency in all AI tools, develops custom AI agents for enhanced workflow efficiency\"}}"
+            }
+          ],
+          "finalized": true,
+          "createdAt": "2026-04-08T01:33:33.966Z"
+        }
+      ],
+      "createdAt": "2026-04-08T01:33:17.274Z"
+    }
+  },
   "balances": {}
 }

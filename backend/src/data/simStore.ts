@@ -136,7 +136,7 @@ export function persistData(): void {
   }
 }
 
-/** Full sim reset — wipes all funding, investments, balances, user-created projects, and comments. Keeps project templates. */
+/** Full sim reset — wipes all funding, investments, balances, user-created projects, and comments. Preserves provider profiles. */
 export function resetSimFull(): void {
   // Reset all demo project funding and investments
   for (const p of DEMO_PROJECTS) {
@@ -154,10 +154,10 @@ export function resetSimFull(): void {
   userBalances.clear();
   // Clear comments
   commentStore.clear();
-  // Clear provider profiles
-  providerProfileStore.clear();
-  // Delete persisted file
-  try { if (fs.existsSync(DATA_FILE)) fs.unlinkSync(DATA_FILE); } catch {}
+  // NOTE: providerProfileStore is intentionally NOT cleared — provider company
+  // profiles and services survive a full reset so users don't lose their work.
+  // Persist remaining state (provider profiles) to disk
+  persistData();
 }
 
 /** Add a user-created sim project to the store and persist it. */
