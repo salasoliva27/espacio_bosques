@@ -7,6 +7,7 @@ import { useT, useLanguage } from '../context/LanguageContext';
 interface Milestone {
   id: string;
   title: string;
+  titleEs?: string;
   status: string;
   durationDays: number;
   fundingPercentage: number;
@@ -75,7 +76,7 @@ export default function MilestoneCalendar({ milestones, projectCreatedAt }: Prop
           return (
             <div
               key={seg.id}
-              title={`${seg.title} — ${seg.durationDays} days`}
+              title={`${lang === 'es' ? seg.titleEs || seg.title : seg.title} — ${seg.durationDays} days`}
               style={{
                 width: `${pct}%`,
                 background: color,
@@ -98,7 +99,7 @@ export default function MilestoneCalendar({ milestones, projectCreatedAt }: Prop
               <span className="px-2 py-0.5 rounded-full text-xs font-medium" style={{ background: bg, color }}>
                 {t(`status.${seg.status.toLowerCase()}` as any) || seg.status}
               </span>
-              <span className="flex-1 truncate font-medium" style={{ color: '#e8f4f0' }}>{seg.title}</span>
+              <span className="flex-1 truncate font-medium" style={{ color: '#e8f4f0' }}>{lang === 'es' ? seg.titleEs || seg.title : seg.title}</span>
               <span className="tabular-nums" style={{ color: '#6b7280' }}>
                 {fmt(seg.start, lang)} – {fmt(seg.end, lang)}
               </span>

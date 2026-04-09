@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import axios from 'axios';
-import { useT } from '../context/LanguageContext';
+import { useT, useLanguage } from '../context/LanguageContext';
 import InvestModal from '../components/InvestModal';
 import MilestoneCalendar from '../components/MilestoneCalendar';
 import VotingSection from '../components/VotingSection';
@@ -33,6 +33,7 @@ export default function ProjectDetail() {
   const [showInvest, setShowInvest] = useState(false);
   const [bidRole, setBidRole] = useState<any>(null);
   const t = useT();
+  const { lang } = useLanguage();
 
   // Auth — to detect if current user is the creator
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
@@ -265,7 +266,7 @@ export default function ProjectDetail() {
         {/* Title row */}
         <div className="flex flex-wrap items-start justify-between gap-4 mb-8">
           <div>
-            <h1 className="text-3xl font-bold mb-2" style={{ color: '#e8f4f0' }}>{project.title}</h1>
+            <h1 className="text-3xl font-bold mb-2" style={{ color: '#e8f4f0' }}>{lang === 'es' ? project.titleEs || project.title : project.title}</h1>
             <div className="flex items-center gap-2">
               <span className="text-xs font-semibold px-2.5 py-1 rounded-full" style={{
                 background: project.status === 'ACTIVE' ? 'rgba(16,185,129,0.12)' : 'rgba(107,114,128,0.12)',
@@ -536,7 +537,7 @@ export default function ProjectDetail() {
             {/* About */}
             <div className="rounded-xl p-6" style={{ background: '#0d1520', border: '1px solid #1e2d3d' }}>
               <h2 className="text-base font-semibold mb-3" style={{ color: '#e8f4f0' }}>{t('project.about')}</h2>
-              <p className="text-sm leading-relaxed" style={{ color: '#9ca3af' }}>{project.summary}</p>
+              <p className="text-sm leading-relaxed" style={{ color: '#9ca3af' }}>{lang === 'es' ? project.summaryEs || project.summary : project.summary}</p>
             </div>
 
             {/* Milestones */}
@@ -558,10 +559,10 @@ export default function ProjectDetail() {
                       </div>
                       <div className="pb-4 flex-1">
                         <div className="flex items-center justify-between mb-1">
-                          <h3 className="text-sm font-semibold" style={{ color: '#e8f4f0' }}>{m.title}</h3>
+                          <h3 className="text-sm font-semibold" style={{ color: '#e8f4f0' }}>{lang === 'es' ? m.titleEs || m.title : m.title}</h3>
                           <span className="text-xs px-2 py-0.5 rounded-full font-medium" style={{ background: s.bg, color: s.color }}>{t(`status.${m.status.toLowerCase()}` as any) || m.status}</span>
                         </div>
-                        <p className="text-xs mb-2" style={{ color: '#6b7280' }}>{m.description}</p>
+                        <p className="text-xs mb-2" style={{ color: '#6b7280' }}>{lang === 'es' ? m.descriptionEs || m.description : m.description}</p>
                         <div className="flex items-center justify-between mt-2">
                           <div className="flex gap-4 text-xs" style={{ color: '#6b7280' }}>
                             <span>{m.fundingPercentage}% of funding</span>

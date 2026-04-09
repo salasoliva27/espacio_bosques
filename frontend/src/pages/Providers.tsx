@@ -9,9 +9,9 @@
  * CFDI XML uploads are parsed server-side — UUID, emisor RFC, total displayed.
  */
 import { useState, useEffect, useRef } from 'react';
-import { ShieldCheck, Clock, XCircle, Upload, Plus, ChevronDown, ChevronRight, FileText, AlertTriangle } from 'lucide-react';
+import { ShieldCheck, Clock, XCircle, Upload, Plus, ChevronDown, ChevronRight, FileText, AlertTriangle, Wrench } from 'lucide-react';
 import { useT } from '../context/LanguageContext';
-import { supabase, getSession } from '../lib/auth';
+import { getSession } from '../lib/auth';
 
 // Use relative path — Vite proxy forwards /api/* to the backend (see vite.config.ts)
 const API = '';
@@ -38,8 +38,16 @@ interface ProviderDoc {
   uploadedAt: string;
 }
 
+interface ServiceItem {
+  id: string;
+  name: string;
+  description: string;
+  priceRange?: string;
+}
+
 interface Provider {
   id: string;
+  userId?: string;
   name: string;
   tipoPersona: 'fisica' | 'moral';
   rfc: string;
@@ -52,6 +60,7 @@ interface Provider {
   efosStatus: 'NOT_CHECKED' | 'CLEAR' | 'FLAGGED';
   documents: ProviderDoc[];
   documentCount?: number;
+  services: ServiceItem[];
   createdAt: string;
   updatedAt: string;
 }
@@ -241,7 +250,7 @@ function UploadDocModal({ provider, onClose, onUploaded }: { provider: Provider;
         <h2 className="text-base font-bold mb-4" style={{ color: '#e8f4f0' }}>{t('providers.upload_doc')} — {provider.name}</h2>
         <form onSubmit={handleUpload} className="space-y-4">
           <div>
-            <label className="block text-xs font-medium mb-1" style={{ color: '#9ca3af' }}>Tipo de documento *</label>
+            <label className="block text-xs font-medium mb-1" style={{ color: '#9ca3af' }}>{t('providers.doc_type')} *</label>
             <select
               value={docType}
               onChange={e => setDocType(e.target.value as any)}
@@ -259,7 +268,7 @@ function UploadDocModal({ provider, onClose, onUploaded }: { provider: Provider;
           >
             <Upload size={20} className="mx-auto mb-2" style={{ color: file ? '#00e5c4' : '#6b7280' }} />
             <p className="text-sm" style={{ color: file ? '#00e5c4' : '#6b7280' }}>
-              {file ? file.name : 'Click to select file'}
+              {file ? file.name : t('providers.click_to_select')}
             </p>
             {file && <p className="text-xs mt-1" style={{ color: '#6b7280' }}>{(file.size / 1024).toFixed(1)} KB</p>}
             <input ref={fileRef} type="file" className="hidden" onChange={e => setFile(e.target.files?.[0] ?? null)} />
@@ -267,7 +276,7 @@ function UploadDocModal({ provider, onClose, onUploaded }: { provider: Provider;
 
           {docType === 'CFDI_XML' && (
             <p className="text-xs px-3 py-2 rounded-lg" style={{ background: 'rgba(0,229,196,0.08)', color: '#00e5c4' }}>
-              El XML se parsea automáticamente — UUID, RFC emisor y total se extraen y almacenan.
+              {t('providers.cfdi_xml_note')}
             </p>
           )}
 
@@ -278,7 +287,7 @@ function UploadDocModal({ provider, onClose, onUploaded }: { provider: Provider;
               {t('providers.form_cancel')}
             </button>
             <button type="submit" disabled={loading || !file} className="flex-1 py-2.5 rounded-xl text-sm font-bold" style={{ background: '#00e5c4', color: '#080c10', opacity: (loading || !file) ? 0.5 : 1 }}>
-              {loading ? '…' : 'Subir'}
+              {loading ? '…' : t('providers.upload_submit')}
             </button>
           </div>
         </form>
@@ -289,12 +298,13 @@ function UploadDocModal({ provider, onClose, onUploaded }: { provider: Provider;
 
 // ── Provider row ──────────────────────────────────────────────────────────────
 
-function ProviderRow({ provider: initial, onStatusChange }: { provider: Provider; onStatusChange: (id: string, status: Provider['status']) => void }) {
+function ProviderRow({ provider: initial, onStatusChange, currentUserId }: { provider: Provider; onStatusChange: (id: string, status: Provider['status']) => void; currentUserId: string | null }) {
   const t = useT();
   const [expanded, setExpanded] = useState(false);
   const [provider, setProvider] = useState(initial);
   const [uploadModal, setUploadModal] = useState(false);
   const [loading, setLoading] = useState<string | null>(null);
+  const isOwner = !!currentUserId && provider.userId === currentUserId;
 
   async function changeStatus(status: Provider['status']) {
     setLoading(status);
@@ -327,6 +337,11 @@ function ProviderRow({ provider: initial, onStatusChange }: { provider: Provider
             <div className="flex items-center gap-2 flex-wrap">
               <span className="font-semibold text-sm truncate" style={{ color: '#e8f4f0' }}>{provider.name}</span>
               <StatusBadge status={provider.status} />
+              {isOwner && (
+                <span className="text-xs px-2 py-0.5 rounded-full font-medium" style={{ background: 'rgba(0,229,196,0.12)', color: '#00e5c4' }}>
+                  {t('providers.my_profile')}
+                </span>
+              )}
             </div>
             <div className="flex items-center gap-3 mt-1 flex-wrap">
               <span className="text-xs font-mono" style={{ color: '#00e5c4' }}>{provider.rfc}</span>
@@ -350,8 +365,8 @@ function ProviderRow({ provider: initial, onStatusChange }: { provider: Provider
               {[
                 ['CLABE', provider.clabe],
                 ['Email', provider.email],
-                ['Teléfono', provider.phone || '—'],
-                ['Tipo', provider.tipoPersona === 'moral' ? t('providers.tipo_moral') : t('providers.tipo_fisica')],
+                [t('providers.phone'), provider.phone || '—'],
+                [t('providers.tipo'), provider.tipoPersona === 'moral' ? t('providers.tipo_moral') : t('providers.tipo_fisica')],
                 ...(provider.curp ? [['CURP', provider.curp]] : []),
               ].map(([label, value]) => (
                 <div key={label as string}>
@@ -365,13 +380,15 @@ function ProviderRow({ provider: initial, onStatusChange }: { provider: Provider
             <div className="px-4 pb-4">
               <div className="flex items-center justify-between mb-3">
                 <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#6b7280' }}>{t('providers.docs')}</p>
-                <button
-                  onClick={(e) => { e.stopPropagation(); setUploadModal(true); }}
-                  className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-lg"
-                  style={{ background: 'rgba(0,229,196,0.1)', color: '#00e5c4', border: '1px solid rgba(0,229,196,0.2)' }}
-                >
-                  <Upload size={10} /> {t('providers.upload_doc')}
-                </button>
+                {isOwner && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setUploadModal(true); }}
+                    className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-lg"
+                    style={{ background: 'rgba(0,229,196,0.1)', color: '#00e5c4', border: '1px solid rgba(0,229,196,0.2)' }}
+                  >
+                    <Upload size={10} /> {t('providers.upload_doc')}
+                  </button>
+                )}
               </div>
 
               {provider.documents && provider.documents.length > 0 ? (
@@ -405,7 +422,32 @@ function ProviderRow({ provider: initial, onStatusChange }: { provider: Provider
                   ))}
                 </div>
               ) : (
-                <p className="text-xs" style={{ color: '#6b7280' }}>Sin documentos todavía.</p>
+                <p className="text-xs" style={{ color: '#6b7280' }}>{t('providers.no_docs')}</p>
+              )}
+            </div>
+
+            {/* Services */}
+            <div className="px-4 pb-4">
+              <div className="flex items-center gap-2 mb-3">
+                <Wrench size={12} style={{ color: '#6b7280' }} />
+                <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#6b7280' }}>{t('providers.services')}</p>
+              </div>
+              {provider.services && provider.services.length > 0 ? (
+                <div className="space-y-2">
+                  {provider.services.map(svc => (
+                    <div key={svc.id} className="rounded-lg p-3" style={{ background: '#1e2d3d' }}>
+                      <div className="flex items-start justify-between gap-2">
+                        <p className="text-xs font-semibold" style={{ color: '#e8f4f0' }}>{svc.name}</p>
+                        {svc.priceRange && (
+                          <span className="text-xs font-mono shrink-0" style={{ color: '#00e5c4' }}>{svc.priceRange}</span>
+                        )}
+                      </div>
+                      <p className="text-xs mt-1" style={{ color: '#6b7280' }}>{svc.description}</p>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-xs" style={{ color: '#6b7280' }}>{t('providers.services_empty')}</p>
               )}
             </div>
 
@@ -459,9 +501,11 @@ export default function Providers() {
   const [error, setError] = useState('');
   const [addModal, setAddModal] = useState(false);
   const [filter, setFilter] = useState<'ALL' | Provider['status']>('ALL');
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
   useEffect(() => {
     loadProviders();
+    getSession().then(({ data: { session } }) => setCurrentUserId(session?.user?.id ?? null));
   }, []);
 
   async function loadProviders() {
@@ -532,7 +576,7 @@ export default function Providers() {
       {/* Content */}
       {loading ? (
         <div className="text-center py-16">
-          <p className="text-sm" style={{ color: '#6b7280' }}>Cargando…</p>
+          <p className="text-sm" style={{ color: '#6b7280' }}>{t('providers.loading')}</p>
         </div>
       ) : error ? (
         <div className="text-center py-16">
@@ -548,6 +592,7 @@ export default function Providers() {
             <ProviderRow
               key={p.id}
               provider={p}
+              currentUserId={currentUserId}
               onStatusChange={(id, status) => setProviders(ps => ps.map(pr => pr.id === id ? { ...pr, status } : pr))}
             />
           ))}

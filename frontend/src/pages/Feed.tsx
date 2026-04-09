@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { supabase, getSession } from '../lib/auth';
-import { useT } from '../context/LanguageContext';
+import { useT, useLanguage } from '../context/LanguageContext';
 import { Heart, MessageCircle, ArrowRight, Users, Flag, TrendingUp } from 'lucide-react';
 
 const CATEGORY_COLORS: Record<string, { color: string; bg: string }> = {
@@ -26,7 +26,9 @@ function timeAgo(dateStr: string | Date, t: (k: any, v?: any) => string): string
 interface FeedProject {
   id: string;
   title: string;
+  titleEs?: string;
   summary: string;
+  summaryEs?: string;
   category: string;
   status: string;
   fundingPct: number;
@@ -53,6 +55,7 @@ interface Comment {
 
 function ProjectCard({ project, userId }: { project: FeedProject; userId: string | null }) {
   const t = useT();
+  const { lang } = useLanguage();
   const [likes, setLikes] = useState(project.likes);
   const [liked, setLiked] = useState(project.liked);
   const [showComments, setShowComments] = useState(false);
@@ -142,13 +145,13 @@ function ProjectCard({ project, userId }: { project: FeedProject; userId: string
               className="text-base font-semibold leading-snug hover:underline"
               style={{ color: '#e8f4f0' }}
             >
-              {project.title}
+              {lang === 'es' ? project.titleEs || project.title : project.title}
             </Link>
           </div>
         </div>
 
         <p className="text-sm leading-relaxed line-clamp-3" style={{ color: '#6b7280' }}>
-          {project.summary}
+          {lang === 'es' ? project.summaryEs || project.summary : project.summary}
         </p>
       </div>
 

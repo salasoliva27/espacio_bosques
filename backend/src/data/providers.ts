@@ -13,6 +13,13 @@ export type ProviderStatus = 'PENDING' | 'VERIFIED' | 'REJECTED';
 export type EfosStatus = 'NOT_CHECKED' | 'CLEAR' | 'FLAGGED';
 export type DocType = 'CFDI_XML' | 'CFDI_PDF' | 'CONTRACT' | 'PHOTO' | 'ID_DOCUMENT';
 
+export interface ServiceItem {
+  id: string;
+  name: string;
+  description: string;
+  priceRange?: string; // e.g. "$15,000 – $80,000 MXN"
+}
+
 export interface CfdiData {
   uuid: string;
   emisorRfc: string;
@@ -36,6 +43,7 @@ export interface SimProviderDoc {
 
 export interface SimProvider {
   id: string;
+  userId?: string;           // Supabase user ID of the provider (owner)
   name: string;              // Nombre completo / razón social
   tipoPersona: ProviderType;
   rfc: string;               // 12 chars (moral) or 13 chars (física)
@@ -47,6 +55,7 @@ export interface SimProvider {
   status: ProviderStatus;
   efosStatus: EfosStatus;    // SAT EFOS list check — NOT_CHECKED in POC
   documents: SimProviderDoc[];
+  services: ServiceItem[];   // Services the provider offers
   createdAt: Date;
   updatedAt: Date;
 }
@@ -66,6 +75,11 @@ export const SIM_PROVIDERS: SimProvider[] = [
     status: 'VERIFIED',
     efosStatus: 'CLEAR',
     documents: [],
+    services: [
+      { id: 'svc-001-1', name: 'Obra civil general', description: 'Construcción de infraestructura comunitaria: accesos, banquetas, muros y estructuras.', priceRange: '$80,000 – $500,000 MXN' },
+      { id: 'svc-001-2', name: 'Rehabilitación de espacios', description: 'Remodelación y mejora de áreas comunes, canchas y jardines comunitarios.', priceRange: '$30,000 – $200,000 MXN' },
+      { id: 'svc-001-3', name: 'Supervisión de obra', description: 'Supervisión técnica y seguimiento de avance para proyectos de terceros.', priceRange: '$15,000 – $60,000 MXN' },
+    ],
     createdAt: new Date('2026-01-10'),
     updatedAt: new Date('2026-01-10'),
   },
@@ -82,6 +96,10 @@ export const SIM_PROVIDERS: SimProvider[] = [
     status: 'PENDING',
     efosStatus: 'NOT_CHECKED',
     documents: [],
+    services: [
+      { id: 'svc-002-1', name: 'Diseño de jardines', description: 'Diseño y plantación de jardines comunitarios con especies nativas de la región.', priceRange: '$20,000 – $80,000 MXN' },
+      { id: 'svc-002-2', name: 'Mantenimiento de áreas verdes', description: 'Servicio mensual de poda, riego y cuidado de áreas verdes.', priceRange: '$5,000 – $18,000 MXN / mes' },
+    ],
     createdAt: new Date('2026-03-15'),
     updatedAt: new Date('2026-03-15'),
   },
@@ -94,7 +112,7 @@ export function getProvider(id: string): SimProvider | undefined {
 }
 
 export function addProvider(
-  data: Omit<SimProvider, 'id' | 'status' | 'efosStatus' | 'documents' | 'createdAt' | 'updatedAt'>
+  data: Omit<SimProvider, 'id' | 'status' | 'efosStatus' | 'documents' | 'services' | 'createdAt' | 'updatedAt'>
 ): SimProvider {
   const provider: SimProvider = {
     ...data,
@@ -102,6 +120,7 @@ export function addProvider(
     status: 'PENDING',
     efosStatus: 'NOT_CHECKED',
     documents: [],
+    services: [],
     createdAt: new Date(),
     updatedAt: new Date(),
   };

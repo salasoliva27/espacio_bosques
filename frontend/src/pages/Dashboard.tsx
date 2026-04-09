@@ -288,8 +288,12 @@ export default function Dashboard() {
                   </div>
 
                   {/* Title + summary */}
-                  <h3 className="font-semibold text-base mb-2 leading-snug" style={{ color: '#e8f4f0' }}>{project.title}</h3>
-                  <p className="text-sm flex-1 mb-4 line-clamp-3" style={{ color: '#6b7280' }}>{project.summary}</p>
+                  <h3 className="font-semibold text-base mb-2 leading-snug" style={{ color: '#e8f4f0' }}>
+                    {lang === 'es' ? project.titleEs || project.title : project.title}
+                  </h3>
+                  <p className="text-sm flex-1 mb-4 line-clamp-3" style={{ color: '#6b7280' }}>
+                    {lang === 'es' ? project.summaryEs || project.summary : project.summary}
+                  </p>
 
                   {/* Progress */}
                   <div className="space-y-2">

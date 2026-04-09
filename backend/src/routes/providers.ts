@@ -108,7 +108,7 @@ router.post('/', requireAuth, (req: AuthRequest, res: Response) => {
     return res.status(409).json({ error: `Provider with RFC ${rfc.toUpperCase()} already exists (id: ${existing.id})` });
   }
 
-  const provider = addProvider({ name, tipoPersona, rfc: rfc.toUpperCase(), curp, clabe, email, phone, specialty });
+  const provider = addProvider({ name, tipoPersona, rfc: rfc.toUpperCase(), curp, clabe, email, phone, specialty, userId: req.user!.id });
   logger.info('[providers] Created provider', { id: provider.id, rfc: provider.rfc });
   res.status(201).json({ provider });
 });
@@ -138,6 +138,11 @@ router.post(
   async (req: AuthRequest, res: Response) => {
     const provider = getProvider(req.params.id);
     if (!provider) return res.status(404).json({ error: 'Provider not found' });
+
+    // Only the provider's own user can upload documents
+    if (provider.userId && provider.userId !== req.user!.id) {
+      return res.status(403).json({ error: 'You can only upload documents to your own provider profile' });
+    }
 
     if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
 
