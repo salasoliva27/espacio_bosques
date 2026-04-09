@@ -1,13 +1,15 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
-import { useT } from '../context/LanguageContext';
+import { useT, useLanguage } from '../context/LanguageContext';
 import { supabase, getSession } from '../lib/auth';
 
 interface Project {
   id: string;
   title: string;
+  titleEs?: string;
   summary: string;
+  summaryEs?: string;
   category: string;
   status: string;
   fundingGoal: string;
@@ -147,6 +149,7 @@ export default function Dashboard() {
   const [balance, setBalance] = useState<number | null>(null);
   const [showDeposit, setShowDeposit] = useState(false);
   const t = useT();
+  const { lang } = useLanguage();
 
   useEffect(() => {
     fetchProjects();

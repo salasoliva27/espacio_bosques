@@ -3,7 +3,9 @@
     {
       "id": "sim-1775616412117",
       "title": "On-Demand Drone Security Patrol System for Bosques de las Lomas",
+      "titleEs": "Sistema de Patrullaje de Seguridad con Drones para Bosques de las Lomas",
       "summary": "Deploy a community-managed autonomous drone security system allowing residents to request aerial patrols via mobile app. Professional-grade GPS-guided drones with terrain mapping capabilities will provide rapid response security surveillance across Bosques de las Lomas streets and common areas, maintaining proper flight altitudes automatically. The system includes AFAC-compliant autonomous flight operations, secure data storage in Mexico, and integration with existing neighborhood security infrastructure. Residents can request drone dispatch to their location or follow suspicious activity, with all footage stored according to INAI privacy regulations and accessible to authorized community security coordinators.",
+      "summaryEs": "Sistema autónomo de vigilancia con drones administrado por la comunidad. Los residentes pueden solicitar patrullas aéreas desde una app. Drones GPS de grado profesional con mapeo de terreno ofrecerán respuesta rápida en calles y áreas comunes de Bosques de las Lomas. El sistema incluye operaciones autónomas homologadas por la AFAC, almacenamiento seguro de datos en México e integración con la infraestructura de seguridad vecinal existente. Las grabaciones se almacenan conforme al reglamento de privacidad de la INAI y son accesibles para los coordinadores de seguridad autorizados.",
       "category": "technology",
       "status": "PENDING",
       "fundingGoal": "4923076923077000000",
@@ -19,7 +21,9 @@
         {
           "id": "sim-m-1775616412117-0",
           "title": "Regulatory Compliance and Permits",
+          "titleEs": "Permisos y Cumplimiento Regulatorio",
           "description": "Obtain AFAC autonomous drone operation permits, liability insurance, and SEDUVI approvals for GPS-guided drone operations over Bosques de las Lomas residential areas",
+          "descriptionEs": "Obtener permisos AFAC para operación autónoma de drones, seguro de responsabilidad civil y aprobaciones SEDUVI para vuelos GPS sobre zonas residenciales de Bosques de las Lomas",
           "fundingPercentage": 18,
           "durationDays": 60,
           "status": "EVIDENCE_REVIEW"
@@ -27,7 +31,9 @@
         {
           "id": "sim-m-1775616412117-1",
           "title": "Hardware and Mapping Infrastructure",
+          "titleEs": "Infraestructura de Hardware y Mapeo",
           "description": "Purchase GPS-guided autonomous drones with HD cameras and terrain mapping capabilities. Configure flight control systems with Bosques de las Lomas geographical data and establish charging stations",
+          "descriptionEs": "Adquirir drones autónomos guiados por GPS con cámaras HD y capacidades de mapeo de terreno. Configurar sistemas de control de vuelo con datos geográficos de Bosques de las Lomas y establecer estaciones de carga",
           "fundingPercentage": 40,
           "durationDays": 45,
           "status": "PENDING"
@@ -35,7 +41,9 @@
         {
           "id": "sim-m-1775616412117-2",
           "title": "App Development and Data Infrastructure",
+          "titleEs": "Desarrollo de App e Infraestructura de Datos",
           "description": "Build resident-facing mobile app with integrated orientation tutorial for drone requests and secure Mexican data center infrastructure for INAI-compliant video storage and access controls",
+          "descriptionEs": "Desarrollar app móvil para residentes con tutorial integrado para solicitar drones, e infraestructura de centro de datos en México para almacenamiento de video conforme a la INAI",
           "fundingPercentage": 25,
           "durationDays": 75,
           "status": "PENDING"
@@ -43,401 +51,71 @@
         {
           "id": "sim-m-1775616412117-3",
           "title": "Community Integration and Launch",
+          "titleEs": "Integración Comunitaria y Lanzamiento",
           "description": "Train community security coordinators, install privacy signage throughout the colonia, and launch autonomous pilot operations with community testing",
+          "descriptionEs": "Capacitar a los coordinadores de seguridad comunitaria, instalar señalética de privacidad en la colonia y lanzar operaciones piloto autónomas con pruebas comunitarias",
           "fundingPercentage": 17,
           "durationDays": 30,
           "status": "PENDING"
         }
       ],
       "investments": [
-        {
-          "id": "sim-inv-1775618366716",
-          "amount": "5384615385000000",
-          "investor": {
-            "id": "investor-001",
-            "walletAddress": "0xsimulated",
-            "name": "Ana Martínez"
-          },
-          "mxn": 350,
-          "createdAt": "2026-04-08T03:19:26.716Z"
-        },
-        {
-          "id": "sim-inv-1775618366717",
-          "amount": "4230769231000000",
-          "investor": {
-            "id": "investor-002",
-            "walletAddress": "0xsimulated",
-            "name": "Carlos Ruiz"
-          },
-          "mxn": 275,
-          "createdAt": "2026-04-08T03:19:26.717Z"
-        },
-        {
-          "id": "sim-inv-1775618366718",
-          "amount": "3461538462000000",
-          "investor": {
-            "id": "investor-003",
-            "walletAddress": "0xsimulated",
-            "name": "Sofia Torres"
-          },
-          "mxn": 225,
-          "createdAt": "2026-04-08T03:19:26.718Z"
-        },
-        {
-          "id": "sim-inv-1775618366719",
-          "amount": "2307692308000000",
-          "investor": {
-            "id": "investor-004",
-            "walletAddress": "0xsimulated"
-          },
-          "mxn": 150,
-          "createdAt": "2026-04-08T03:19:26.719Z"
-        },
-        {
-          "id": "sim-inv-1775619663662",
-          "amount": "5384615385000000",
-          "investor": {
-            "id": "investor-001",
-            "walletAddress": "0xsimulated",
-            "name": "Ana Martínez"
-          },
-          "mxn": 350,
-          "createdAt": "2026-04-08T03:41:03.662Z"
-        },
-        {
-          "id": "sim-inv-1775619663663",
-          "amount": "4230769231000000",
-          "investor": {
-            "id": "investor-002",
-            "walletAddress": "0xsimulated",
-            "name": "Carlos Ruiz"
-          },
-          "mxn": 275,
-          "createdAt": "2026-04-08T03:41:03.663Z"
-        },
-        {
-          "id": "sim-inv-1775619663663",
-          "amount": "3461538462000000",
-          "investor": {
-            "id": "investor-003",
-            "walletAddress": "0xsimulated",
-            "name": "Sofia Torres"
-          },
-          "mxn": 225,
-          "createdAt": "2026-04-08T03:41:03.663Z"
-        },
-        {
-          "id": "sim-inv-1775619663664",
-          "amount": "2307692308000000",
-          "investor": {
-            "id": "investor-004",
-            "walletAddress": "0xsimulated"
-          },
-          "mxn": 150,
-          "createdAt": "2026-04-08T03:41:03.664Z"
-        },
-        {
-          "id": "sim-inv-1775619778381",
-          "amount": "5384615385000000",
-          "investor": {
-            "id": "investor-001",
-            "walletAddress": "0xsimulated",
-            "name": "Ana Martínez"
-          },
-          "mxn": 350,
-          "createdAt": "2026-04-08T03:42:58.381Z"
-        },
-        {
-          "id": "sim-inv-1775619778382",
-          "amount": "4230769231000000",
-          "investor": {
-            "id": "investor-002",
-            "walletAddress": "0xsimulated",
-            "name": "Carlos Ruiz"
-          },
-          "mxn": 275,
-          "createdAt": "2026-04-08T03:42:58.382Z"
-        },
-        {
-          "id": "sim-inv-1775619778384",
-          "amount": "3461538462000000",
-          "investor": {
-            "id": "investor-003",
-            "walletAddress": "0xsimulated",
-            "name": "Sofia Torres"
-          },
-          "mxn": 225,
-          "createdAt": "2026-04-08T03:42:58.384Z"
-        },
-        {
-          "id": "sim-inv-1775619778385",
-          "amount": "2307692308000000",
-          "investor": {
-            "id": "investor-004",
-            "walletAddress": "0xsimulated"
-          },
-          "mxn": 150,
-          "createdAt": "2026-04-08T03:42:58.385Z"
-        },
-        {
-          "id": "sim-inv-1775621600071",
-          "amount": "5384615385000000",
-          "investor": {
-            "id": "investor-001",
-            "walletAddress": "0xsimulated",
-            "name": "Ana Martínez"
-          },
-          "mxn": 350,
-          "createdAt": "2026-04-08T04:13:20.071Z"
-        },
-        {
-          "id": "sim-inv-1775621600072",
-          "amount": "4230769231000000",
-          "investor": {
-            "id": "investor-002",
-            "walletAddress": "0xsimulated",
-            "name": "Carlos Ruiz"
-          },
-          "mxn": 275,
-          "createdAt": "2026-04-08T04:13:20.072Z"
-        },
-        {
-          "id": "sim-inv-1775621600073",
-          "amount": "3461538462000000",
-          "investor": {
-            "id": "investor-003",
-            "walletAddress": "0xsimulated",
-            "name": "Sofia Torres"
-          },
-          "mxn": 225,
-          "createdAt": "2026-04-08T04:13:20.073Z"
-        },
-        {
-          "id": "sim-inv-1775621600073",
-          "amount": "2307692308000000",
-          "investor": {
-            "id": "investor-004",
-            "walletAddress": "0xsimulated",
-            "name": "Luis García"
-          },
-          "mxn": 150,
-          "createdAt": "2026-04-08T04:13:20.073Z"
-        },
-        {
-          "id": "sim-inv-1775622647701",
-          "amount": "5384615385000000",
-          "investor": {
-            "id": "investor-001",
-            "walletAddress": "0xsimulated",
-            "name": "Ana Martínez"
-          },
-          "mxn": 350,
-          "createdAt": "2026-04-08T04:30:47.701Z"
-        },
-        {
-          "id": "sim-inv-1775622647714",
-          "amount": "4230769231000000",
-          "investor": {
-            "id": "investor-002",
-            "walletAddress": "0xsimulated",
-            "name": "Carlos Ruiz"
-          },
-          "mxn": 275,
-          "createdAt": "2026-04-08T04:30:47.714Z"
-        },
-        {
-          "id": "sim-inv-1775622647717",
-          "amount": "3461538462000000",
-          "investor": {
-            "id": "investor-003",
-            "walletAddress": "0xsimulated",
-            "name": "Sofia Torres"
-          },
-          "mxn": 225,
-          "createdAt": "2026-04-08T04:30:47.717Z"
-        },
-        {
-          "id": "sim-inv-1775622647762",
-          "amount": "2307692308000000",
-          "investor": {
-            "id": "investor-004",
-            "walletAddress": "0xsimulated",
-            "name": "Luis García"
-          },
-          "mxn": 150,
-          "createdAt": "2026-04-08T04:30:47.762Z"
-        },
-        {
-          "id": "sim-inv-1775623074641",
-          "amount": "5384615385000000",
-          "investor": {
-            "id": "investor-001",
-            "walletAddress": "0xsimulated",
-            "name": "Ana Martínez"
-          },
-          "mxn": 350,
-          "createdAt": "2026-04-08T04:37:54.641Z"
-        },
-        {
-          "id": "sim-inv-1775623074652",
-          "amount": "4230769231000000",
-          "investor": {
-            "id": "investor-002",
-            "walletAddress": "0xsimulated",
-            "name": "Carlos Ruiz"
-          },
-          "mxn": 275,
-          "createdAt": "2026-04-08T04:37:54.652Z"
-        },
-        {
-          "id": "sim-inv-1775623074655",
-          "amount": "3461538462000000",
-          "investor": {
-            "id": "investor-003",
-            "walletAddress": "0xsimulated",
-            "name": "Sofia Torres"
-          },
-          "mxn": 225,
-          "createdAt": "2026-04-08T04:37:54.655Z"
-        },
-        {
-          "id": "sim-inv-1775623074659",
-          "amount": "2307692308000000",
-          "investor": {
-            "id": "investor-004",
-            "walletAddress": "0xsimulated"
-          },
-          "mxn": 150,
-          "createdAt": "2026-04-08T04:37:54.659Z"
-        }
+        {"id": "sim-inv-1775618366716","amount": "5384615385000000","investor": {"id": "investor-001","walletAddress": "0xsimulated","name": "Ana Martínez"},"mxn": 350,"createdAt": "2026-04-08T03:19:26.716Z"},
+        {"id": "sim-inv-1775618366717","amount": "4230769231000000","investor": {"id": "investor-002","walletAddress": "0xsimulated","name": "Carlos Ruiz"},"mxn": 275,"createdAt": "2026-04-08T03:19:26.717Z"},
+        {"id": "sim-inv-1775618366718","amount": "3461538462000000","investor": {"id": "investor-003","walletAddress": "0xsimulated","name": "Sofia Torres"},"mxn": 225,"createdAt": "2026-04-08T03:19:26.718Z"},
+        {"id": "sim-inv-1775618366719","amount": "2307692308000000","investor": {"id": "investor-004","walletAddress": "0xsimulated"},"mxn": 150,"createdAt": "2026-04-08T03:19:26.719Z"},
+        {"id": "sim-inv-1775619663662","amount": "5384615385000000","investor": {"id": "investor-001","walletAddress": "0xsimulated","name": "Ana Martínez"},"mxn": 350,"createdAt": "2026-04-08T03:41:03.662Z"},
+        {"id": "sim-inv-1775619663663","amount": "4230769231000000","investor": {"id": "investor-002","walletAddress": "0xsimulated","name": "Carlos Ruiz"},"mxn": 275,"createdAt": "2026-04-08T03:41:03.663Z"},
+        {"id": "sim-inv-1775619663663","amount": "3461538462000000","investor": {"id": "investor-003","walletAddress": "0xsimulated","name": "Sofia Torres"},"mxn": 225,"createdAt": "2026-04-08T03:41:03.663Z"},
+        {"id": "sim-inv-1775619663664","amount": "2307692308000000","investor": {"id": "investor-004","walletAddress": "0xsimulated"},"mxn": 150,"createdAt": "2026-04-08T03:41:03.664Z"},
+        {"id": "sim-inv-1775619778381","amount": "5384615385000000","investor": {"id": "investor-001","walletAddress": "0xsimulated","name": "Ana Martínez"},"mxn": 350,"createdAt": "2026-04-08T03:42:58.381Z"},
+        {"id": "sim-inv-1775619778382","amount": "4230769231000000","investor": {"id": "investor-002","walletAddress": "0xsimulated","name": "Carlos Ruiz"},"mxn": 275,"createdAt": "2026-04-08T03:42:58.382Z"},
+        {"id": "sim-inv-1775619778384","amount": "3461538462000000","investor": {"id": "investor-003","walletAddress": "0xsimulated","name": "Sofia Torres"},"mxn": 225,"createdAt": "2026-04-08T03:42:58.384Z"},
+        {"id": "sim-inv-1775619778385","amount": "2307692308000000","investor": {"id": "investor-004","walletAddress": "0xsimulated"},"mxn": 150,"createdAt": "2026-04-08T03:42:58.385Z"},
+        {"id": "sim-inv-1775621600071","amount": "5384615385000000","investor": {"id": "investor-001","walletAddress": "0xsimulated","name": "Ana Martínez"},"mxn": 350,"createdAt": "2026-04-08T04:13:20.071Z"},
+        {"id": "sim-inv-1775621600072","amount": "4230769231000000","investor": {"id": "investor-002","walletAddress": "0xsimulated","name": "Carlos Ruiz"},"mxn": 275,"createdAt": "2026-04-08T04:13:20.072Z"},
+        {"id": "sim-inv-1775621600073","amount": "3461538462000000","investor": {"id": "investor-003","walletAddress": "0xsimulated","name": "Sofia Torres"},"mxn": 225,"createdAt": "2026-04-08T04:13:20.073Z"},
+        {"id": "sim-inv-1775621600073","amount": "2307692308000000","investor": {"id": "investor-004","walletAddress": "0xsimulated","name": "Luis García"},"mxn": 150,"createdAt": "2026-04-08T04:13:20.073Z"},
+        {"id": "sim-inv-1775622647701","amount": "5384615385000000","investor": {"id": "investor-001","walletAddress": "0xsimulated","name": "Ana Martínez"},"mxn": 350,"createdAt": "2026-04-08T04:30:47.701Z"},
+        {"id": "sim-inv-1775622647714","amount": "4230769231000000","investor": {"id": "investor-002","walletAddress": "0xsimulated","name": "Carlos Ruiz"},"mxn": 275,"createdAt": "2026-04-08T04:30:47.714Z"},
+        {"id": "sim-inv-1775622647717","amount": "3461538462000000","investor": {"id": "investor-003","walletAddress": "0xsimulated","name": "Sofia Torres"},"mxn": 225,"createdAt": "2026-04-08T04:30:47.717Z"},
+        {"id": "sim-inv-1775622647762","amount": "2307692308000000","investor": {"id": "investor-004","walletAddress": "0xsimulated","name": "Luis García"},"mxn": 150,"createdAt": "2026-04-08T04:30:47.762Z"},
+        {"id": "sim-inv-1775623074641","amount": "5384615385000000","investor": {"id": "investor-001","walletAddress": "0xsimulated","name": "Ana Martínez"},"mxn": 350,"createdAt": "2026-04-08T04:37:54.641Z"},
+        {"id": "sim-inv-1775623074652","amount": "4230769231000000","investor": {"id": "investor-002","walletAddress": "0xsimulated","name": "Carlos Ruiz"},"mxn": 275,"createdAt": "2026-04-08T04:37:54.652Z"},
+        {"id": "sim-inv-1775623074655","amount": "3461538462000000","investor": {"id": "investor-003","walletAddress": "0xsimulated","name": "Sofia Torres"},"mxn": 225,"createdAt": "2026-04-08T04:37:54.655Z"},
+        {"id": "sim-inv-1775623074659","amount": "2307692308000000","investor": {"id": "investor-004","walletAddress": "0xsimulated"},"mxn": 150,"createdAt": "2026-04-08T04:37:54.659Z"}
       ],
       "telemetry": [],
       "reports": [],
       "requiredRoles": [
-        {
-          "id": "sim-slot-1775616412117-0",
-          "role": "AFAC Autonomous Flight Compliance Specialist",
-          "description": "Navigate autonomous drone registration and flight permits with Mexican aviation authorities for GPS-guided operations",
-          "milestoneId": null
-        },
-        {
-          "id": "sim-slot-1775616412117-1",
-          "role": "Autonomous Drone Systems Contractor",
-          "description": "Procure and configure GPS-guided drones with terrain mapping, autonomous flight controls, and security camera systems for residential surveillance",
-          "milestoneId": null
-        },
-        {
-          "id": "sim-slot-1775616412117-2",
-          "role": "Mobile App Developer with Tutorial Integration",
-          "description": "Build iOS/Android app with built-in orientation tutorial for drone dispatch requests, live video feeds, and resident authentication with bilingual interface",
-          "milestoneId": null
-        },
-        {
-          "id": "sim-slot-1775616412117-3",
-          "role": "Data Privacy Legal Counsel",
-          "description": "Ensure INAI compliance for video recording, establish data retention policies, and draft resident privacy agreements for autonomous drone surveillance",
-          "milestoneId": null
-        },
-        {
-          "id": "sim-slot-1775616412117-4",
-          "role": "Community Security Coordinator",
-          "description": "Train residents and security personnel on autonomous drone operations, establish dispatch protocols, and manage integration with existing neighborhood security systems",
-          "milestoneId": null
-        },
-        {
-          "id": "sim-slot-1775616412117-5",
-          "role": "Financial Auditor",
-          "description": "Oversee procurement compliance including 3-quote vendor selection, verify SAT status of contractors, and manage milestone-based payment disbursements",
-          "milestoneId": null
-        }
+        {"id": "sim-slot-1775616412117-0","role": "AFAC Autonomous Flight Compliance Specialist","description": "Navigate autonomous drone registration and flight permits with Mexican aviation authorities for GPS-guided operations","milestoneId": null},
+        {"id": "sim-slot-1775616412117-1","role": "Autonomous Drone Systems Contractor","description": "Procure and configure GPS-guided drones with terrain mapping, autonomous flight controls, and security camera systems for residential surveillance","milestoneId": null},
+        {"id": "sim-slot-1775616412117-2","role": "Mobile App Developer with Tutorial Integration","description": "Build iOS/Android app with built-in orientation tutorial for drone dispatch requests, live video feeds, and resident authentication with bilingual interface","milestoneId": null},
+        {"id": "sim-slot-1775616412117-3","role": "Data Privacy Legal Counsel","description": "Ensure INAI compliance for video recording, establish data retention policies, and draft resident privacy agreements for autonomous drone surveillance","milestoneId": null},
+        {"id": "sim-slot-1775616412117-4","role": "Community Security Coordinator","description": "Train residents and security personnel on autonomous drone operations, establish dispatch protocols, and manage integration with existing neighborhood security systems","milestoneId": null},
+        {"id": "sim-slot-1775616412117-5","role": "Financial Auditor","description": "Oversee procurement compliance including 3-quote vendor selection, verify SAT status of contractors, and manage milestone-based payment disbursements","milestoneId": null}
       ],
-      "_count": {
-        "investments": 24
-      },
+      "_count": {"investments": 24},
       "aiGenerated": true,
       "aiBlueprint": {
         "title": "On-Demand Drone Security Patrol System for Bosques de las Lomas",
-        "summary": "Deploy a community-managed autonomous drone security system allowing residents to request aerial patrols via mobile app. Professional-grade GPS-guided drones with terrain mapping capabilities will provide rapid response security surveillance across Bosques de las Lomas streets and common areas, maintaining proper flight altitudes automatically. The system includes AFAC-compliant autonomous flight operations, secure data storage in Mexico, and integration with existing neighborhood security infrastructure. Residents can request drone dispatch to their location or follow suspicious activity, with all footage stored according to INAI privacy regulations and accessible to authorized community security coordinators.",
+        "summary": "Deploy a community-managed autonomous drone security system allowing residents to request aerial patrols via mobile app.",
         "category": "technology",
         "estimatedBudgetMXN": 320000,
-        "budgetJustification": "Autonomous GPS-guided drone systems with terrain mapping cost significantly more than manual systems (~MXN 100,000-140,000 per unit). Advanced flight control software and mapping infrastructure add ~MXN 60,000. AFAC autonomous operation permits and insurance run ~MXN 40,000.",
         "milestones": [
-          {
-            "title": "Regulatory Compliance and Permits",
-            "description": "Obtain AFAC autonomous drone operation permits, liability insurance, and SEDUVI approvals for GPS-guided drone operations over Bosques de las Lomas residential areas",
-            "fundingPercentage": 18,
-            "durationDays": 60
-          },
-          {
-            "title": "Hardware and Mapping Infrastructure",
-            "description": "Purchase GPS-guided autonomous drones with HD cameras and terrain mapping capabilities. Configure flight control systems with Bosques de las Lomas geographical data and establish charging stations",
-            "fundingPercentage": 40,
-            "durationDays": 45
-          },
-          {
-            "title": "App Development and Data Infrastructure",
-            "description": "Build resident-facing mobile app with integrated orientation tutorial for drone requests and secure Mexican data center infrastructure for INAI-compliant video storage and access controls",
-            "fundingPercentage": 25,
-            "durationDays": 75
-          },
-          {
-            "title": "Community Integration and Launch",
-            "description": "Train community security coordinators, install privacy signage throughout the colonia, and launch autonomous pilot operations with community testing",
-            "fundingPercentage": 17,
-            "durationDays": 30
-          }
-        ],
-        "monitoringHints": [
-          "Verify AFAC autonomous flight permit compliance through quarterly flight log reviews",
-          "Track GPS accuracy and terrain mapping effectiveness through flight path analysis",
-          "Monitor response times and resident satisfaction through app analytics and monthly community feedback",
-          "Audit data storage practices to ensure INAI compliance and Mexican data sovereignty",
-          "Review drone maintenance logs and autonomous system reliability to ensure operational readiness"
-        ],
-        "serviceSlots": [
-          {
-            "role": "AFAC Autonomous Flight Compliance Specialist",
-            "description": "Navigate autonomous drone registration and flight permits with Mexican aviation authorities for GPS-guided operations",
-            "category": "legal",
-            "milestoneTitle": "Regulatory Compliance and Permits"
-          },
-          {
-            "role": "Autonomous Drone Systems Contractor",
-            "description": "Procure and configure GPS-guided drones with terrain mapping, autonomous flight controls, and security camera systems for residential surveillance",
-            "category": "technical",
-            "milestoneTitle": "Hardware and Mapping Infrastructure"
-          },
-          {
-            "role": "Mobile App Developer with Tutorial Integration",
-            "description": "Build iOS/Android app with built-in orientation tutorial for drone dispatch requests, live video feeds, and resident authentication with bilingual interface",
-            "category": "technical",
-            "milestoneTitle": "App Development and Data Infrastructure"
-          },
-          {
-            "role": "Data Privacy Legal Counsel",
-            "description": "Ensure INAI compliance for video recording, establish data retention policies, and draft resident privacy agreements for autonomous drone surveillance",
-            "category": "legal",
-            "milestoneTitle": "App Development and Data Infrastructure"
-          },
-          {
-            "role": "Community Security Coordinator",
-            "description": "Train residents and security personnel on autonomous drone operations, establish dispatch protocols, and manage integration with existing neighborhood security systems",
-            "category": "community",
-            "milestoneTitle": "Community Integration and Launch"
-          },
-          {
-            "role": "Financial Auditor",
-            "description": "Oversee procurement compliance including 3-quote vendor selection, verify SAT status of contractors, and manage milestone-based payment disbursements",
-            "category": "financial",
-            "milestoneTitle": "Hardware and Mapping Infrastructure"
-          }
+          {"title": "Regulatory Compliance and Permits","description": "Obtain AFAC autonomous drone operation permits, liability insurance, and SEDUVI approvals","fundingPercentage": 18,"durationDays": 60},
+          {"title": "Hardware and Mapping Infrastructure","description": "Purchase GPS-guided autonomous drones with HD cameras and terrain mapping capabilities","fundingPercentage": 40,"durationDays": 45},
+          {"title": "App Development and Data Infrastructure","description": "Build resident-facing mobile app and secure Mexican data center infrastructure","fundingPercentage": 25,"durationDays": 75},
+          {"title": "Community Integration and Launch","description": "Train community security coordinators and launch autonomous pilot operations","fundingPercentage": 17,"durationDays": 30}
         ]
       }
     },
     {
       "id": "sim-1775614613769",
       "title": "Paseo de las Palmas Lighting Upgrade",
+      "titleEs": "Modernización de Alumbrado en Paseo de las Palmas",
       "summary": "Replace 40 sodium streetlights with LED fixtures along Paseo de las Palmas.",
+      "summaryEs": "Sustitución de 40 lámparas de sodio por luminarias LED a lo largo del Paseo de las Palmas.",
       "category": "infrastructure",
       "status": "PENDING",
       "fundingGoal": "1500000000000000000000",
@@ -453,7 +131,9 @@
         {
           "id": "sim-m-1775614613769-0",
           "title": "Permits & Design",
+          "titleEs": "Permisos y Diseño",
           "description": "Obtain municipal permits and finalize LED specs.",
+          "descriptionEs": "Obtener permisos municipales y definir las especificaciones de las luminarias LED.",
           "fundingPercentage": 20,
           "durationDays": 21,
           "status": "PENDING"
@@ -461,7 +141,9 @@
         {
           "id": "sim-m-1775614613769-1",
           "title": "Installation",
+          "titleEs": "Instalación",
           "description": "Install 40 LED fixtures.",
+          "descriptionEs": "Instalar 40 luminarias LED.",
           "fundingPercentage": 70,
           "durationDays": 45,
           "status": "PENDING"
@@ -469,7 +151,9 @@
         {
           "id": "sim-m-1775614613769-2",
           "title": "Testing & Handoff",
+          "titleEs": "Pruebas y Entrega",
           "description": "Commission and hand off to colonia.",
+          "descriptionEs": "Puesta en marcha y entrega a la colonia.",
           "fundingPercentage": 10,
           "durationDays": 14,
           "status": "PENDING"
@@ -479,22 +163,10 @@
       "telemetry": [],
       "reports": [],
       "requiredRoles": [
-        {
-          "id": "sim-slot-1775614613769-0",
-          "role": "Legal Counsel",
-          "description": "Permit management",
-          "milestoneId": "sim-m-1775614613769-0"
-        },
-        {
-          "id": "sim-slot-1775614613769-1",
-          "role": "Electrical Engineer",
-          "description": "LED design & installation",
-          "milestoneId": "sim-m-1775614613769-1"
-        }
+        {"id": "sim-slot-1775614613769-0","role": "Legal Counsel","description": "Permit management","milestoneId": "sim-m-1775614613769-0"},
+        {"id": "sim-slot-1775614613769-1","role": "Electrical Engineer","description": "LED design & installation","milestoneId": "sim-m-1775614613769-1"}
       ],
-      "_count": {
-        "investments": 0
-      },
+      "_count": {"investments": 0},
       "aiGenerated": false,
       "aiBlueprint": null
     }
@@ -521,68 +193,8 @@
           "id": "svc-1775612013966-t4b95",
           "name": "Custom Software Development",
           "description": "Full-stack software development covering web applications, mobile apps, data analysis systems, and AI solutions. Handles complete project lifecycle from consultation and planning through development, testing, and deployment.",
-          "deliverables": [
-            "Working software",
-            "Source code",
-            "Documentation",
-            "Training",
-            "Ongoing support"
-          ],
+          "deliverables": ["Working software","Source code","Documentation","Training","Ongoing support"],
           "typicalPriceMxn": "$50 USD per hour (~950 MXN/hr), flexible project-based pricing",
-          "chatMessages": [
-            {
-              "role": "assistant",
-              "content": "Hi! I'll help you define a service for your provider profile. Let's start — what's the name of the service you'd like to register? A short, professional title works best (e.g., \"LED Electrical Installation\" or \"Landscape Architecture\")."
-            },
-            {
-              "role": "user",
-              "content": "i can program any type of project in every coding language. i have 5 years of experience as a data scienist and i charge 90,000 mexican pesos a month"
-            },
-            {
-              "role": "assistant",
-              "content": "Great! Let's refine this. For the service name, would you call it \"Custom Software Development\" or something more specific like \"Data Science & Software Development\"?\n\nAnd when you say \"any type of project\" — what are the main types you typically work on? Web applications, mobile apps, data analysis systems, or something else?"
-            },
-            {
-              "role": "user",
-              "content": "i do all of it"
-            },
-            {
-              "role": "assistant",
-              "content": "Perfect! So \"Custom Software Development\" covers it all. \n\nNow, what does your typical process look like? Do you handle everything from initial consultation and planning through to final deployment, or do you focus on specific phases like development and testing?"
-            },
-            {
-              "role": "user",
-              "content": "yes, everything"
-            },
-            {
-              "role": "assistant",
-              "content": "Got it! So what exactly does a client receive when you complete a project? For example: working software, source code, documentation, training, ongoing support?"
-            },
-            {
-              "role": "user",
-              "content": "all of that"
-            },
-            {
-              "role": "assistant",
-              "content": "Excellent! Now about pricing — you mentioned 90,000 MXN per month. Is that for full-time project work, or do you also offer per-project rates for smaller jobs?"
-            },
-            {
-              "role": "user",
-              "content": "no, i want to charge 50 usd pero hour, and flexible to projects which involve an undefined ammount of time"
-            },
-            {
-              "role": "assistant",
-              "content": "Perfect! And finally, besides your 5 years as a data scientist, do you have any specific certifications, notable projects, or technologies you specialize in that you'd want to highlight?"
-            },
-            {
-              "role": "user",
-              "content": "i specialize in AI, I use all its tools with proefficiency as well as developing my own agents to help me work"
-            },
-            {
-              "role": "assistant",
-              "content": "Perfecto, I have everything I need. Ready to save this service?\n\n{\"ready\": true, \"service\": {\"name\": \"Custom Software Development\", \"description\": \"Full-stack software development covering web applications, mobile apps, data analysis systems, and AI solutions. Handles complete project lifecycle from consultation and planning through development, testing, and deployment.\", \"deliverables\": [\"Working software\", \"Source code\", \"Documentation\", \"Training\", \"Ongoing support\"], \"typicalPriceMxn\": \"$50 USD per hour (~950 MXN/hr), flexible project-based pricing\", \"highlights\": \"5 years data science experience, AI specialization with proficiency in all AI tools, develops custom AI agents for enhanced workflow efficiency\"}}"
-            }
-          ],
           "finalized": true,
           "createdAt": "2026-04-08T01:33:33.966Z"
         }
