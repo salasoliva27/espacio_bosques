@@ -507,7 +507,7 @@ export default function Providers() {
       <div className="flex items-start gap-3 p-4 rounded-xl mb-6" style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)' }}>
         <AlertTriangle size={14} className="mt-0.5 shrink-0" style={{ color: '#f59e0b' }} />
         <p className="text-xs leading-relaxed" style={{ color: '#d97706' }}>
-          Cada desembolso requiere CFDI 4.0 con Receptor RFC = RFC de la AC. Los proveedores deben pasar validación EFOS antes de recibir pagos en producción.
+          {t('providers.cfdi_warning')}
         </p>
       </div>
 
@@ -524,7 +524,7 @@ export default function Providers() {
               border: filter === f ? '1px solid rgba(0,229,196,0.2)' : '1px solid transparent',
             }}
           >
-            {f === 'ALL' ? 'Todos' : f} <span style={{ opacity: 0.6 }}>({counts[f]})</span>
+            {f === 'ALL' ? t('providers.filter_all') : f} <span style={{ opacity: 0.6 }}>({counts[f]})</span>
           </button>
         ))}
       </div>

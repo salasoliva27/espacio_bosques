@@ -5,7 +5,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../lib/auth';
-import { useT } from '../context/LanguageContext';
+import { useT, useLanguage } from '../context/LanguageContext';
 import { Vote, ChevronDown, ChevronUp, ExternalLink } from 'lucide-react';
 
 interface Milestone { id: string; title: string; status: string; }
@@ -35,6 +35,7 @@ function fmt(n: number) {
 
 function MilestoneVoting({ projectId, milestone }: { projectId: string; milestone: Milestone }) {
   const t = useT();
+  const { lang } = useLanguage();
   const [proposals, setProposals] = useState<Proposal[]>([]);
   const [voteState, setVoteState] = useState<VoteState | null>(null);
   const [expanded, setExpanded] = useState<string | null>(null);
@@ -123,7 +124,7 @@ function MilestoneVoting({ projectId, milestone }: { projectId: string; mileston
         <div className="flex items-center gap-3">
           <span className="text-xs" style={{ color: '#6b7280' }}>
             {voteState?.totalVotes ?? 0} {t('gov.votes')}
-            {deadline && ` · ${t('gov.closes', { date: deadline.toLocaleDateString('es-MX', { day: 'numeric', month: 'short' }) })}`}
+            {deadline && ` · ${t('gov.closes', { date: deadline.toLocaleDateString(lang === 'en' ? 'en-US' : 'es-MX', { day: 'numeric', month: 'short' }) })}`}
           </span>
           {open ? <ChevronUp size={14} style={{ color: '#6b7280' }} /> : <ChevronDown size={14} style={{ color: '#6b7280' }} />}
         </div>

@@ -4,7 +4,7 @@
  */
 import { useState, useEffect } from 'react';
 import { Banknote } from 'lucide-react';
-import { useT } from '../context/LanguageContext';
+import { useT, useLanguage } from '../context/LanguageContext';
 
 interface Transaction {
   id: string;
@@ -23,12 +23,14 @@ function fmt(n: number) {
   return n.toLocaleString('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 0 });
 }
 
-function fmtDate(d: string | Date) {
-  return new Date(d).toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' });
+function fmtDate(d: string | Date, lang: string) {
+  const locale = lang === 'en' ? 'en-US' : 'es-MX';
+  return new Date(d).toLocaleDateString(locale, { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
 export default function TransactionLedger({ projectId }: Props) {
   const t = useT();
+  const { lang } = useLanguage();
   const [txs, setTxs] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -78,7 +80,7 @@ export default function TransactionLedger({ projectId }: Props) {
                   <td className="py-3 pr-4 text-right font-semibold tabular-nums" style={{ color: '#10b981' }}>
                     {fmt(tx.amountMxn)}
                   </td>
-                  <td className="py-3 text-right" style={{ color: '#6b7280' }}>{fmtDate(tx.date)}</td>
+                  <td className="py-3 text-right" style={{ color: '#6b7280' }}>{fmtDate(tx.date, lang)}</td>
                 </tr>
               ))}
             </tbody>

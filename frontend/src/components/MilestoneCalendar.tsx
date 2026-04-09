@@ -2,7 +2,7 @@
  * MilestoneCalendar — horizontal timeline showing milestone date ranges.
  * Dates are computed sequentially from projectCreatedAt + durationDays.
  */
-import { useT } from '../context/LanguageContext';
+import { useT, useLanguage } from '../context/LanguageContext';
 
 interface Milestone {
   id: string;
@@ -37,12 +37,14 @@ function addDays(date: Date, days: number): Date {
   return d;
 }
 
-function fmt(date: Date): string {
-  return date.toLocaleDateString('es-MX', { day: 'numeric', month: 'short' });
+function fmt(date: Date, lang: string): string {
+  const locale = lang === 'en' ? 'en-US' : 'es-MX';
+  return date.toLocaleDateString(locale, { day: 'numeric', month: 'short' });
 }
 
 export default function MilestoneCalendar({ milestones, projectCreatedAt }: Props) {
   const t = useT();
+  const { lang } = useLanguage();
   const base = new Date(projectCreatedAt);
   const totalDays = milestones.reduce((s, m) => s + m.durationDays, 0);
 
@@ -61,7 +63,7 @@ export default function MilestoneCalendar({ milestones, projectCreatedAt }: Prop
       <div className="flex items-center justify-between mb-5">
         <h2 className="text-base font-semibold" style={{ color: '#e8f4f0' }}>{t('cal.title')}</h2>
         <span className="text-xs" style={{ color: '#6b7280' }}>
-          {fmt(base)} → {fmt(projectEnd)} · {t('cal.days_total', { n: String(totalDays) })}
+          {fmt(base, lang)} → {fmt(projectEnd, lang)} · {t('cal.days_total', { n: String(totalDays) })}
         </span>
       </div>
 
@@ -98,7 +100,7 @@ export default function MilestoneCalendar({ milestones, projectCreatedAt }: Prop
               </span>
               <span className="flex-1 truncate font-medium" style={{ color: '#e8f4f0' }}>{seg.title}</span>
               <span className="tabular-nums" style={{ color: '#6b7280' }}>
-                {fmt(seg.start)} – {fmt(seg.end)}
+                {fmt(seg.start, lang)} – {fmt(seg.end, lang)}
               </span>
               <span className="tabular-nums" style={{ color: '#4b5563' }}>
                 {seg.durationDays}d

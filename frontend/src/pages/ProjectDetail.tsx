@@ -259,7 +259,7 @@ export default function ProjectDetail() {
 
         {/* Breadcrumb */}
         <Link to="/dashboard" className="inline-flex items-center gap-1.5 text-sm mb-6 transition-opacity hover:opacity-80" style={{ color: '#6b7280' }}>
-          ← {t('project.back')}
+          {t('project.back')}
         </Link>
 
         {/* Title row */}

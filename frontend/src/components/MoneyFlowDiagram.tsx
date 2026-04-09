@@ -3,6 +3,7 @@
  * with exact MXN amounts at every node. Pure SVG, no external deps.
  */
 import { useState, useEffect } from 'react';
+import { useLanguage } from '../context/LanguageContext';
 
 interface DiagramData {
   projectTitle: string;
@@ -18,8 +19,9 @@ function fmt(n: number) {
   return n.toLocaleString('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 0 });
 }
 
-function fmtDate(s: string) {
-  return new Date(s).toLocaleDateString('es-MX', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+function fmtDate(s: string, lang: string) {
+  const locale = lang === 'en' ? 'en-US' : 'es-MX';
+  return new Date(s).toLocaleDateString(locale, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
 }
 
 const TYPE_COLOR: Record<string, string> = { INVEST: '#00e5c4', DISBURSE: '#f59e0b', REFUND: '#f87171' };
@@ -27,6 +29,7 @@ const TYPE_COLOR: Record<string, string> = { INVEST: '#00e5c4', DISBURSE: '#f59e
 interface Props { projectId: string }
 
 export default function MoneyFlowDiagram({ projectId }: Props) {
+  const { lang } = useLanguage();
   const [data, setData] = useState<DiagramData | null>(null);
   const [tab, setTab] = useState<'diagram' | 'log'>('diagram');
 
@@ -161,7 +164,7 @@ export default function MoneyFlowDiagram({ projectId }: Props) {
                   <span className="text-sm font-bold tabular-nums flex-shrink-0" style={{ color: TYPE_COLOR[ev.type] }}>
                     {fmt(ev.mxnAmount)}
                   </span>
-                  <span className="text-[10px] flex-shrink-0" style={{ color: '#4b5563' }}>{fmtDate(ev.createdAt)}</span>
+                  <span className="text-[10px] flex-shrink-0" style={{ color: '#4b5563' }}>{fmtDate(ev.createdAt, lang)}</span>
                 </div>
               ))}
             </div>
