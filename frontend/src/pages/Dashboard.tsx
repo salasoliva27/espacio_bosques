@@ -45,11 +45,12 @@ function DepositModal({ balance, onClose, onDeposited }: { balance: number; onCl
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const PRESETS = [500, 1000, 5000, 10000];
+  const t = useT();
 
   async function handleDeposit() {
     const mxn = Number(amount);
-    if (!mxn || isNaN(mxn) || mxn < 100) { setError('Minimum deposit is $100 MXN'); return; }
-    if (mxn > 50000) { setError('Maximum deposit is $50,000 MXN per transaction'); return; }
+    if (!mxn || isNaN(mxn) || mxn < 100) { setError(t('dashboard.deposit_min_err')); return; }
+    if (mxn > 50000) { setError(t('dashboard.deposit_max_err')); return; }
     setLoading(true);
     setError('');
     try {
@@ -60,7 +61,7 @@ function DepositModal({ balance, onClose, onDeposited }: { balance: number; onCl
         body: JSON.stringify({ mxn }),
       });
       const data = await res.json();
-      if (!res.ok) { setError(data.error || 'Deposit failed'); setLoading(false); return; }
+      if (!res.ok) { setError(data.error || t('dashboard.deposit_fail')); setLoading(false); return; }
       onDeposited(data.balance);
     } catch (err: any) {
       setError(err.message);
@@ -73,9 +74,9 @@ function DepositModal({ balance, onClose, onDeposited }: { balance: number; onCl
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)' }}>
       <div className="w-full max-w-sm rounded-2xl p-6" style={{ background: '#0d1520', border: '1px solid #1e2d3d' }}>
-        <h2 className="text-base font-bold mb-1" style={{ color: '#e8f4f0' }}>Deposit Funds</h2>
+        <h2 className="text-base font-bold mb-1" style={{ color: '#e8f4f0' }}>{t('dashboard.deposit_title')}</h2>
         <p className="text-xs mb-4" style={{ color: '#6b7280' }}>
-          Current balance: <span style={{ color: '#00e5c4' }}>{fmt(balance)}</span>
+          {t('dashboard.deposit_balance')} <span style={{ color: '#00e5c4' }}>{fmt(balance)}</span>
           <span className="ml-2 text-[10px] px-1.5 py-0.5 rounded" style={{ background: 'rgba(0,229,196,0.08)', color: '#00e5c4' }}>SIM</span>
         </p>
 
@@ -99,7 +100,7 @@ function DepositModal({ balance, onClose, onDeposited }: { balance: number; onCl
 
         {/* Custom amount */}
         <div className="mb-4">
-          <label className="block text-xs font-medium mb-1.5" style={{ color: '#6b7280' }}>Custom amount (MXN)</label>
+          <label className="block text-xs font-medium mb-1.5" style={{ color: '#6b7280' }}>{t('dashboard.deposit_custom')}</label>
           <div className="relative">
             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm" style={{ color: '#6b7280' }}>$</span>
             <input
@@ -117,14 +118,14 @@ function DepositModal({ balance, onClose, onDeposited }: { balance: number; onCl
         </div>
 
         <p className="text-xs mb-4 px-3 py-2 rounded-lg" style={{ background: 'rgba(0,229,196,0.06)', color: '#4b7c74', border: '1px solid rgba(0,229,196,0.1)' }}>
-          Simulation: In production, you'd send SPEI to your Bitso account. Espacio Bosques never holds funds.
+          {t('dashboard.deposit_sim')}
         </p>
 
         {error && <p className="text-xs mb-3 px-3 py-2 rounded-lg" style={{ background: 'rgba(239,68,68,0.08)', color: '#f87171' }}>{error}</p>}
 
         <div className="flex gap-2">
           <button onClick={onClose} className="flex-1 py-2.5 rounded-xl text-sm" style={{ background: '#1e2d3d', color: '#9ca3af', border: '1px solid #2a3f52' }}>
-            Cancel
+            {t('dashboard.deposit_cancel')}
           </button>
           <button
             onClick={handleDeposit}
@@ -132,7 +133,7 @@ function DepositModal({ balance, onClose, onDeposited }: { balance: number; onCl
             className="flex-1 py-2.5 rounded-xl text-sm font-bold disabled:opacity-50"
             style={{ background: '#00e5c4', color: '#080c10' }}
           >
-            {loading ? 'Depositing…' : 'Deposit'}
+            {loading ? t('dashboard.deposit_loading') : t('dashboard.deposit_confirm')}
           </button>
         </div>
       </div>
@@ -220,7 +221,7 @@ export default function Dashboard() {
                   className="px-3 py-2 rounded-lg text-xs font-semibold transition-opacity hover:opacity-80"
                   style={{ background: 'rgba(0,229,196,0.1)', color: '#00e5c4', border: '1px solid rgba(0,229,196,0.2)' }}
                 >
-                  + Deposit
+                  {t('dashboard.deposit_btn')}
                 </button>
               </div>
             )}
@@ -261,13 +262,13 @@ export default function Dashboard() {
                   {/* Status badge over photo */}
                   <div className="absolute top-3 right-3">
                     <span className="text-xs font-medium px-2 py-0.5 rounded-full" style={{ background: 'rgba(8,12,16,0.7)', color: project.status === 'ACTIVE' ? '#10b981' : '#6b7280', backdropFilter: 'blur(4px)' }}>
-                      ● {project.status}
+                      ● {t(`status.${project.status.toLowerCase().replace('_', '_')}` as any) || project.status}
                     </span>
                   </div>
                   {/* Category badge bottom-left */}
                   <div className="absolute bottom-3 left-3">
                     <span className="text-xs font-semibold px-2 py-0.5 rounded-full" style={{ background: `${catColor}33`, color: catColor, backdropFilter: 'blur(4px)' }}>
-                      {project.category}
+                      {t(`category.${project.category.toLowerCase()}` as any) || project.category}
                     </span>
                   </div>
                 </div>

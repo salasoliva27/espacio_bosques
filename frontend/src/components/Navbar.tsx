@@ -49,7 +49,7 @@ export default function Navbar() {
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors"
                 style={{ color: isActive('/providers') ? '#00e5c4' : '#9ca3af', background: isActive('/providers') ? 'rgba(0,229,196,0.08)' : 'transparent' }}
               >
-                <Briefcase size={13} />Providers
+                <Briefcase size={13} />{t('nav.providers')}
               </Link>
               <Link
                 to="/feed"

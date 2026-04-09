@@ -131,7 +131,7 @@ function ProjectCard({ project, userId }: { project: FeedProject; userId: string
                 className="text-xs font-semibold px-2 py-0.5 rounded-full"
                 style={{ background: cat.bg, color: cat.color }}
               >
-                {project.category}
+                {t(`category.${project.category.toLowerCase()}` as any) || project.category}
               </span>
               <span className="text-xs" style={{ color: '#4b5563' }}>
                 {timeAgo(project.updatedAt, t)}

@@ -105,10 +105,33 @@ const translations = {
     'sim.banner': '🟡 Simulation mode — no real transactions',
     // App loading
     'app.loading': 'Loading…',
-    // Milestones status
+    // Milestones / project status
     'status.completed': 'COMPLETED',
     'status.in_progress': 'IN PROGRESS',
     'status.pending': 'PENDING',
+    'status.active': 'ACTIVE',
+    'status.funded': 'FUNDED',
+    'status.evidence_review': 'EVIDENCE REVIEW',
+    // Project categories
+    'category.technology': 'technology',
+    'category.infrastructure': 'infrastructure',
+    'category.community': 'community',
+    'category.environment': 'environment',
+    'category.education': 'education',
+    // Navbar
+    'nav.providers': 'Providers',
+    // Deposit modal
+    'dashboard.deposit_btn': '+ Deposit',
+    'dashboard.deposit_title': 'Deposit Funds',
+    'dashboard.deposit_balance': 'Current balance:',
+    'dashboard.deposit_custom': 'Custom amount (MXN)',
+    'dashboard.deposit_sim': "Simulation: In production, you'd send SPEI to your Bitso account. Espacio Bosques never holds funds.",
+    'dashboard.deposit_min_err': 'Minimum deposit is $100 MXN',
+    'dashboard.deposit_max_err': 'Maximum deposit is $50,000 MXN per transaction',
+    'dashboard.deposit_fail': 'Deposit failed',
+    'dashboard.deposit_cancel': 'Cancel',
+    'dashboard.deposit_confirm': 'Deposit',
+    'dashboard.deposit_loading': 'Depositing…',
     // Landing
     'landing.location': 'Bosques de las Lomas · Ciudad de México',
     'landing.hero_line1': 'Your neighborhood,',
@@ -355,6 +378,29 @@ const translations = {
     'status.completed': 'COMPLETADO',
     'status.in_progress': 'EN CURSO',
     'status.pending': 'PENDIENTE',
+    'status.active': 'ACTIVO',
+    'status.funded': 'FONDEADO',
+    'status.evidence_review': 'EN REVISIÓN',
+    // Project categories
+    'category.technology': 'tecnología',
+    'category.infrastructure': 'infraestructura',
+    'category.community': 'comunidad',
+    'category.environment': 'medio ambiente',
+    'category.education': 'educación',
+    // Navbar
+    'nav.providers': 'Proveedores',
+    // Deposit modal
+    'dashboard.deposit_btn': '+ Depositar',
+    'dashboard.deposit_title': 'Depositar fondos',
+    'dashboard.deposit_balance': 'Balance actual:',
+    'dashboard.deposit_custom': 'Monto personalizado (MXN)',
+    'dashboard.deposit_sim': 'Simulación: En producción, enviarías un SPEI a tu cuenta Bitso. Espacio Bosques nunca retiene fondos.',
+    'dashboard.deposit_min_err': 'El depósito mínimo es $100 MXN',
+    'dashboard.deposit_max_err': 'El depósito máximo es $50,000 MXN por transacción',
+    'dashboard.deposit_fail': 'Error al depositar',
+    'dashboard.deposit_cancel': 'Cancelar',
+    'dashboard.deposit_confirm': 'Depositar',
+    'dashboard.deposit_loading': 'Depositando…',
     // Landing
     'landing.location': 'Bosques de las Lomas · Ciudad de México',
     'landing.hero_line1': 'Tu colonia,',

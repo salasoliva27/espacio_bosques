@@ -271,7 +271,7 @@ export default function ProjectDetail() {
                 background: project.status === 'ACTIVE' ? 'rgba(16,185,129,0.12)' : 'rgba(107,114,128,0.12)',
                 color: project.status === 'ACTIVE' ? '#10b981' : '#9ca3af',
               }}>
-                {project.status}
+                {t(`status.${project.status.toLowerCase()}` as any) || project.status}
               </span>
               {isCreator && !editMode && (
                 <button
@@ -559,7 +559,7 @@ export default function ProjectDetail() {
                       <div className="pb-4 flex-1">
                         <div className="flex items-center justify-between mb-1">
                           <h3 className="text-sm font-semibold" style={{ color: '#e8f4f0' }}>{m.title}</h3>
-                          <span className="text-xs px-2 py-0.5 rounded-full font-medium" style={{ background: s.bg, color: s.color }}>{m.status}</span>
+                          <span className="text-xs px-2 py-0.5 rounded-full font-medium" style={{ background: s.bg, color: s.color }}>{t(`status.${m.status.toLowerCase()}` as any) || m.status}</span>
                         </div>
                         <p className="text-xs mb-2" style={{ color: '#6b7280' }}>{m.description}</p>
                         <div className="flex items-center justify-between mt-2">

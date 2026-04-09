@@ -96,7 +96,7 @@ export default function MilestoneCalendar({ milestones, projectCreatedAt }: Prop
             <div key={seg.id} className="flex items-center gap-3 text-xs">
               <span className="font-bold tabular-nums" style={{ color: '#6b7280', minWidth: 20 }}>{i + 1}</span>
               <span className="px-2 py-0.5 rounded-full text-xs font-medium" style={{ background: bg, color }}>
-                {seg.status}
+                {t(`status.${seg.status.toLowerCase()}` as any) || seg.status}
               </span>
               <span className="flex-1 truncate font-medium" style={{ color: '#e8f4f0' }}>{seg.title}</span>
               <span className="tabular-nums" style={{ color: '#6b7280' }}>
