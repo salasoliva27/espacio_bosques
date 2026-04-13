@@ -17,6 +17,7 @@ import ProposalSubmit from './pages/ProposalSubmit';
 import Feed from './pages/Feed';
 import Register from './pages/Register';
 import CompleteProfile from './pages/CompleteProfile';
+import AIInvestorPanel from './components/AIInvestorPanel';
 
 const queryClient = new QueryClient();
 const SIM = import.meta.env.VITE_SIMULATION_MODE === 'true';
@@ -102,6 +103,7 @@ function AppInner() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </div>
+      <AIInvestorPanel />
     </QueryClientProvider>
   );
 }
