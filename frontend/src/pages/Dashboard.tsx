@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { useT, useLanguage } from '../context/LanguageContext';
 import { supabase, getSession } from '../lib/auth';
+import AIInvestorPanel from '../components/AIInvestorPanel';
 
 interface Project {
   id: string;
@@ -332,6 +333,8 @@ export default function Dashboard() {
           }}
         />
       )}
+
+      <AIInvestorPanel />
     </div>
   );
 }

@@ -27,6 +27,7 @@ import profileRoutes from "./routes/profile";
 import statsRoutes from "./routes/stats";
 import rfcRoutes from "./routes/rfc";
 import userProfileRoutes from "./routes/userProfile";
+import aiInvestorRoutes from "./routes/aiInvestor";
 import { warmBlacklist } from "./services/satBlacklist";
 
 // Initialize environment
@@ -87,6 +88,7 @@ app.use("/api/profile", profileRoutes);
 app.use("/api/stats", statsRoutes);
 app.use("/api/rfc", rfcRoutes);
 app.use("/api/user/profile", userProfileRoutes);
+app.use("/api/ai-investor", aiInvestorRoutes);
 
 // Test harness — simulation mode only
 import { SIMULATION_MODE } from "./config/mode";
