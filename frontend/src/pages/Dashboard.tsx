@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { useT, useLanguage } from '../context/LanguageContext';
 import { supabase, getSession } from '../lib/auth';
-// AIInvestorPanel is mounted at App level — listen for its investment events to refresh
+import AIInvestorPanel from '../components/AIInvestorPanel';
 
 interface Project {
   id: string;
@@ -155,11 +155,6 @@ export default function Dashboard() {
   useEffect(() => {
     fetchProjects();
     fetchBalance();
-
-    // Re-fetch projects when AI investor makes investments
-    const handleAiInvestment = () => { fetchProjects(); };
-    window.addEventListener('ai-investment', handleAiInvestment);
-    return () => window.removeEventListener('ai-investment', handleAiInvestment);
   }, []);
 
   const fetchBalance = async () => {
@@ -339,6 +334,7 @@ export default function Dashboard() {
         />
       )}
 
+      <AIInvestorPanel />
     </div>
   );
 }

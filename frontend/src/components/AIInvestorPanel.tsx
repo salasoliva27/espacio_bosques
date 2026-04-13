@@ -89,8 +89,6 @@ export default function AIInvestorPanel() {
         if (event.type === 'investment') {
           setThinking(null);
           if (event.stats) setStats(event.stats);
-          // Notify Dashboard (and any other listener) to refresh project data
-          window.dispatchEvent(new CustomEvent('ai-investment'));
           addFeedEntry({
             id: `inv-${Date.now()}-${Math.random()}`,
             type: 'investment',
