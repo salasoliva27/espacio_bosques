@@ -4,9 +4,9 @@ stage: dev
 phase: "Pre-launch — first real demo"
 phaseProgress: 0.7
 summary: "Blockchain-powered community platform for transparent project funding and AI-driven monitoring — built for Bosques de las Lomas."
-lastSyncedAt: "2026-04-30T19:01:15.626Z"
-lastSyncedCommit: "6aad35d"
-lastSyncedCommitMessage: "chore: clarify dotfiles vs project-specific env vars"
+lastSyncedAt: "2026-04-30T21:05:43.119Z"
+lastSyncedCommit: "63d4f10"
+lastSyncedCommitMessage: "chore(janus): seed real status from brain context"
 ---
 
 ## Next Steps
