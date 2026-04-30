@@ -4,6 +4,9 @@ stage: dev
 phase: ""
 phaseProgress: 0
 summary: "Blockchain-powered community platform for transparent project funding and AI-driven monitoring — built for Bosques de las Lomas."
+lastSyncedAt: "2026-04-30T19:01:15.626Z"
+lastSyncedCommit: "6aad35d"
+lastSyncedCommitMessage: "chore: clarify dotfiles vs project-specific env vars"
 ---
 
 ## Next Steps
